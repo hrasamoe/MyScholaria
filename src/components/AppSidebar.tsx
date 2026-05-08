@@ -151,7 +151,7 @@ const AppSidebar = ({ collapsed, onToggleCollapsed }: AppSidebarProps) => {
           <SchoolIcon color="primary" />
           {!mini && (
             <Typography variant="h6" fontWeight={700} color="text.primary" noWrap>
-              Scholara
+              MyScholaria
             </Typography>
           )}
         </Box>
