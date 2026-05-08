@@ -146,11 +146,29 @@ const AppSidebar = ({ collapsed, onToggleCollapsed }: AppSidebarProps) => {
 
   const renderContent = (mini: boolean) => (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: mini ? "center" : "space-between", gap: 1, px: mini ? 1 : 2.5, py: 2.5, borderBottom: 1, borderColor: "divider" }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1, minWidth: 0 }}>
-          <SchoolIcon color="primary" />
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: mini ? "center" : "space-between",
+          gap: 1,
+          px: mini ? 1 : 2.5,
+          py: 2.5,
+          borderBottom: 1,
+          borderColor: "divider",
+        }}
+      >
+        <Box
+          sx={{ display: "flex", alignItems: "center", gap: 1, minWidth: 0 }}
+        >
+          <img src="/logo.png" width={44} />
           {!mini && (
-            <Typography variant="h6" fontWeight={700} color="text.primary" noWrap>
+            <Typography
+              variant="h6"
+              fontWeight={700}
+              color="text.primary"
+              noWrap
+            >
               MyScholaria
             </Typography>
           )}
@@ -167,7 +185,17 @@ const AppSidebar = ({ collapsed, onToggleCollapsed }: AppSidebarProps) => {
             key={group.label}
             subheader={
               !mini ? (
-                <ListSubheader sx={{ bgcolor: "transparent", fontSize: "0.7rem", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", color: "text.secondary", lineHeight: 3 }}>
+                <ListSubheader
+                  sx={{
+                    bgcolor: "transparent",
+                    fontSize: "0.7rem",
+                    fontWeight: 700,
+                    letterSpacing: 1,
+                    textTransform: "uppercase",
+                    color: "text.secondary",
+                    lineHeight: 3,
+                  }}
+                >
                   {group.label}
                 </ListSubheader>
               ) : undefined
@@ -191,19 +219,41 @@ const AppSidebar = ({ collapsed, onToggleCollapsed }: AppSidebarProps) => {
                       bgcolor: "primary.main",
                       color: "primary.contrastText",
                       "&:hover": { bgcolor: "primary.dark" },
-                      "& .MuiListItemIcon-root": { color: "primary.contrastText" },
+                      "& .MuiListItemIcon-root": {
+                        color: "primary.contrastText",
+                      },
                     },
                   }}
                 >
-                  <ListItemIcon sx={{ minWidth: mini ? 0 : 36, justifyContent: "center", color: active ? "inherit" : "text.secondary" }}>
+                  <ListItemIcon
+                    sx={{
+                      minWidth: mini ? 0 : 36,
+                      justifyContent: "center",
+                      color: active ? "inherit" : "text.secondary",
+                    }}
+                  >
                     {item.icon}
                   </ListItemIcon>
-                  {!mini && <ListItemText primary={item.label} primaryTypographyProps={{ fontSize: "0.875rem", fontWeight: 500 }} />}
+                  {!mini && (
+                    <ListItemText
+                      primary={item.label}
+                      primaryTypographyProps={{
+                        fontSize: "0.875rem",
+                        fontWeight: 500,
+                      }}
+                    />
+                  )}
                 </ListItemButton>
               );
               return (
                 <ListItem key={item.path} disablePadding sx={{ px: 1 }}>
-                  {mini ? <Tooltip title={item.label} placement="right" arrow>{button}</Tooltip> : button}
+                  {mini ? (
+                    <Tooltip title={item.label} placement="right" arrow>
+                      {button}
+                    </Tooltip>
+                  ) : (
+                    button
+                  )}
                 </ListItem>
               );
             })}
@@ -211,7 +261,15 @@ const AppSidebar = ({ collapsed, onToggleCollapsed }: AppSidebarProps) => {
         ))}
       </Box>
       {mini && isDesktop && (
-        <Box sx={{ display: "flex", justifyContent: "center", p: 1, borderTop: 1, borderColor: "divider" }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            p: 1,
+            borderTop: 1,
+            borderColor: "divider",
+          }}
+        >
           <Tooltip title="Expand menu" placement="right" arrow>
             <IconButton size="small" onClick={onToggleCollapsed}>
               <MenuIcon />
