@@ -104,14 +104,14 @@ const SignUp = () => {
                 width: 56,
                 height: 56,
                 borderRadius: 2,
-                bgcolor: "primary.main",
+                // bgcolor: "primary.main",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 color: "#fff",
               }}
             >
-              <SchoolIcon fontSize="large" />
+            <img src="/download.png" height="100%" />
             </Box>
             <Typography variant="h5" fontWeight={700}>
               Create your account
