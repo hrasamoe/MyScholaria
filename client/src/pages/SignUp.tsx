@@ -20,6 +20,7 @@ import {
   Link,
   Alert,
   LinearProgress,
+  useTheme,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import SchoolIcon from "@mui/icons-material/School";
@@ -51,6 +52,7 @@ const SignUp = () => {
   const [error, setError] = useState("");
   const { enqueueSnackbar } = useSnackbar();
   const navigate = useNavigate();
+  const theme = useTheme();
 
   const strength = passwordStrength(form.password);
   const strengthLabel =
@@ -92,8 +94,7 @@ const SignUp = () => {
         justifyContent: "center",
         bgcolor: "background.default",
         p: 2,
-        background:
-          "linear-gradient(135deg, #e3f2fd 0%, #f7f9fc 50%, #fff 100%)",
+        background: `linear-gradient(135deg, ${theme.palette.background.default} 0%, ${theme.palette.divider} 50%, ${theme.palette.background.paper} 100%)`,
       }}
     >
       <Card sx={{ width: "100%", maxWidth: 520, my: 3 }}>
@@ -111,7 +112,7 @@ const SignUp = () => {
                 color: "#fff",
               }}
             >
-            <img src="/download.png" height="100%" />
+              <img src="/download.png" height="100%" />
             </Box>
             <Typography variant="h5" fontWeight={700}>
               Create your account

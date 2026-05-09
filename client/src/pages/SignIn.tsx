@@ -15,6 +15,7 @@ import {
   FormControlLabel,
   Link,
   Alert,
+  useTheme,
 } from "@mui/material";
 import SchoolIcon from "@mui/icons-material/School";
 import VisibilityIcon from "@mui/icons-material/Visibility";
@@ -29,6 +30,7 @@ const SignIn = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const { enqueueSnackbar } = useSnackbar();
+  const theme = useTheme();
   const navigate = useNavigate();
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -51,8 +53,7 @@ const SignIn = () => {
         justifyContent: "center",
         bgcolor: "background.default",
         p: 2,
-        background:
-          "linear-gradient(135deg, #e3f2fd 0%, #f7f9fc 50%, #fff 100%)",
+        background: `linear-gradient(135deg, ${theme.palette.background.default} 0%, ${theme.palette.divider} 50%, ${theme.palette.background.paper} 100%)`,
       }}
     >
       <Card sx={{ width: "100%", maxWidth: 440 }}>
@@ -147,7 +148,11 @@ const SignIn = () => {
           <Divider sx={{ my: 3 }}>OR</Divider>
 
           <Stack spacing={1.5}>
-            <Button variant="outlined" fullWidth startIcon={<img src="/google.png" width={20} />}>
+            <Button
+              variant="outlined"
+              fullWidth
+              startIcon={<img src="/google.png" width={20} />}
+            >
               Continue with Google
             </Button>
           </Stack>

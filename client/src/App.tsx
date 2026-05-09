@@ -2,7 +2,6 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 import { SnackbarProvider } from "notistack";
-import theme from "./theme";
 import Dashboard from "./pages/Dashboard";
 import Students from "./pages/Students";
 import Teachers from "./pages/Teachers";
@@ -41,11 +40,15 @@ import SignUp from "./pages/SignUp";
 import ForgotPassword from "./pages/ForgotPassword";
 import ChangePassword from "./pages/ChangePassword";
 import NotFound from "./pages/NotFound";
+import { AppThemeProvider } from "./hooks/Themecontext";
 
 const App = () => (
-  <ThemeProvider theme={theme}>
+  <AppThemeProvider>
     <CssBaseline />
-    <SnackbarProvider maxSnack={3} anchorOrigin={{ vertical: "bottom", horizontal: "right" }}>
+    <SnackbarProvider
+      maxSnack={3}
+      anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+    >
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Dashboard />} />
@@ -89,7 +92,7 @@ const App = () => (
         </Routes>
       </BrowserRouter>
     </SnackbarProvider>
-  </ThemeProvider>
+  </AppThemeProvider>
 );
 
 export default App;
