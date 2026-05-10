@@ -15,6 +15,7 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  CircularProgress,
   Checkbox,
   FormControlLabel,
   Link,
@@ -23,11 +24,11 @@ import {
   useTheme,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
-import SchoolIcon from "@mui/icons-material/School";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
-import GoogleIcon from "@mui/icons-material/Google";
 import { useSnackbar } from "notistack";
+import { register } from "../services/auth.service";
+import { useAuth } from "../hooks/Authcontext";
 
 const passwordStrength = (pw: string) => {
   let s = 0;
@@ -50,7 +51,9 @@ const SignUp = () => {
   });
   const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState("");
+  const { saveAuth } = useAuth();
   const { enqueueSnackbar } = useSnackbar();
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const theme = useTheme();
 
@@ -66,7 +69,7 @@ const SignUp = () => {
   const strengthColor: any =
     strength < 50 ? "error" : strength < 75 ? "warning" : "success";
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.firstName || !form.lastName || !form.email || !form.password) {
       setError("Please fill all required fields");
@@ -81,8 +84,26 @@ const SignUp = () => {
       return;
     }
     setError("");
-    enqueueSnackbar("Account created (mockup)", { variant: "success" });
-    navigate("/auth/signin");
+    setIsLoading(true);
+    try {
+      const data = await register(
+        form.email,
+        form.password,
+        form.firstName + form.lastName,
+      );
+      saveAuth(data.user, data.accessToken, data.refreshToken);
+      enqueueSnackbar("Account created", { variant: "success" });
+      navigate("/dashboard");
+    } catch (err: any) {
+      enqueueSnackbar(`An error was occures ${err.message}`, {
+        variant: "error",
+      });
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+    // enqueueSnackbar("Account created (mockup)", { variant: "success" });
+    // navigate("/auth/signin");
   };
 
   return (
@@ -249,7 +270,11 @@ const SignUp = () => {
                   size="large"
                   fullWidth
                 >
-                  Create Account
+                  {isLoading ? (
+                    <CircularProgress size={22} color="inherit" />
+                  ) : (
+                    "Create Account"
+                  )}
                 </Button>
               </Grid>
             </Grid>
