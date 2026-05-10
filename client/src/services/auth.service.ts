@@ -1,4 +1,4 @@
-const API_URL = import.meta.env;
+const API_URL = import.meta.env.VITE_API_URL;
 
 export interface AuthResponse {
   user: {
@@ -16,7 +16,7 @@ export async function register(
   password: string,
   full_name: string,
 ): Promise<AuthResponse> {
-  const res = await fetch(`${API_URL}/auth/register`, {
+  const res = await fetch(`${API_URL}/api/auth/register`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -32,7 +32,7 @@ export async function login(
   email: string,
   password: string,
 ): Promise<AuthResponse> {
-  const res = await fetch(`${API_URL}/auth/login`, {
+  const res = await fetch(`${API_URL}/api/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, password }),
@@ -43,7 +43,7 @@ export async function login(
 }
 
 export async function logout(userId: string): Promise<void> {
-  await fetch(`${API_URL}/auth/logout`, {
+  await fetch(`${API_URL}/api/auth/logout`, {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify({userId}),
