@@ -1,4 +1,9 @@
 {
+  "scripts": {
+    "dev": "nodemon --exec ts-node src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
   "dependencies": {
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
@@ -7,6 +12,7 @@
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.3",
     "pg": "^8.20.0",
+    "postgres": "^3.4.9",
     "zod": "^4.4.3"
   },
   "devDependencies": {
