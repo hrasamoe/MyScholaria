@@ -41,57 +41,61 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ChangePassword from "./pages/ChangePassword";
 import NotFound from "./pages/NotFound";
 import { AppThemeProvider } from "./hooks/Themecontext";
+import { AuthProvider } from "./hooks/Authcontext";
 
 const App = () => (
   <AppThemeProvider>
-    <CssBaseline />
-    <SnackbarProvider
-      maxSnack={3}
-      anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-    >
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/students" element={<Students />} />
-          <Route path="/teachers" element={<Teachers />} />
-          <Route path="/staff" element={<Staff />} />
-          <Route path="/classes" element={<Classes />} />
-          <Route path="/classrooms" element={<Classrooms />} />
-          <Route path="/calendar" element={<SchoolCalendar />} />
-          <Route path="/timetable" element={<Timetable />} />
-          <Route path="/subjects" element={<Subjects />} />
-          <Route path="/coursebook" element={<Coursebook />} />
-          <Route path="/internships" element={<Internships />} />
-          <Route path="/library" element={<Library />} />
-          <Route path="/attendance" element={<Attendance />} />
-          <Route path="/duty" element={<Duty />} />
-          <Route path="/grades" element={<Grades />} />
-          <Route path="/exams" element={<Exams />} />
-          <Route path="/payments" element={<Payments />} />
-          <Route path="/facturation" element={<Facturation />} />
-          <Route path="/scholarships" element={<Scholarships />} />
-          <Route path="/budget" element={<Budget />} />
-          <Route path="/portal/parent" element={<ParentPortal />} />
-          <Route path="/portal/student" element={<StudentPortal />} />
-          <Route path="/messages" element={<Messages />} />
-          <Route path="/announcements" element={<Announcements />} />
-          <Route path="/events" element={<Events />} />
-          <Route path="/notifications" element={<Notifications />} />
-          <Route path="/programs" element={<Programs />} />
-          <Route path="/theses" element={<Theses />} />
-          <Route path="/diplomas" element={<Diplomas />} />
-          <Route path="/reports" element={<Reports />} />
-          <Route path="/users" element={<Users />} />
-          <Route path="/roles" element={<Roles />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/auth/signin" element={<SignIn />} />
-          <Route path="/auth/signup" element={<SignUp />} />
-          <Route path="/auth/forgot-password" element={<ForgotPassword />} />
-          <Route path="/auth/change-password" element={<ChangePassword />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </SnackbarProvider>
+    <AuthProvider>
+      {" "}
+      <CssBaseline />
+      <SnackbarProvider
+        maxSnack={3}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+      >
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/students" element={<Students />} />
+            <Route path="/teachers" element={<Teachers />} />
+            <Route path="/staff" element={<Staff />} />
+            <Route path="/classes" element={<Classes />} />
+            <Route path="/classrooms" element={<Classrooms />} />
+            <Route path="/calendar" element={<SchoolCalendar />} />
+            <Route path="/timetable" element={<Timetable />} />
+            <Route path="/subjects" element={<Subjects />} />
+            <Route path="/coursebook" element={<Coursebook />} />
+            <Route path="/internships" element={<Internships />} />
+            <Route path="/library" element={<Library />} />
+            <Route path="/attendance" element={<Attendance />} />
+            <Route path="/duty" element={<Duty />} />
+            <Route path="/grades" element={<Grades />} />
+            <Route path="/exams" element={<Exams />} />
+            <Route path="/payments" element={<Payments />} />
+            <Route path="/facturation" element={<Facturation />} />
+            <Route path="/scholarships" element={<Scholarships />} />
+            <Route path="/budget" element={<Budget />} />
+            <Route path="/portal/parent" element={<ParentPortal />} />
+            <Route path="/portal/student" element={<StudentPortal />} />
+            <Route path="/messages" element={<Messages />} />
+            <Route path="/announcements" element={<Announcements />} />
+            <Route path="/events" element={<Events />} />
+            <Route path="/notifications" element={<Notifications />} />
+            <Route path="/programs" element={<Programs />} />
+            <Route path="/theses" element={<Theses />} />
+            <Route path="/diplomas" element={<Diplomas />} />
+            <Route path="/reports" element={<Reports />} />
+            <Route path="/users" element={<Users />} />
+            <Route path="/roles" element={<Roles />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/auth/signin" element={<SignIn />} />
+            <Route path="/auth/signup" element={<SignUp />} />
+            <Route path="/auth/forgot-password" element={<ForgotPassword />} />
+            <Route path="/auth/change-password" element={<ChangePassword />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </SnackbarProvider>
+    </AuthProvider>
   </AppThemeProvider>
 );
 
