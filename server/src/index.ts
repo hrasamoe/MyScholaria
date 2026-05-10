@@ -9,7 +9,6 @@ import { setDefaultResultOrder } from "dns";
 import { authRouter } from "./modules/auth/aut.router";
 setDefaultResultOrder("ipv4first");
 
-
 const app = express();
 const PORT = process.env.PORT || 4242;
 
@@ -18,7 +17,7 @@ app.use(
     contentSecurityPolicy: false,
   }),
 );
-app.use(cors({ origin: "http://localhost:5173" }));
+app.use(cors({ origin: process.env.CLIENT_URL }));
 app.use(express.json());
 app.use("/api/auth", authRouter);
 
