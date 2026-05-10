@@ -3,7 +3,6 @@ import jwt from "jsonwebtoken";
 import { pool } from "../../db/pool";
 import { RegisterInput, LoginInput } from "./auth.schema";
 import { ENV } from "../../config/env";
-import { json } from "zod";
 
 function generateAccessToken(userID: string) {
   return jwt.sign({ userID }, ENV.JWT_SECRET!, { expiresIn: "15m" });
@@ -39,7 +38,7 @@ export async function registerUser(data: RegisterInput) {
   const tokenHash = await bcrypt.hash(refreshToken, 8);
   await pool.query(
     `INSERT INTO refresh_tokens (user_id, token_hash, expires_at)
-    VALUES ($1, $2, NOW() + INTERVAL '7 days)`,
+    VALUES ($1, $2, NOW() + INTERVAL '7 days')`,
     [user.id, tokenHash],
   );
   return {
