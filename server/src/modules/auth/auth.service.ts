@@ -106,3 +106,10 @@ export async function loginUser(data: LoginInput) {
     refreshToken,
   };
 }
+
+export async function logoutUser(userID: string) {
+  await pool.query(
+    "UPDATE refresh_tokens SET revoked_at = NOW() WHERE user_id = $1 AND revoked_at is NULL",
+    [userID],
+  );
+}
