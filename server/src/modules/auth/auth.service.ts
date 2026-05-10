@@ -53,3 +53,56 @@ export async function registerUser(data: RegisterInput) {
     refreshToken,
   };
 }
+
+export async function loginUser(data: LoginInput) {
+  const { rows } = await pool.query(
+    `SELECT u.*, p.full_name
+    FROM users u 
+    LEFT JOIN profiles p ON p.id = u.id
+    WHERE u.email = $1 AND u.is_active = true
+    `,
+    [data.email],
+  );
+  const { user } = rows[0];
+  if (!user) {
+    throw new Error("Email or password is incorrect");
+  }
+
+  if (user.locked_until && new Date(user.locked_until) > new Date()) {
+    const minutes = Math.ceil(
+      (new Date(user.locked_until).getTime() - Date.now()) / 60000,
+    );
+    throw new Error(`Account is locked. Try again in ${minutes} minutes.`);
+  }
+
+  const valid = await bcrypt.compare(data.password, user.password_hash);
+  if (!valid) {
+    await pool.query("SELECT record_failed_login($1)", [data.email]);
+    throw new Error("Email or password is incorrect");
+  }
+  await pool.query("SELECT record_successful_login($1)", [user.id]);
+  const rolesResult = await pool.query(
+    "SELECT role FROM user_role WHERE user_id = $1",
+    [user.id],
+  );
+  const roles = rolesResult.rows.map((r) => r.role);
+  const accessToken = generateAccessToken(user.id);
+  const refreshToken = generateRefreshToken(user.id);
+  const hash_toke = bcrypt.hash(refreshToken, 8);
+  await pool.query(
+    `INSERT INTO refresh_tokes (user_id, token_hash, expires_at)
+    VALUES ($1, $2, NOW() + INTERVAL '7days')
+    `,
+    [user.id, hash_toke],
+  );
+  return {
+    user: {
+      id: user.id,
+      email: user.email,
+      full_name: user.full_name,
+      roles,
+    },
+    accessToken,
+    refreshToken,
+  };
+}
