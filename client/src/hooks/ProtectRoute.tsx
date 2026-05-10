@@ -1,23 +1,40 @@
-import { Navigate, replace } from "react-router-dom";
+import { ReactNode } from "react";
+import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "./Authcontext";
 
-export function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuth, isLoading } = useAuth();
-  if (isLoading) return null;
-  if (!isAuth) return <Navigate to="auth/signin" replace />;
-
-  return <>{children}</>;
+interface ProtectedRouteProps {
+  children?: ReactNode;
 }
 
-export function RoleRoute({
-  children,
-  roles,
-}: {
-  children: React.ReactNode;
+export function ProtectedRoute({ children }: ProtectedRouteProps) {
+  const { isAuth, isLoading } = useAuth();
+
+  if (isLoading) return null;
+
+  if (!isAuth) {
+    return <Navigate to="/auth/signin" replace />;
+  }
+
+  return children ? <>{children}</> : <Outlet />;
+}
+
+interface RoleRouteProps {
   roles: string[];
-}) {
-  const { user } = useAuth();
-  const hasROle = user?.roles.some((r) => roles.includes(r));
-  if (!hasROle) return <Navigate to="/" replace />;
-  return <>{children}</>;
+  children?: ReactNode;
+}
+
+export function RoleRoute({ roles, children }: RoleRouteProps) {
+  const { user, isAuth, isLoading } = useAuth();
+
+  if (isLoading) return null;
+
+  // Utilisation de l'optional chaining (?.) et repli sur un tableau vide ([])
+  const userRoles = user?.roles || [];
+  const hasRole = userRoles.some((r) => roles.includes(r));
+
+  if (!isAuth || !hasRole) {
+    return <Navigate to="/" replace />;
+  }
+
+  return children ? <>{children}</> : <Outlet />;
 }
