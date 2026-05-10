@@ -1,5 +1,4 @@
 import { useState } from "react";
-import AppLayout from "@/components/AppLayout";
 import PageHeader from "@/components/PageHeader";
 import DataTable from "@/components/DataTable";
 import {
@@ -62,7 +61,7 @@ const Users = () => {
   ];
 
   return (
-    <AppLayout>
+    <>
       <PageHeader title="Users" subtitle="Manage system users and access" action={
         <Button variant="contained" startIcon={<AddIcon />} onClick={() => setOpen(true)}>Add User</Button>
       } />
@@ -96,7 +95,7 @@ const Users = () => {
           <Button variant="contained" onClick={handleAdd}>Create</Button>
         </DialogActions>
       </Dialog>
-    </AppLayout>
+    </>
   );
 };
 

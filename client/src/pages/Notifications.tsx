@@ -1,5 +1,4 @@
 import { useState } from "react";
-import AppLayout from "@/components/AppLayout";
 import PageHeader from "@/components/PageHeader";
 import {
   Button, TextField, Dialog, DialogTitle, DialogContent, DialogActions,
@@ -54,7 +53,7 @@ const Notifications = () => {
   };
 
   return (
-    <AppLayout>
+    <>
       <PageHeader title="Notifications" subtitle={`${unread} unread`} action={
         <Stack direction="row" spacing={1}>
           <Button variant="outlined" startIcon={<DoneAllIcon />} onClick={() => setItems(items.map(i => ({ ...i, read: true })))}>Mark all read</Button>
@@ -143,7 +142,7 @@ const Notifications = () => {
           <Button variant="contained" onClick={send}>Send</Button>
         </DialogActions>
       </Dialog>
-    </AppLayout>
+    </>
   );
 };
 

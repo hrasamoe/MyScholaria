@@ -1,4 +1,3 @@
-import AppLayout from "@/components/AppLayout";
 import PageHeader from "@/components/PageHeader";
 import LightModeIcon from "@mui/icons-material/LightMode";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
@@ -31,7 +30,7 @@ const Settings = () => {
     setChecked(event.target.checked);
   };
   return (
-    <AppLayout>
+    <>
       <PageHeader
         title="Settings"
         subtitle="Security, backups and multi-campus configuration"
@@ -181,7 +180,7 @@ const Settings = () => {
           </Card>
         </Grid>
       </Grid>
-    </AppLayout>
+    </>
   );
 };
 

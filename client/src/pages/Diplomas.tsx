@@ -1,5 +1,4 @@
 import { useState } from "react";
-import AppLayout from "@/components/AppLayout";
 import PageHeader from "@/components/PageHeader";
 import DataTable from "@/components/DataTable";
 import { Button, TextField, Dialog, DialogTitle, DialogContent, DialogActions, Chip } from "@mui/material";
@@ -38,7 +37,7 @@ const Diplomas = () => {
   ];
 
   return (
-    <AppLayout>
+    <>
       <PageHeader title="Diplomas & Certificates" subtitle="Issuance and verification" action={
         <Button variant="contained" color="success" startIcon={<AddIcon />} onClick={() => setOpen(true)}>Issue Document</Button>
       } />
@@ -57,7 +56,7 @@ const Diplomas = () => {
           <Button variant="contained" onClick={handleAdd}>Issue</Button>
         </DialogActions>
       </Dialog>
-    </AppLayout>
+    </>
   );
 };
 

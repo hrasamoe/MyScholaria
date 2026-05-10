@@ -1,5 +1,4 @@
 import { useState } from "react";
-import AppLayout from "@/components/AppLayout";
 import PageHeader from "@/components/PageHeader";
 import DataTable from "@/components/DataTable";
 import { Button, TextField, Dialog, DialogTitle, DialogContent, DialogActions, Chip } from "@mui/material";
@@ -38,7 +37,7 @@ const Subjects = () => {
   ];
 
   return (
-    <AppLayout>
+    <>
       <PageHeader title="Subjects & Syllabus" subtitle={`${items.length} subjects defined`} action={
         <Button variant="contained" color="success" startIcon={<AddIcon />} onClick={() => setOpen(true)}>Add Subject</Button>
       } />
@@ -60,7 +59,7 @@ const Subjects = () => {
           <Button variant="contained" onClick={handleAdd}>Save</Button>
         </DialogActions>
       </Dialog>
-    </AppLayout>
+    </>
   );
 };
 

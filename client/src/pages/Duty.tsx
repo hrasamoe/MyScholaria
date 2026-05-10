@@ -1,5 +1,4 @@
 import { useState } from "react";
-import AppLayout from "@/components/AppLayout";
 import PageHeader from "@/components/PageHeader";
 import DataTable from "@/components/DataTable";
 import {
@@ -38,7 +37,7 @@ const Duty = () => {
   ];
 
   return (
-    <AppLayout>
+    <>
       <PageHeader title="Duty" subtitle="Manage teacher duties and supervision" action={
         <Button variant="contained" color="success" startIcon={<AddIcon />} onClick={() => setOpen(true)}>Assign Duty</Button>
       } />
@@ -69,7 +68,7 @@ const Duty = () => {
           <Button variant="contained" onClick={handleAdd}>Assign</Button>
         </DialogActions>
       </Dialog>
-    </AppLayout>
+    </>
   );
 };
 

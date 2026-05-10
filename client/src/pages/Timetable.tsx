@@ -1,5 +1,4 @@
 import { useState } from "react";
-import AppLayout from "@/components/AppLayout";
 import PageHeader from "@/components/PageHeader";
 import {
   Box, Card, Typography, MenuItem, Select, FormControl, InputLabel,
@@ -44,7 +43,7 @@ const Timetable = () => {
   const grid = sample[klass];
 
   return (
-    <AppLayout>
+    <>
       <PageHeader title="Timetable" subtitle="Weekly schedule per class" />
       <Card sx={{ p: 2, mb: 2 }}>
         <FormControl size="small" sx={{ minWidth: 200 }}>
@@ -88,7 +87,7 @@ const Timetable = () => {
           </TableBody>
         </Table>
       </TableContainer>
-    </AppLayout>
+    </>
   );
 };
 

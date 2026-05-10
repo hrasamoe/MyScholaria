@@ -1,4 +1,3 @@
-import AppLayout from "@/components/AppLayout";
 import PageHeader from "@/components/PageHeader";
 import StatCard from "@/components/StatCard";
 import DataTable from "@/components/DataTable";
@@ -33,7 +32,7 @@ const Budget = () => {
   ];
 
   return (
-    <AppLayout>
+    <>
       <PageHeader title="Budget & Accounting" subtitle="Income, expenses and balance" />
       <Grid container spacing={2} sx={{ mb: 3 }}>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}><StatCard title="Income" value={`${income.toLocaleString()} TND`} icon={<TrendingUpIcon />} color="success" /></Grid>
@@ -42,7 +41,7 @@ const Budget = () => {
         <Grid size={{ xs: 12, sm: 6, md: 3 }}><StatCard title="Budget Year" value="2026" icon={<AccountBalanceIcon />} color="primary" /></Grid>
       </Grid>
       <DataTable columns={columns} data={ledger} />
-    </AppLayout>
+    </>
   );
 };
 

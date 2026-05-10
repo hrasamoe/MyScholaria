@@ -1,5 +1,4 @@
 import { useState } from "react";
-import AppLayout from "@/components/AppLayout";
 import PageHeader from "@/components/PageHeader";
 import DataTable from "@/components/DataTable";
 import { Button, TextField, Dialog, DialogTitle, DialogContent, DialogActions, Chip, Tabs, Tab, Box } from "@mui/material";
@@ -57,7 +56,7 @@ const Library = () => {
   ];
 
   return (
-    <AppLayout>
+    <>
       <PageHeader title="Library" subtitle="Catalog and loans management" action={
         tab === 0 ? <Button variant="contained" color="success" startIcon={<AddIcon />} onClick={() => setOpen(true)}>Add Book</Button> : undefined
       } />
@@ -87,7 +86,7 @@ const Library = () => {
           <Button variant="contained" onClick={handleAdd}>Save</Button>
         </DialogActions>
       </Dialog>
-    </AppLayout>
+    </>
   );
 };
 

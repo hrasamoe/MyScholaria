@@ -1,4 +1,3 @@
-import AppLayout from "@/components/AppLayout";
 import PageHeader from "@/components/PageHeader";
 import StatCard from "@/components/StatCard";
 import { Box, Card, Typography, Chip, Stack } from "@mui/material";
@@ -28,7 +27,7 @@ const statusColor = (s: string) =>
   s === "Paid" ? "success" : s === "Pending" ? "warning" : "error";
 
 const Dashboard = () => (
-  <AppLayout>
+  <>
     <PageHeader title="Dashboard" subtitle="Welcome back! Here's an overview of your school." />
 
     <Grid container spacing={2} sx={{ mb: 4 }}>
@@ -89,7 +88,7 @@ const Dashboard = () => (
         </Card>
       </Grid>
     </Grid>
-  </AppLayout>
+  </>
 );
 
 export default Dashboard;

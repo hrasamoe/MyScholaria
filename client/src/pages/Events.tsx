@@ -1,5 +1,4 @@
 import { useState } from "react";
-import AppLayout from "@/components/AppLayout";
 import PageHeader from "@/components/PageHeader";
 import {
   Button, TextField, Dialog, DialogTitle, DialogContent, DialogActions,
@@ -66,7 +65,7 @@ const Events = () => {
   const total = (acts: Activity[]) => acts.reduce((s, a) => s + a.fee, 0);
 
   return (
-    <AppLayout>
+    <>
       <PageHeader title="Events" subtitle="Plan school events with activities and fees" action={
         <Button variant="contained" startIcon={<AddIcon />} onClick={() => setOpen(true)}>New Event</Button>
       } />
@@ -173,7 +172,7 @@ const Events = () => {
           <Button variant="contained" onClick={handleAdd}>Create</Button>
         </DialogActions>
       </Dialog>
-    </AppLayout>
+    </>
   );
 };
 

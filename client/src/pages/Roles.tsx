@@ -1,4 +1,3 @@
-import AppLayout from "@/components/AppLayout";
 import PageHeader from "@/components/PageHeader";
 import { Card, CardContent, Typography, Table, TableHead, TableRow, TableCell, TableBody, Checkbox, Box } from "@mui/material";
 
@@ -13,7 +12,7 @@ const perms = [
 ];
 
 const Roles = () => (
-  <AppLayout>
+  <>
     <PageHeader title="Roles & Permissions" subtitle="Module-level access control" />
     <Card>
       <CardContent sx={{ overflowX: "auto" }}>
@@ -43,7 +42,7 @@ const Roles = () => (
         </Table>
       </CardContent>
     </Card>
-  </AppLayout>
+  </>
 );
 
 export default Roles;

@@ -1,5 +1,4 @@
 import { useState } from "react";
-import AppLayout from "@/components/AppLayout";
 import PageHeader from "@/components/PageHeader";
 import DataTable from "@/components/DataTable";
 import { Button, TextField, Dialog, DialogTitle, DialogContent, DialogActions, Chip } from "@mui/material";
@@ -52,7 +51,7 @@ const Facturation = () => {
   ];
 
   return (
-    <AppLayout>
+    <>
       <PageHeader title="Facturation" subtitle="Manage invoices and billing" action={
         <Button variant="contained" color="success" startIcon={<AddIcon />} onClick={() => setOpen(true)}>Create Invoice</Button>
       } />
@@ -74,7 +73,7 @@ const Facturation = () => {
           <Button variant="contained" onClick={handleAdd}>Create</Button>
         </DialogActions>
       </Dialog>
-    </AppLayout>
+    </>
   );
 };
 

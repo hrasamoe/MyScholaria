@@ -1,4 +1,3 @@
-import AppLayout from "@/components/AppLayout";
 import PageHeader from "@/components/PageHeader";
 import StatCard from "@/components/StatCard";
 import { Card, CardContent, Typography, Box, Stack, LinearProgress, Button, Chip } from "@mui/material";
@@ -10,7 +9,7 @@ import SchoolIcon from "@mui/icons-material/School";
 import DownloadIcon from "@mui/icons-material/Download";
 
 const Reports = () => (
-  <AppLayout>
+  <>
     <PageHeader title="Reports & KPIs" subtitle="Strategic indicators dashboard" action={
       <Button variant="outlined" startIcon={<DownloadIcon />}>Export</Button>
     } />
@@ -78,7 +77,7 @@ const Reports = () => (
         </Card>
       </Grid>
     </Grid>
-  </AppLayout>
+  </>
 );
 
 export default Reports;

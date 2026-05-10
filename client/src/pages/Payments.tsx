@@ -1,5 +1,4 @@
 import { useState } from "react";
-import AppLayout from "@/components/AppLayout";
 import PageHeader from "@/components/PageHeader";
 import DataTable from "@/components/DataTable";
 import {
@@ -47,7 +46,7 @@ const Payments = () => {
   ];
 
   return (
-    <AppLayout>
+    <>
       <PageHeader title="Payments" subtitle="Track student payments" action={
         <Button variant="contained" color="success" startIcon={<AddIcon />} onClick={() => setOpen(true)}>Record Payment</Button>
       } />
@@ -87,7 +86,7 @@ const Payments = () => {
           <Button variant="contained" onClick={handleAdd}>Save</Button>
         </DialogActions>
       </Dialog>
-    </AppLayout>
+    </>
   );
 };
 

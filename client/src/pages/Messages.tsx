@@ -1,5 +1,4 @@
 import { useState } from "react";
-import AppLayout from "@/components/AppLayout";
 import PageHeader from "@/components/PageHeader";
 import { Card, CardContent, Box, List, ListItemButton, ListItemAvatar, Avatar, ListItemText, Typography, Divider, TextField, Button, Stack, Chip } from "@mui/material";
 import Grid from "@mui/material/Grid";
@@ -19,7 +18,7 @@ const Messages = () => {
   const current = convs.find(c => c.id === active)!;
 
   return (
-    <AppLayout>
+    <>
       <PageHeader title="Messages" subtitle="Internal messaging" />
       <Grid container spacing={2} sx={{ height: { md: "70vh" } }}>
         <Grid size={{ xs: 12, md: 4 }}>
@@ -57,7 +56,7 @@ const Messages = () => {
           </Card>
         </Grid>
       </Grid>
-    </AppLayout>
+    </>
   );
 };
 

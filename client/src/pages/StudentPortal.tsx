@@ -1,4 +1,3 @@
-import AppLayout from "@/components/AppLayout";
 import PageHeader from "@/components/PageHeader";
 import { Card, CardContent, Typography, Box, Chip, List, ListItem, ListItemText, Divider, LinearProgress, Stack } from "@mui/material";
 import Grid from "@mui/material/Grid";
@@ -7,7 +6,7 @@ import AssignmentIcon from "@mui/icons-material/Assignment";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 
 const StudentPortal = () => (
-  <AppLayout>
+  <>
     <PageHeader title="Student Portal" subtitle="Welcome back, Ahmed — Class 3A" />
 
     <Grid container spacing={2}>
@@ -73,7 +72,7 @@ const StudentPortal = () => (
         </Card>
       </Grid>
     </Grid>
-  </AppLayout>
+  </>
 );
 
 export default StudentPortal;
