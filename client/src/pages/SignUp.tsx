@@ -1,4 +1,3 @@
-import ErrorIcon from "@mui/icons-material/Error";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { useState } from "react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
@@ -47,6 +46,7 @@ const SignUp = () => {
     lastName: "",
     email: "",
     role: "Student",
+    schoolName: "",
     password: "",
     confirm: "",
     terms: false,
@@ -78,6 +78,10 @@ const SignUp = () => {
       setError("Please fill all required fields");
       return;
     }
+    if (form.role === "Admin" && !form.schoolName) {
+      setError("School name is required for administrators");
+      return;
+    }
     if (form.password !== form.confirm) {
       setError("Passwords do not match");
       return;
@@ -89,26 +93,25 @@ const SignUp = () => {
     setError("");
     setIsLoading(true);
     try {
-      const data = await register(
+      await register(
         form.email,
         form.password,
         `${form.firstName} ${form.lastName}`,
         form.role.toLowerCase(),
+        // form.schoolName,
       );
       enqueueSnackbar("Account created", { variant: "success" });
-      // navigate("/");
       setEmailSent(true);
     } catch (err: any) {
-      enqueueSnackbar(`An error was occures ${err.message}`, {
+      enqueueSnackbar(`An error occurred: ${err.message}`, {
         variant: "error",
       });
       setError(err.message);
     } finally {
       setIsLoading(false);
     }
-    // enqueueSnackbar("Account created (mockup)", { variant: "success" });
-    // navigate("/auth/signin");
   };
+
   if (emailSent) {
     return (
       <Box
@@ -121,7 +124,7 @@ const SignUp = () => {
       >
         <CheckCircleIcon sx={{ fontSize: 64, color: "success.main" }} />
         <Typography variant="h5" fontWeight={700}>
-          Check your inbox !
+          Check your inbox!
         </Typography>
         <Typography color="text.secondary" textAlign="center">
           We sent a confirmation email to <strong>{form.email}</strong>.<br />
@@ -151,20 +154,18 @@ const SignUp = () => {
                 width: 56,
                 height: 56,
                 borderRadius: 2,
-                // bgcolor: "primary.main",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                color: "#fff",
               }}
             >
-              <img src="/download.png" height="100%" />
+              <img src="/download.png" height="100%" alt="Logo" />
             </Box>
             <Typography variant="h5" fontWeight={700}>
               Create your account
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Join MyScholaria in less than a minute
+              Join Scholara in less than a minute
             </Typography>
           </Stack>
 
@@ -176,6 +177,30 @@ const SignUp = () => {
 
           <Box component="form" onSubmit={handleSubmit}>
             <Grid container spacing={2}>
+              <Grid size={12}>
+                <Divider sx={{ mb: 1 }}>
+                  <Typography variant="caption" color="text.secondary">
+                    I AM A
+                  </Typography>
+                </Divider>
+                <Stack direction="row" spacing={1}>
+                  <Button
+                    fullWidth
+                    variant={form.role === "Admin" ? "contained" : "outlined"}
+                    onClick={() => setForm({ ...form, role: "Admin" })}
+                  >
+                    Admin
+                  </Button>
+                  <Button
+                    fullWidth
+                    variant={form.role !== "Admin" ? "contained" : "outlined"}
+                    onClick={() => setForm({ ...form, role: "Student" })}
+                  >
+                    Member
+                  </Button>
+                </Stack>
+              </Grid>
+
               <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
                   fullWidth
@@ -196,6 +221,20 @@ const SignUp = () => {
                   }
                 />
               </Grid>
+
+                <Grid size={12}>
+                  <TextField
+                    fullWidth
+                    label="School Name *"
+                    placeholder="e.g. Lycée de Tana"
+                    value={form.schoolName}
+                    onChange={(e) =>
+                      setForm({ ...form, schoolName: e.target.value })
+                    }
+                  />
+                </Grid>
+            
+
               <Grid size={12}>
                 <TextField
                   fullWidth
@@ -205,21 +244,27 @@ const SignUp = () => {
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
                 />
               </Grid>
-              <Grid size={12}>
-                <FormControl fullWidth>
-                  <InputLabel>Role</InputLabel>
-                  <Select
-                    value={form.role}
-                    label="Role"
-                    onChange={(e) => setForm({ ...form, role: e.target.value })}
-                  >
-                    <MenuItem value="Student">Student</MenuItem>
-                    <MenuItem value="Parent">Parent</MenuItem>
-                    <MenuItem value="Teacher">Teacher</MenuItem>
-                    <MenuItem value="Staff">Staff</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
+
+              {/* {form.role !== "Admin" && (
+                <Grid size={12}>
+                  <FormControl fullWidth>
+                    <InputLabel>Role</InputLabel>
+                    <Select
+                      value={form.role}
+                      label="Role"
+                      onChange={(e) =>
+                        setForm({ ...form, role: e.target.value })
+                      }
+                    >
+                      <MenuItem value="Student">Student</MenuItem>
+                      <MenuItem value="Parent">Parent</MenuItem>
+                      <MenuItem value="Teacher">Teacher</MenuItem>
+                      <MenuItem value="Staff">Staff</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+              )} */}
+
               <Grid size={12}>
                 <TextField
                   fullWidth
@@ -282,8 +327,14 @@ const SignUp = () => {
                   }
                   label={
                     <Typography variant="body2">
-                      I accept the <Link href="/term">Terms</Link> and{" "}
-                      <Link href="/policy">Privacy Policy</Link>
+                      I accept the{" "}
+                      <Link component={RouterLink} to="/terms" target="_blank">
+                        Terms
+                      </Link>{" "}
+                      and{" "}
+                      <Link component={RouterLink} target="_blank" to="/policy">
+                        Privacy Policy
+                      </Link>
                     </Typography>
                   }
                 />
@@ -294,9 +345,12 @@ const SignUp = () => {
                   variant="contained"
                   size="large"
                   fullWidth
+                  disabled={isLoading}
                 >
                   {isLoading ? (
-                    <CircularProgress size={22} color="inherit" />
+                    <CircularProgress size={24} color="inherit" />
+                  ) : form.role === "Admin" ? (
+                    "Register School"
                   ) : (
                     "Create Account"
                   )}
@@ -310,7 +364,7 @@ const SignUp = () => {
           <Button
             variant="outlined"
             fullWidth
-            startIcon={<img src="/google.png" width={20} />}
+            startIcon={<img src="/google.png" width={20} alt="Google" />}
           >
             Sign up with Google
           </Button>
