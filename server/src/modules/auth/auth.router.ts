@@ -88,8 +88,9 @@ authRouter.post("/reset-password", async (req: Request, res: Response) => {
   try {
     const { token, password } = req.body;
     if (!token || !password)
-      return res.status(400).json("Token and password required");
-    await resetPassword(token, password);
+      return res.status(400).json({ message: "Token and password required" });
+    const result = await resetPassword(token, password);
+    res.status(200).json(result);
   } catch (err: any) {
     res.status(400).json({ message: err.message });
   }
