@@ -44,6 +44,7 @@ import SignUp from "./pages/SignUp";
 import ForgotPassword from "./pages/ForgotPassword";
 import ChangePassword from "./pages/ChangePassword";
 import NotFound from "./pages/NotFound";
+import VerifyEmail from "./pages/VerifyEmail";
 
 const App = () => (
   <AppThemeProvider>
@@ -122,7 +123,7 @@ const App = () => (
                 }
               />
             </Route>
-
+            <Route path="/auth/verify-email" element={<VerifyEmail />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
