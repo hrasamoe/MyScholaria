@@ -6,7 +6,7 @@ import dotenv from "dotenv";
 import path from "path";
 dotenv.config({ path: path.resolve(__dirname, "../.env") });
 import { setDefaultResultOrder } from "dns";
-import { authRouter } from "./modules/auth/aut.router";
+import { authRouter } from "./modules/auth/auth.router";
 setDefaultResultOrder("ipv4first");
 
 const app = express();

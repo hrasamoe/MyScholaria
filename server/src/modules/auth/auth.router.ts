@@ -1,8 +1,10 @@
 import { Router, Request, Response } from "express";
 import { registerSchema, loginSchema } from "./auth.schema";
 import { loginUser, logoutUser, registerUser } from "./auth.service";
-
+import { RequireAuth, AuthRequest } from "../../middleware/auth.middleware";
 export const authRouter = Router();
+import jwt from 'jsonwebtoken';
+import { ENV } from "../../config/env";
 
 authRouter.post("/register", async (req: Request, res: Response) => {
   try {
@@ -28,15 +30,21 @@ authRouter.post("/login", async (req: Request, res: Response) => {
     res.status(401).json({ message: err.message });
   }
 });
+
 authRouter.post("/logout", async (req: Request, res: Response) => {
   try {
-    const userID = req.body.userId;
-    if (!userID) {
-      return res.status(400).json({ message: "userId is required" });
+    const { refreshToken } = req.body;
+    if (!refreshToken) {
+      return res.status(400).json({ message: "Refresh token required" });
     }
-    await logoutUser(userID);
+    const payload = jwt.verify(
+      refreshToken,
+      ENV.JWT_SECRET
+    ) as { userId: string };
+
+    await logoutUser(payload.userId);
     res.status(200).json({ message: "Logged out successfully" });
-  } catch (err: any) {
-    res.status(500).json({ message: err.message });
+  } catch {
+    res.status(401).json({ message: "Invalid or expired token" });
   }
 });
