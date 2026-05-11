@@ -1,3 +1,5 @@
+import ErrorIcon from '@mui/icons-material/Error';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import { useState } from "react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import {
@@ -49,6 +51,7 @@ const SignUp = () => {
     confirm: "",
     terms: false,
   });
+  const [emailSent, setEmailSent] = useState(false);
   const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState("");
   const { saveAuth } = useAuth();
@@ -94,7 +97,8 @@ const SignUp = () => {
       );
       saveAuth(data.user, data.accessToken, data.refreshToken);
       enqueueSnackbar("Account created", { variant: "success" });
-      navigate("/");
+      // navigate("/");
+      setEmailSent(true);
     } catch (err: any) {
       enqueueSnackbar(`An error was occures ${err.message}`, {
         variant: "error",
@@ -106,6 +110,27 @@ const SignUp = () => {
     // enqueueSnackbar("Account created (mockup)", { variant: "success" });
     // navigate("/auth/signin");
   };
+  if (emailSent) {
+    return (
+      <Box
+        display="flex"
+        flexDirection="column"
+        alignItems="center"
+        justifyContent="center"
+        minHeight="100vh"
+        gap={2}
+      >
+        <CheckCircleIcon sx={{ fontSize: 64, color: "success.main" }} />
+        <Typography variant="h5" fontWeight={700}>
+          Check your inbox !
+        </Typography>
+        <Typography color="text.secondary" textAlign="center">
+          We sent a confirmation email to <strong>{form.email}</strong>.<br />
+          Click the link to activate your account.
+        </Typography>
+      </Box>
+    );
+  }
 
   return (
     <Box
