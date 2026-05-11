@@ -35,9 +35,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (saved && saved !== "undefined") setUser(JSON.parse(saved));
     } catch {
       localStorage.removeItem("user");
-    setLoading(false);
+      setLoading(false);
+    }
   }, []);
-  
+
   const saveAuth = (user: User, accessToken: string, refreshToken: string) => {
     localStorage.setItem("user", JSON.stringify(user));
     localStorage.setItem("accessToken", accessToken);
