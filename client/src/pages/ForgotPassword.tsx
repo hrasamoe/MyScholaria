@@ -32,6 +32,8 @@ const ForgotPassword = () => {
       setSent(true);
     } catch (error: any) {
       setError(error.message);
+      enqueueSnackbar(error.message, { variant: "error" });
+
     } finally {
       setLoading(false);
     }
@@ -76,7 +78,7 @@ const ForgotPassword = () => {
 
           {sent ? (
             <Alert severity="success">
-              A reset link has been sent to <b>{email}</b> (mockup).
+              A reset link has been sent to <b>{email}</b>.
             </Alert>
           ) : (
             <Box component="form" onSubmit={handleSubmit}>

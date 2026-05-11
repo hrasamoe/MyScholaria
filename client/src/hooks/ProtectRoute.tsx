@@ -10,7 +10,7 @@ interface ProtectedRouteProps {
 export function ProtectedRoute({ children }: { children?: ReactNode }) {
   const { isAuth, isLoading, user } = useAuth();
 
-  console.log("ProtectedRoute:", { isAuth, isLoading, user }); // ← ajoute
+  console.log("ProtectedRoute:", { isAuth, isLoading, user });
 
   if (isLoading)
     return (
