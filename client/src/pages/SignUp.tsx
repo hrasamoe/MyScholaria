@@ -1,5 +1,5 @@
-import ErrorIcon from '@mui/icons-material/Error';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle'
+import ErrorIcon from "@mui/icons-material/Error";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { useState } from "react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import {
@@ -95,7 +95,6 @@ const SignUp = () => {
         `${form.firstName} ${form.lastName}`,
         form.role.toLowerCase(),
       );
-      saveAuth(data.user, data.accessToken, data.refreshToken);
       enqueueSnackbar("Account created", { variant: "success" });
       // navigate("/");
       setEmailSent(true);
