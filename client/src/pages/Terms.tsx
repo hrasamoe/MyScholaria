@@ -1,247 +1,220 @@
-import React from "react";
-import {
-  Box,
-  Container,
-  Typography,
-  Paper,
-  Divider,
-  List,
-  ListItem,
-  ListItemText,
-  useTheme,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  Alert,
-  Stack,
-} from "@mui/material";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import { Link as RouterLink } from "react-router-dom";
+import { Box, Card, CardContent, Container, Typography, Stack, Divider, Link, Breadcrumbs, Chip } from "@mui/material";
 import GavelIcon from "@mui/icons-material/Gavel";
-import SecurityIcon from "@mui/icons-material/Security";
-import SchoolIcon from "@mui/icons-material/School";
-import PaymentsIcon from "@mui/icons-material/Payments";
-import BusinessIcon from "@mui/icons-material/Business";
-import WarningIcon from "@mui/icons-material/Warning";
 
-const Terms = () => {
-  const theme = useTheme();
+const Section = ({ n, title, children }: { n: string; title: string; children: React.ReactNode }) => (
+  <Box id={`section-${n}`} sx={{ mb: 4 }}>
+    <Typography variant="h6" fontWeight={700} gutterBottom>
+      {n}. {title}
+    </Typography>
+    <Stack spacing={1.5}>{children}</Stack>
+  </Box>
+);
 
-  return (
-    <Box
-      sx={{
-        minHeight: "100vh",
-        py: { xs: 6, md: 12 },
-        bgcolor: "background.default",
-      }}
-    >
-      <Container maxWidth="lg">
-        <Paper
-          elevation={0}
-          sx={{
-            p: { xs: 4, md: 10 },
-            borderRadius: 6,
-            border: "1px solid",
-            borderColor: "divider",
-          }}
-        >
-          <Stack spacing={2} mb={8}>
-            <Typography
-              variant="overline"
-              color="primary"
-              fontWeight={800}
-              letterSpacing={2}
-            >
-              LEGAL FRAMEWORK v1.0.0
-            </Typography>
-            <Typography variant="h2" fontWeight={900}>
-              Master Terms of Service
-            </Typography>
-            <Typography variant="body1" color="text.secondary">
-              These terms govern the entire MyScholaria ecosystem. Please read
-              sections regarding
-              <strong> Liability </strong> and <strong> Data Ownership </strong>{" "}
-              with extreme care.
-            </Typography>
+const P = ({ children }: { children: React.ReactNode }) => (
+  <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.8 }}>
+    {children}
+  </Typography>
+);
+
+const Terms = () => (
+  <Box sx={{ minHeight: "100vh", bgcolor: "background.default", py: { xs: 3, md: 6 } }}>
+    <Container maxWidth="md">
+      <Breadcrumbs sx={{ mb: 2 }}>
+        <Link component={RouterLink} to="/" underline="hover" color="inherit">Home</Link>
+        <Typography color="text.primary">Terms of Service</Typography>
+      </Breadcrumbs>
+
+      <Card>
+        <CardContent sx={{ p: { xs: 3, sm: 5 } }}>
+          <Stack direction="row" spacing={2} alignItems="center" mb={2}>
+            <Box sx={{ width: 48, height: 48, borderRadius: 2, bgcolor: "primary.main", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <GavelIcon />
+            </Box>
+            <Box>
+              <Typography variant="h4" fontWeight={800}>Terms of Service</Typography>
+              <Stack direction="row" spacing={1} mt={0.5}>
+                <Chip size="small" label="Version 1.0" />
+                <Chip size="small" label="Effective: May 2026" color="primary" variant="outlined" />
+              </Stack>
+            </Box>
           </Stack>
 
-          <Alert
-            severity="warning"
-            variant="filled"
-            sx={{ mb: 8, fontSize: 16, borderRadius: 3 }}
-          >
-            <strong>NOTICE:</strong> MyScholaria is a technical intermediary. We
-            do not provide educational instruction, nor do we certify the
-            validity of diplomas or grades entered by Institutions.
-          </Alert>
+          <P>
+            Welcome to <b>MyScholaria</b> (the "Service", "Platform", "we", "us", or "our"). These Terms of
+            Service ("Terms") govern your access to and use of our school management platform, including
+            its websites, dashboards, mobile views, APIs and related services. By creating an account,
+            accessing, browsing or otherwise using the Service, you ("you", "User", "Institution") agree
+            to be legally bound by these Terms. If you do not agree, please do not use the Service.
+          </P>
 
-          {/* SECTION 1: PROVISION OF SERVICE */}
-          <Box sx={{ mb: 8 }}>
-            <Typography
-              variant="h4"
-              fontWeight={800}
-              gutterBottom
-              sx={{ display: "flex", alignItems: "center", gap: 2 }}
-            >
-              <BusinessIcon fontSize="large" color="primary" /> 1. Provision of
-              SaaS Platform
-            </Typography>
-            <Typography variant="body1" color="text.secondary" paragraph>
-              1.1 <strong>License Grant:</strong> MyScholaria grants the
-              Institution a non-exclusive, non-transferable, revocable license
-              to access the platform. This license is strictly limited to
-              educational management purposes within the scope of the subscribed
-              establishment.
-            </Typography>
-            <Typography variant="body1" color="text.secondary" paragraph>
-              1.2 <strong>Modifications:</strong> We reserve the right to deploy
-              updates, patches, and "futuristic" UI enhancements at any time.
-              While we strive for backwards compatibility, some legacy features
-              may be deprecated with a 30-day notice.
-            </Typography>
-          </Box>
+          <Divider sx={{ my: 3 }} />
 
-          <Divider sx={{ mb: 6 }} />
+          <Section n="1" title="Definitions">
+            <P><b>Institution</b> — any school, college, university or training organization that subscribes to MyScholaria.</P>
+            <P><b>End User</b> — any individual (administrator, teacher, student, parent, staff member) granted access to the Service by an Institution.</P>
+            <P><b>Content</b> — any data, text, files, images, grades, attendance records, communications, or other materials uploaded, transmitted or generated through the Service.</P>
+            <P><b>Subscription</b> — the paid or trial plan under which the Institution accesses the Service.</P>
+          </Section>
 
-          {/* DETAILED ACCORDIONS */}
-          <Typography variant="h5" fontWeight={800} mb={4}>
-            Detailed Operational Framework
+          <Section n="2" title="Eligibility & Account Registration">
+            <P>
+              To use MyScholaria you must be at least 16 years old, or have valid consent from a parent,
+              legal guardian or educational institution. By registering, you represent and warrant that
+              the information you provide is accurate, complete and up to date, and that you will
+              maintain it as such. You are solely responsible for safeguarding your credentials, for
+              any activity occurring under your account, and for promptly notifying us of any
+              unauthorized access or security breach.
+            </P>
+            <P>
+              Institutions are responsible for managing the accounts of their End Users, including
+              provisioning, role assignment, and timely deactivation when access is no longer required.
+            </P>
+          </Section>
+
+          <Section n="3" title="Acceptable Use">
+            <P>You agree NOT to:</P>
+            <P>• Use the Service for any unlawful, fraudulent, harmful, defamatory or discriminatory purpose;</P>
+            <P>• Upload viruses, malware, or any code intended to disrupt, damage or gain unauthorized access to the Service or its users;</P>
+            <P>• Attempt to reverse-engineer, decompile, scrape, or otherwise extract source code, data models, or proprietary algorithms;</P>
+            <P>• Impersonate another person, falsify your identity, or misrepresent your affiliation;</P>
+            <P>• Harass, bully, threaten, or abuse other users — particularly minors — through messages, comments or any communication tool;</P>
+            <P>• Use the Service to send unsolicited bulk messages (spam) or to violate any applicable export control or sanctions law.</P>
+          </Section>
+
+          <Section n="4" title="Subscriptions, Fees & Billing">
+            <P>
+              Access to MyScholaria is offered through subscription plans billed monthly or annually.
+              Fees are detailed at the time of purchase. Unless otherwise stated, all fees are
+              exclusive of taxes, which will be added where applicable. Subscriptions renew
+              automatically at the end of each billing cycle unless cancelled at least 14 days prior to
+              the renewal date through the Settings page or by written request to billing@myscholaria.app.
+            </P>
+            <P>
+              Late payments may result in suspension or termination of access. Refunds are issued at
+              our sole discretion and only in cases of duplicate billing, technical failure preventing
+              meaningful use of the Service, or as required by applicable consumer protection laws.
+            </P>
+          </Section>
+
+          <Section n="5" title="Intellectual Property">
+            <P>
+              The Service, including its software, design, logos, trademarks, documentation and
+              underlying technology, is owned by MyScholaria and its licensors and is protected by
+              copyright, trademark and other intellectual property laws. We grant you a limited,
+              non-exclusive, non-transferable, revocable license to use the Service strictly for its
+              intended educational management purposes during the term of your Subscription.
+            </P>
+            <P>
+              You retain ownership of all Content you upload. You grant us a worldwide, royalty-free
+              license to host, process, transmit, display and back up such Content solely as necessary
+              to operate, maintain and improve the Service.
+            </P>
+          </Section>
+
+          <Section n="6" title="User Roles & Permissions">
+            <P>
+              The Service uses role-based access control (Administrator, Director, Teacher, Staff,
+              Student, Parent). Each role grants different capabilities. The Institution is solely
+              responsible for the proper assignment of roles and for ensuring that confidential data
+              (grades, financial information, disciplinary records) is only made visible to authorized
+              parties.
+            </P>
+          </Section>
+
+          <Section n="7" title="Data Protection & Privacy">
+            <P>
+              Our handling of personal data is described in detail in our <Link component={RouterLink} to="/privacy">Privacy Policy</Link>,
+              which forms an integral part of these Terms. We act as a data processor on behalf of
+              Institutions for student, parent and staff data, and we comply with applicable data
+              protection laws including the GDPR, FERPA (where relevant), and local equivalents.
+            </P>
+          </Section>
+
+          <Section n="8" title="Service Availability & Support">
+            <P>
+              We aim for 99.5% monthly uptime, excluding scheduled maintenance windows announced at
+              least 48 hours in advance. While we make commercially reasonable efforts to maintain a
+              continuous, secure and error-free Service, we do not guarantee uninterrupted access.
+              Support is provided through the in-app help center and at support@myscholaria.app
+              during business hours (Mon–Fri, 9:00–18:00 CET).
+            </P>
+          </Section>
+
+          <Section n="9" title="Suspension & Termination">
+            <P>
+              We may suspend or terminate your access immediately and without prior notice if you
+              breach these Terms, if your use endangers the security or integrity of the Service or
+              other users, or if required by law. Upon termination, your right to use the Service
+              ceases. Institutions may export their Content for 30 days after termination, after
+              which data may be permanently deleted from active systems.
+            </P>
+          </Section>
+
+          <Section n="10" title="Disclaimers">
+            <P>
+              THE SERVICE IS PROVIDED "AS IS" AND "AS AVAILABLE", WITHOUT WARRANTIES OF ANY KIND,
+              EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO MERCHANTABILITY, FITNESS FOR A
+              PARTICULAR PURPOSE, OR NON-INFRINGEMENT. WE DO NOT WARRANT THAT THE SERVICE WILL MEET
+              YOUR REQUIREMENTS OR THAT IT WILL BE UNINTERRUPTED, TIMELY, SECURE OR ERROR-FREE.
+            </P>
+          </Section>
+
+          <Section n="11" title="Limitation of Liability">
+            <P>
+              To the maximum extent permitted by applicable law, MyScholaria shall not be liable for
+              any indirect, incidental, special, consequential or punitive damages, or any loss of
+              profits, revenues, data, or goodwill, arising out of or in connection with your use of
+              the Service. Our total aggregate liability shall not exceed the amount paid by the
+              Institution to MyScholaria during the twelve (12) months preceding the event giving
+              rise to the claim.
+            </P>
+          </Section>
+
+          <Section n="12" title="Indemnification">
+            <P>
+              You agree to indemnify and hold harmless MyScholaria, its officers, directors,
+              employees and affiliates from and against any claims, damages, liabilities, losses and
+              expenses (including reasonable attorneys' fees) arising out of: (a) your breach of
+              these Terms; (b) your Content; (c) your violation of any law or third-party right.
+            </P>
+          </Section>
+
+          <Section n="13" title="Modifications">
+            <P>
+              We may revise these Terms from time to time. Material changes will be communicated by
+              email or through an in-app notice at least 30 days before they take effect. Your
+              continued use of the Service after the effective date constitutes acceptance of the
+              revised Terms.
+            </P>
+          </Section>
+
+          <Section n="14" title="Governing Law & Jurisdiction">
+            <P>
+              These Terms are governed by the laws of the jurisdiction in which MyScholaria is
+              headquartered, without regard to its conflict-of-laws principles. Any dispute shall be
+              submitted to the exclusive jurisdiction of the competent courts of that jurisdiction,
+              unless mandatory consumer protection laws provide otherwise.
+            </P>
+          </Section>
+
+          <Section n="15" title="Contact">
+            <P>
+              For any question regarding these Terms, please contact us at:
+              <br />📧 legal@myscholaria.app
+              <br />📍 MyScholaria — Legal Department
+            </P>
+          </Section>
+
+          <Divider sx={{ my: 3 }} />
+          <Typography variant="caption" color="text.secondary">
+            Last updated: May 11, 2026 — By using MyScholaria, you acknowledge that you have read,
+            understood and agreed to these Terms of Service.
           </Typography>
-
-          <Accordion
-            elevation={0}
-            sx={{
-              border: "1px solid",
-              borderColor: "divider",
-              mb: 3,
-              borderRadius: "12px !important",
-              overflow: "hidden",
-            }}
-          >
-            <AccordionSummary
-              expandIcon={<ExpandMoreIcon />}
-              sx={{ bgcolor: "action.hover" }}
-            >
-              <Typography fontWeight={700} variant="h6">
-                2. Identity & Role-Based Access Control (RBAC)
-              </Typography>
-            </AccordionSummary>
-            <AccordionDetails sx={{ p: 4 }}>
-              <Typography variant="body2" paragraph>
-                2.1 <strong>Account Security:</strong> You are responsible for
-                maintaining the confidentiality of your OAuth2 tokens and
-                session cookies. MyScholaria implements Row-Level Security (RLS)
-                at the database layer, but this does not protect against "social
-                engineering" or shared passwords.
-              </Typography>
-              <Typography variant="body2" paragraph>
-                2.2 <strong>Profiles & Impersonation:</strong> Using the
-                'Profiles' table to misrepresent qualifications or identity is a
-                material breach. Administrators must verify the 'is_active'
-                status of staff members weekly to prevent unauthorized access by
-                terminated employees.
-              </Typography>
-            </AccordionDetails>
-          </Accordion>
-
-          <Accordion
-            elevation={0}
-            sx={{
-              border: "1px solid",
-              borderColor: "divider",
-              mb: 3,
-              borderRadius: "12px !important",
-            }}
-          >
-            <AccordionSummary
-              expandIcon={<ExpandMoreIcon />}
-              sx={{ bgcolor: "action.hover" }}
-            >
-              <Typography fontWeight={700} variant="h6">
-                3. Financial Integrity & Invoicing
-              </Typography>
-            </AccordionSummary>
-            <AccordionDetails sx={{ p: 4 }}>
-              <Typography variant="body2" paragraph>
-                3.1 <strong>Automatic Calculations:</strong> The 'Invoices'
-                module calculates totals based on 'unit_price' and 'quantity'.
-                While we ensure the logic is mathematically sound ($Total = \sum
-                (q \times p)$), the Institution must audit final invoices before
-                sending them to students.
-              </Typography>
-              <Typography variant="body2" paragraph>
-                3.2 <strong>Scholarships & Waivers:</strong> Scholarship entries
-                in the 'Scholarships' table are deductive records only.
-                MyScholaria does not provide the funds for these discounts.
-              </Typography>
-            </AccordionDetails>
-          </Accordion>
-
-          <Accordion
-            elevation={0}
-            sx={{
-              border: "1px solid",
-              borderColor: "divider",
-              mb: 3,
-              borderRadius: "12px !important",
-            }}
-          >
-            <AccordionSummary
-              expandIcon={<ExpandMoreIcon />}
-              sx={{ bgcolor: "action.hover" }}
-            >
-              <Typography fontWeight={700} variant="h6">
-                4. Intellectual Property & Database Schema
-              </Typography>
-            </AccordionSummary>
-            <AccordionDetails sx={{ p: 4 }}>
-              <Typography variant="body2" paragraph>
-                4.1 <strong>Proprietary Rights:</strong> The structure, logic,
-                and code behind the tables (e.g., `coursebook`, `timetable`,
-                `audit_logs`) are protected trade secrets.
-              </Typography>
-              <Typography variant="body2">
-                4.2 <strong>Data Export:</strong> Upon termination, the
-                Institution has 30 days to export raw data in CSV or JSON
-                format. After this period, MyScholaria reserves the right to
-                permanently delete the database instance to free up resources.
-              </Typography>
-            </AccordionDetails>
-          </Accordion>
-
-          <Box
-            sx={{
-              mt: 8,
-              p: 5,
-              bgcolor: "#421717",
-              color: "#fff",
-              borderRadius: 4,
-            }}
-          >
-            <Typography
-              variant="h5"
-              fontWeight={800}
-              gutterBottom
-              sx={{ color: theme.palette.text.secondary }}
-            >
-              5. Limitation of Liability & Force Majeure
-            </Typography>
-            <Typography variant="body2" sx={{ lineHeight: 1.8, opacity: 0.9 }}>
-              In no event shall Scholara be liable for any consequential,
-              indirect, or special damages. This includes but is not limited to:
-              <ol>
-                <li>Loss of academic progress data</li>
-                <li> Reputational damage due to public announcements</li>
-                <li>Financial losses due to incorrect invoice generation</li>
-                <li> Unauthorized access to sensitive student documents</li>
-              </ol>
-              Our total liability is capped at the amount paid by the
-              institution during the previous 6 months.
-            </Typography>
-          </Box>
-        </Paper>
-      </Container>
-    </Box>
-  );
-};
+        </CardContent>
+      </Card>
+    </Container>
+  </Box>
+);
 
 export default Terms;

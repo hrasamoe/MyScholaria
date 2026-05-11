@@ -1,231 +1,234 @@
-import React from "react";
-import {
-  Box,
-  Container,
-  Typography,
-  Paper,
-  Stack,
-  Alert,
-  AlertTitle,
-  useTheme,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Divider,
-  Chip,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-} from "@mui/material";
-import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
-import PolicyIcon from "@mui/icons-material/Policy";
-import StorageIcon from "@mui/icons-material/Storage";
-import ContactSupportIcon from "@mui/icons-material/ContactSupport";
+import { Link as RouterLink } from "react-router-dom";
+import { Box, Card, CardContent, Container, Typography, Stack, Divider, Link, Breadcrumbs, Chip, List, ListItem, ListItemIcon, ListItemText } from "@mui/material";
+import PrivacyTipIcon from "@mui/icons-material/PrivacyTip";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 
-const Privacy = () => {
-  const theme = useTheme();
+const Section = ({ n, title, children }: { n: string; title: string; children: React.ReactNode }) => (
+  <Box id={`section-${n}`} sx={{ mb: 4 }}>
+    <Typography variant="h6" fontWeight={700} gutterBottom>
+      {n}. {title}
+    </Typography>
+    <Stack spacing={1.5}>{children}</Stack>
+  </Box>
+);
 
-  return (
-    <Box
-      sx={{
-        minHeight: "100vh",
-        py: { xs: 6, md: 12 },
-        bgcolor: "background.default",
-      }}
-    >
-      <Container maxWidth="lg">
-        <Paper
-          sx={{
-            p: { xs: 4, md: 10 },
-            borderRadius: 6,
-            boxShadow: "0 25px 50px -12px rgba(0,0,0,0.1)",
-          }}
-        >
-          <Stack spacing={6}>
+const P = ({ children }: { children: React.ReactNode }) => (
+  <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.8 }}>
+    {children}
+  </Typography>
+);
+
+const Privacy = () => (
+  <Box sx={{ minHeight: "100vh", bgcolor: "background.default", py: { xs: 3, md: 6 } }}>
+    <Container maxWidth="md">
+      <Breadcrumbs sx={{ mb: 2 }}>
+        <Link component={RouterLink} to="/" underline="hover" color="inherit">Home</Link>
+        <Typography color="text.primary">Privacy Policy</Typography>
+      </Breadcrumbs>
+
+      <Card>
+        <CardContent sx={{ p: { xs: 3, sm: 5 } }}>
+          <Stack direction="row" spacing={2} alignItems="center" mb={2}>
+            <Box sx={{ width: 48, height: 48, borderRadius: 2, bgcolor: "success.main", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <PrivacyTipIcon />
+            </Box>
             <Box>
-              <Typography variant="h2" fontWeight={900}>
-                Privacy Policy
-              </Typography>
-              <Typography variant="h6" color="text.secondary">
-                Educational Data Protection & GDPR Alignment
-              </Typography>
+              <Typography variant="h4" fontWeight={800}>Privacy Policy</Typography>
+              <Stack direction="row" spacing={1} mt={0.5}>
+                <Chip size="small" label="GDPR compliant" color="success" variant="outlined" />
+                <Chip size="small" label="Effective: May 2026" />
+              </Stack>
             </Box>
-
-            <Divider />
-
-            <Box>
-              <Typography variant="h4" fontWeight={800} gutterBottom>
-                1. Data Processing Architecture
-              </Typography>
-              <Typography variant="body1" color="text.secondary" paragraph>
-                We collect data through four primary channels: Direct User
-                Entry, Institutional Imports, Automated System Logs, and
-                Third-Party OAuth providers.
-              </Typography>
-
-              <TableContainer
-                component={Paper}
-                variant="outlined"
-                sx={{ mt: 4 }}
-              >
-                <Table>
-                  <TableHead sx={{ bgcolor: "action.hover" }}>
-                    <TableRow>
-                      <TableCell>
-                        <strong>Data Cluster</strong>
-                      </TableCell>
-                      <TableCell>
-                        <strong>SQL Table Reference</strong>
-                      </TableCell>
-                      <TableCell>
-                        <strong>Retention Period</strong>
-                      </TableCell>
-                      <TableCell>
-                        <strong>Encryption Level</strong>
-                      </TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    <TableRow>
-                      <TableCell>Identity</TableCell>
-                      <TableCell>`profiles`, `users`</TableCell>
-                      <TableCell>Active Account + 5 years</TableCell>
-                      <TableCell>AES-256</TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell>Academic Records</TableCell>
-                      <TableCell>`grades`, `exams`, `attendance`</TableCell>
-                      <TableCell>Lifetime of Institution</TableCell>
-                      <TableCell>AES-256</TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell>Disciplinary/Health</TableCell>
-                      <TableCell>
-                        `disciplinary_actions`, `medical_notes`
-                      </TableCell>
-                      <TableCell>End of School Year + 1 year</TableCell>
-                      <TableCell>Table-Level Encryption</TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell>System Behavior</TableCell>
-                      <TableCell>`audit_logs`, `refresh_tokens`</TableCell>
-                      <TableCell>Rolling 12 months</TableCell>
-                      <TableCell>Encrypted Logs</TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </Box>
-
-            <Box>
-              <Typography variant="h4" fontWeight={800} gutterBottom>
-                2. Use of Sub-Processors
-              </Typography>
-              <Typography variant="body1" paragraph>
-                To provide the "2099-feeling" performance, MyScholaria leverages
-                premium sub-processors:
-              </Typography>
-              <List>
-                <ListItem>
-                  <ListItemIcon>
-                    <StorageIcon color="primary" />
-                  </ListItemIcon>
-                  <ListItemText
-                    primary="Database Infrastructure"
-                    secondary="Supabase/PostgreSQL (Hosted on AWS Regions). Data is physically isolated using separate schemas."
-                  />
-                </ListItem>
-                <ListItem>
-                  <ListItemIcon>
-                    <VerifiedUserIcon color="primary" />
-                  </ListItemIcon>
-                  <ListItemText
-                    primary="Authentication"
-                    secondary="Google/GitHub OAuth. We never store raw passwords; only secure hashes."
-                  />
-                </ListItem>
-              </List>
-            </Box>
-
-            <Box
-              sx={{
-                p: 4,
-                bgcolor: "action.selected",
-                borderRadius: 3,
-                borderLeft: "8px solid",
-                borderColor: "primary.main",
-              }}
-            >
-              <Typography variant="h5" fontWeight={800} gutterBottom>
-                3. The "Right to be Forgotten" in Education
-              </Typography>
-              <Typography variant="body2" paragraph>
-                GDPR Article 17 grants the right to erasure. However, in an
-                educational context, legal obligations regarding academic
-                transcripts (`diplomas`, `grades`) may override immediate
-                deletion requests.
-              </Typography>
-              <Typography variant="body2">
-                We will anonymize profile data while preserving the integrity of
-                academic history required for government audits or future
-                transcript verification.
-              </Typography>
-            </Box>
-
-            <Box>
-              <Typography
-                variant="h4"
-                fontWeight={800}
-                gutterBottom
-                sx={{ display: "flex", alignItems: "center", gap: 2 }}
-              >
-                <PolicyIcon /> 4. Audit & Transparency
-              </Typography>
-              <Typography variant="body1">
-                Every action taken by an Administrator (e.g., deleting a
-                student, modifying a salary in `staff`) is captured in our
-                immutable Audit Logs. These logs are available for review by the
-                Institution's Data Protection Officer (DPO).
-              </Typography>
-            </Box>
-
-            <Divider />
-
-            <Stack
-              direction={{ xs: "column", md: "row" }}
-              spacing={4}
-              alignItems="center"
-            >
-              <ContactSupportIcon sx={{ fontSize: 60, opacity: 0.2 }} />
-              <Box>
-                <Typography variant="h6" fontWeight={700}>
-                  Questions or Compliance Reports?
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Contact our Legal & Privacy team at{" "}
-                  <a
-                    href="mailto:hrasamoevj@gmail.com"
-                    style={{
-                      fontWeight: 'bold',
-                      color: theme.palette.text.primary
-                    }}
-                  >
-                    hrasamoevj@gmail.com
-                  </a>
-                  {/* . Physical inquiries can be directed to our headquarters in
-                  Antananarivo, Madagascar. */}
-                </Typography>
-              </Box>
-            </Stack>
           </Stack>
-        </Paper>
-      </Container>
-    </Box>
-  );
-};
+
+          <P>
+            At <b>MyScholaria</b>, the privacy and security of personal data — especially data
+            concerning minors — is a core priority. This Privacy Policy explains what information we
+            collect, how and why we use it, with whom we share it, how long we keep it, and the
+            rights you have over your personal data. It applies to all users of the MyScholaria
+            platform: administrators, teachers, staff, students, parents and visitors.
+          </P>
+
+          <Divider sx={{ my: 3 }} />
+
+          <Section n="1" title="Who we are (Data Controller / Processor)">
+            <P>
+              When an Institution (school, college, university) subscribes to MyScholaria,
+              <b> the Institution acts as the Data Controller</b> for the personal data of its
+              students, parents and staff. <b>MyScholaria acts as the Data Processor</b>, handling
+              data strictly on the Institution's behalf and according to its documented instructions.
+            </P>
+            <P>
+              For account registration, billing, marketing communications, and visitor data on our
+              public website, MyScholaria acts as the Data Controller.
+            </P>
+          </Section>
+
+          <Section n="2" title="Information We Collect">
+            <P><b>a) Identification data:</b> first name, last name, date of birth, gender, nationality, profile picture, national ID or student number.</P>
+            <P><b>b) Contact data:</b> email address, postal address, phone number, emergency contacts.</P>
+            <P><b>c) Academic data:</b> class, grade level, attendance records, grades, exam results, transcripts, diplomas, internship information, library loans.</P>
+            <P><b>d) Financial data:</b> tuition fees, invoices, payment status, scholarship records (no full credit card numbers are stored — payment processing is handled by certified PCI-DSS providers).</P>
+            <P><b>e) Communication data:</b> messages, announcements, notifications, parent-teacher conversations.</P>
+            <P><b>f) Technical data:</b> IP address, device type, browser, operating system, language preference, time zone, log files, pages visited, session duration.</P>
+            <P><b>g) Cookies & analytics:</b> see Section 9.</P>
+          </Section>
+
+          <Section n="3" title="How We Use Your Data (Purposes)">
+            <List dense>
+              {[
+                "Provide and operate the school management Service (core functionality).",
+                "Authenticate users and prevent unauthorized access.",
+                "Manage academic records, grades, attendance, scheduling and reporting.",
+                "Process tuition fees, invoices and scholarships.",
+                "Communicate operational information (updates, security alerts, service changes).",
+                "Improve the Service through aggregated, anonymized usage analytics.",
+                "Comply with legal obligations (educational regulations, accounting, tax law).",
+                "Detect, prevent and address fraud, abuse or security incidents.",
+              ].map((t) => (
+                <ListItem key={t} disableGutters sx={{ alignItems: "flex-start" }}>
+                  <ListItemIcon sx={{ minWidth: 32, mt: 0.5 }}>
+                    <CheckCircleOutlineIcon fontSize="small" color="success" />
+                  </ListItemIcon>
+                  <ListItemText primary={<Typography variant="body2" color="text.secondary">{t}</Typography>} />
+                </ListItem>
+              ))}
+            </List>
+          </Section>
+
+          <Section n="4" title="Legal Basis for Processing (GDPR)">
+            <P><b>Contract:</b> processing necessary for the performance of the contract between the Institution and MyScholaria.</P>
+            <P><b>Legal obligation:</b> processing required to comply with educational, accounting, fiscal and regulatory laws.</P>
+            <P><b>Legitimate interest:</b> ensuring the security, performance and continuous improvement of the Service.</P>
+            <P><b>Consent:</b> for optional features such as marketing emails, non-essential cookies, or sharing of student work in promotional materials. Consent can be withdrawn at any time.</P>
+          </Section>
+
+          <Section n="5" title="Special Protection for Minors">
+            <P>
+              MyScholaria is used by educational institutions where many End Users are minors. We
+              apply enhanced safeguards: stricter access controls, reduced data retention windows,
+              prohibition of behavioral advertising, mandatory parental consent for under-16 users
+              where required by local law, and additional encryption for sensitive academic and
+              disciplinary records.
+            </P>
+          </Section>
+
+          <Section n="6" title="Data Sharing & Recipients">
+            <P>We do <b>not sell</b> personal data. We may share data with:</P>
+            <P>• <b>Authorized Institution staff</b> (teachers, administrators) according to their assigned roles;</P>
+            <P>• <b>Parents</b>, when the User is their child and where local law permits;</P>
+            <P>• <b>Sub-processors</b> providing hosting, email delivery, payment processing, analytics or customer support — bound by data processing agreements (DPA) and equivalent confidentiality / security obligations;</P>
+            <P>• <b>Public authorities</b> when legally required (court order, regulatory request);</P>
+            <P>• <b>In case of merger or acquisition</b>, to the acquiring entity, with prior notice to Institutions.</P>
+          </Section>
+
+          <Section n="7" title="International Data Transfers">
+            <P>
+              Personal data is primarily stored within the European Economic Area (EEA). When a
+              transfer outside the EEA is necessary (e.g. for cloud infrastructure or support), we
+              rely on appropriate safeguards such as Standard Contractual Clauses approved by the
+              European Commission, adequacy decisions, or equivalent legal mechanisms.
+            </P>
+          </Section>
+
+          <Section n="8" title="Data Retention">
+            <P>
+              We retain personal data only for as long as necessary to fulfill the purposes described
+              above and to comply with legal obligations. Indicative retention periods:
+            </P>
+            <P>• Active student records — duration of enrollment + 5 years (or as required by national education law);</P>
+            <P>• Diplomas and final transcripts — long-term archival, often 30 years or more;</P>
+            <P>• Financial records (invoices, payments) — 10 years;</P>
+            <P>• Login and security logs — 12 months;</P>
+            <P>• Marketing data — until consent withdrawal or 3 years of inactivity;</P>
+            <P>• Backups — automatically purged within 90 days of deletion from active systems.</P>
+          </Section>
+
+          <Section n="9" title="Cookies & Similar Technologies">
+            <P>
+              We use strictly necessary cookies for authentication, session management and security.
+              With your consent, we may use analytics cookies (e.g. anonymized page views and
+              feature usage) to improve the Service. We do not use advertising or tracking cookies.
+              You can manage your preferences at any time through the cookie banner or your browser
+              settings.
+            </P>
+          </Section>
+
+          <Section n="10" title="Security Measures">
+            <P>
+              We implement industry-standard organizational and technical measures to protect
+              personal data, including: TLS 1.3 encryption in transit, AES-256 encryption at rest,
+              role-based access control, multi-factor authentication for administrators, regular
+              security audits and penetration tests, automated vulnerability scanning, segregated
+              environments (development / staging / production), and a documented incident response
+              procedure. In the event of a personal data breach likely to result in a risk to the
+              rights and freedoms of individuals, we will notify the competent supervisory authority
+              within 72 hours and affected users without undue delay.
+            </P>
+          </Section>
+
+          <Section n="11" title="Your Rights">
+            <P>Subject to applicable law, you have the right to:</P>
+            <P>• <b>Access</b> the personal data we hold about you;</P>
+            <P>• <b>Rectify</b> inaccurate or incomplete data;</P>
+            <P>• <b>Erase</b> your data ("right to be forgotten") where legally applicable;</P>
+            <P>• <b>Restrict</b> or <b>object</b> to certain processing;</P>
+            <P>• <b>Port</b> your data in a structured, commonly used, machine-readable format;</P>
+            <P>• <b>Withdraw consent</b> at any time, without affecting the lawfulness of prior processing;</P>
+            <P>• <b>Lodge a complaint</b> with your national data protection authority.</P>
+            <P>
+              To exercise these rights, contact your Institution (for data they control) or write to
+              us at <b>privacy@myscholaria.app</b>. We respond within 30 days.
+            </P>
+          </Section>
+
+          <Section n="12" title="Automated Decision-Making">
+            <P>
+              MyScholaria does not make decisions producing legal or similarly significant effects
+              based solely on automated processing. Grade calculations, attendance summaries and
+              report generation are tools that assist human decision-makers (teachers, staff) and
+              never replace them.
+            </P>
+          </Section>
+
+          <Section n="13" title="Third-Party Links">
+            <P>
+              The Service may contain links to external websites or integrations (e.g. payment
+              providers, video conferencing). We are not responsible for the privacy practices of
+              these third parties. We encourage you to review their privacy policies before using
+              them.
+            </P>
+          </Section>
+
+          <Section n="14" title="Changes to this Policy">
+            <P>
+              We may update this Privacy Policy from time to time to reflect changes in our
+              practices, technology, legal requirements or for other operational reasons. The
+              "Effective" date at the top will be updated and, for material changes, we will notify
+              users via in-app message or email at least 30 days before the changes take effect.
+            </P>
+          </Section>
+
+          <Section n="15" title="Contact our Data Protection Officer">
+            <P>
+              📧 <b>privacy@myscholaria.app</b>
+              <br />📧 DPO: dpo@myscholaria.app
+              <br />📍 MyScholaria — Data Protection Office
+            </P>
+            <P>
+              See also our <Link component={RouterLink} to="/terms">Terms of Service</Link>.
+            </P>
+          </Section>
+
+          <Divider sx={{ my: 3 }} />
+          <Typography variant="caption" color="text.secondary">
+            Last updated: May 11, 2026 — Your trust matters. We are committed to transparency and to
+            protecting the personal data of every member of the MyScholaria community.
+          </Typography>
+        </CardContent>
+      </Card>
+    </Container>
+  </Box>
+);
 
 export default Privacy;
