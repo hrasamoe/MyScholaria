@@ -27,7 +27,7 @@ export const AuthContext = createContext<AuthContextType>(
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setLoading] = useState(false);
+  const [isLoading, setLoading] = useState(true);
 
   useEffect(() => {
     const saved = localStorage.getItem("user");
@@ -36,7 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch {
       localStorage.removeItem("user");
       setLoading(false);
-    }
+    } {setLoading(false)}
   }, []);
 
   const saveAuth = (user: User, accessToken: string, refreshToken: string) => {
