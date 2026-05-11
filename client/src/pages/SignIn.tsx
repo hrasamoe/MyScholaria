@@ -42,6 +42,7 @@ const SignIn = () => {
       return;
     }
     setError("");
+    setIsLoading(true);
     try {
       const data = await login(email, password);
       saveAuth(data.user, data.accessToken, data.refreshToken);
