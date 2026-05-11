@@ -5,6 +5,8 @@ import {
   loginUser,
   logoutUser,
   registerUser,
+  resetPassword,
+  verifyEmail,
 } from "./auth.service";
 import { RequireAuth, AuthRequest } from "../../middleware/auth.middleware";
 export const authRouter = Router();
@@ -40,30 +42,12 @@ authRouter.post("/login", async (req: Request, res: Response) => {
 authRouter.get("/verify-email", async (req: Request, res: Response) => {
   try {
     const { token } = req.query;
-    if (!token || typeof token !== "string") {
-      return res.status(400).json({ message: "Missing token" });
-    }
-    const { rows } = await pool.query(
-      `SELECT id FROM users 
-      WHERE verify_token = $1
-      AND verify_expires > NOW()
-      AND is_verified = false`,
-      [token],
-    );
-    if (rows.length === 0) {
-      return res.status(400).json({
-        message: "Token invalid or expired",
-      });
-    }
-    const userId = rows[0].id;
-    await pool.query(
-      `UPDATE users
-      SET is_verified = true, verify_token = NULL, verify_expires = NULL
-      WHERE id = $1`,
-      [userId],
-    );
-    return res.status(200).json({ message: "Email verified" });
+    const result = await verifyEmail(token);
+    res.status(201).json(result);
   } catch (err: any) {
+    if (err.errors) {
+      return res.status(400).json({ message: err.errors[0].message });
+    }
     res.status(500).json({ message: err.message });
   } finally {
   }
@@ -105,6 +89,7 @@ authRouter.post("/reset-password", async (req: Request, res: Response) => {
     const { token, password } = req.body;
     if (!token || !password)
       return res.status(400).json("Token and password required");
+    await resetPassword(token, password);
   } catch (err: any) {
     res.status(400).json({ message: err.message });
   }

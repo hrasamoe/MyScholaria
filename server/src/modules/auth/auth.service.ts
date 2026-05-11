@@ -7,6 +7,7 @@ import crypto from "crypto";
 import { sendConfirmationEmail } from "../../services/email/confirmation-email";
 import { sendForgotPasswordEmail } from "../../services/email/forgot-password";
 import { populate } from "dotenv";
+import { string } from "zod";
 
 function generateAccessToken(userId: string) {
   return jwt.sign({ userId }, ENV.JWT_SECRET!, { expiresIn: "15m" });
@@ -120,6 +121,30 @@ export async function loginUser(data: LoginInput) {
     accessToken,
     refreshToken,
   };
+}
+
+export async function verifyEmail(token: any) {
+  if (!token || typeof token !== "string") {
+    throw new Error("Missing token");
+  }
+  const { rows } = await pool.query(
+    `SELECT id FROM users
+    WHERE verify_token = $1
+    AND verify_expires > NOW()
+    AND is_verified = false`,
+    [token],
+  );
+  if (rows.length === 0) {
+    throw new Error("Token invalid or expired");
+  }
+  const userId = rows[0].id;
+  await pool.query(
+    `UPDATE users
+    SET is_verified = true, verify_token = NULL, verify_expires = NULL
+    WHERE id = $1`,
+    [userId],
+  );
+  return "Email verified";
 }
 
 export async function logoutUser(userId: string) {
