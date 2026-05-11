@@ -4,7 +4,7 @@ import { pool } from "../../db/pool";
 import { RegisterInput, LoginInput } from "./auth.schema";
 import { ENV } from "../../config/env";
 import crypto from "crypto";
-import { sendConfirmationEmail } from "../../services/email/confirmation";
+import { sendConfirmationEmail } from "../../services/email/confirmation-email";
 
 function generateAccessToken(userId: string) {
   return jwt.sign({ userId }, ENV.JWT_SECRET!, { expiresIn: "15m" });
