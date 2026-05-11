@@ -71,7 +71,7 @@ authRouter.post("/logout", async (req: Request, res: Response) => {
 });
 
 // SECURITY
-authRouter.post("/forgot-passoword", async (req: Request, res: Response) => {
+authRouter.post("/forgot-password", async (req: Request, res: Response) => {
   try {
     const { email } = req.body;
     if (!email) return res.status(400).json({ message: "Email requires" });
@@ -93,4 +93,17 @@ authRouter.post("/reset-password", async (req: Request, res: Response) => {
   } catch (err: any) {
     res.status(400).json({ message: err.message });
   }
+});
+
+authRouter.get("/verify-reset-token", async (req: Request, res: Response) => {
+  const { token } = req.query;
+  if (!token || typeof token !== "string")
+    return res.status(400).json({ message: "Missing token" });
+  const { rows } = await pool.query(
+    `SELECT id FROM users WHERE reset_token = $1 AND reset_expires > NOW()`,
+    [token],
+  );
+  if (rows.length === 0)
+    return res.status(400).json({ message: "Invalid or expored token" });
+  res.status(200).json({ message: "Done" });
 });
