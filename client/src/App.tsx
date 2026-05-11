@@ -46,6 +46,8 @@ import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 import VerifyEmail from "./pages/VerifyEmail";
 import ChangePassword from "./pages/ChangePassword";
+import Terms from "./pages/Terms";
+import Privacy from "./pages/Privacy";
 
 const App = () => (
   <AppThemeProvider>
@@ -62,7 +64,8 @@ const App = () => (
             <Route path="/auth/forgot-password" element={<ForgotPassword />} />
             <Route path="/auth/reset-password" element={<ResetPassword />} />
             <Route path="/auth/change-password" element={<ChangePassword />} />
-
+            <Route path="/term" element={<Terms />} />
+            <Route path="/policy" element={<Privacy />} />
             <Route
               element={
                 <ProtectedRoute>
