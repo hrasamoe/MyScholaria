@@ -282,8 +282,8 @@ const SignUp = () => {
                   }
                   label={
                     <Typography variant="body2">
-                      I accept the <Link href="#">Terms</Link> and{" "}
-                      <Link href="#">Privacy Policy</Link>
+                      I accept the <Link href="/term">Terms</Link> and{" "}
+                      <Link href="/policy">Privacy Policy</Link>
                     </Typography>
                   }
                 />
