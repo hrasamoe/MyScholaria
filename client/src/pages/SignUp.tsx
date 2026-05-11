@@ -89,11 +89,12 @@ const SignUp = () => {
       const data = await register(
         form.email,
         form.password,
-        form.firstName + form.lastName,
+        `${form.firstName} ${form.lastName}`,
+        form.role.toLowerCase(),
       );
       saveAuth(data.user, data.accessToken, data.refreshToken);
       enqueueSnackbar("Account created", { variant: "success" });
-      navigate("/dashboard");
+      navigate("/");
     } catch (err: any) {
       enqueueSnackbar(`An error was occures ${err.message}`, {
         variant: "error",
