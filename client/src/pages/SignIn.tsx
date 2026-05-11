@@ -48,7 +48,7 @@ const SignIn = () => {
       saveAuth(data.user, data.accessToken, data.refreshToken);
       navigate("/");
     } catch (err: any) {
-      enqueueSnackbar(`An error was occured ${err.message}`, {
+      enqueueSnackbar(`Error: ${err.message}`, {
         variant: "error",
       });
       setError(err.message);
