@@ -160,7 +160,7 @@ const Settings = () => {
                   <TextField
                     fullWidth
                     label="Establishment name"
-                    defaultValue="Scholara Group"
+                    defaultValue="MyScholaria Group"
                   />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }}>

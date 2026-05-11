@@ -165,7 +165,7 @@ const SignUp = () => {
               Create your account
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Join Scholara in less than a minute
+              Join MyScholaria in less than a minute
             </Typography>
           </Stack>
 
