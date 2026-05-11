@@ -1,6 +1,11 @@
 import { Router, Request, Response } from "express";
 import { registerSchema, loginSchema } from "./auth.schema";
-import { loginUser, logoutUser, registerUser } from "./auth.service";
+import {
+  forgotPassword,
+  loginUser,
+  logoutUser,
+  registerUser,
+} from "./auth.service";
 import { RequireAuth, AuthRequest } from "../../middleware/auth.middleware";
 export const authRouter = Router();
 import jwt from "jsonwebtoken";
@@ -78,5 +83,29 @@ authRouter.post("/logout", async (req: Request, res: Response) => {
     res.status(200).json({ message: "Logged out successfully" });
   } catch {
     res.status(401).json({ message: "Invalid or expired token" });
+  }
+});
+
+// SECURITY
+authRouter.post("/forgot-passoword", async (req: Request, res: Response) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ message: "Email requires" });
+    await forgotPassword(email);
+    res
+      .status(200)
+      .json({ message: "If this email exists, a reset link has been send" });
+  } catch (error: any) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+authRouter.post("/reset-password", async (req: Request, res: Response) => {
+  try {
+    const { token, password } = req.body;
+    if (!token || !password)
+      return res.status(400).json("Token and password required");
+  } catch (err: any) {
+    res.status(400).json({ message: err.message });
   }
 });
