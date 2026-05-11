@@ -7,6 +7,7 @@ function requireEnv(key: string): string {
 }
 
 export const ENV = {
+  CLIENT_URL: process.env.CLIENT_URL,
   JWT_SECRET: requireEnv("JWT_SECRET"),
   JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || "15m",
   GMAIL_USER: process.env.GMAIL_USER,
