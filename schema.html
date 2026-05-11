@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MyScholaria — ERD Interactif</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Syne:wght@400;600;700;800&display=swap');
+:root {
+  --bg:#0d0f14; --bg2:#13161e; --bg3:#1a1e28; --bg4:#212636;
+  --border:#2a2f3d; --border2:#353b4f;
+  --text:#e8eaf0; --text2:#9ba3b8; --text3:#5d6478;
+  --accent:#5b8def; --green:#3dcf8e; --amber:#f0a429;
+  --coral:#e8604c; --teal:#2ec4b6; --pink:#e870a0;
+  --purple:#9b6dff; --sky:#5bc8f0; --lime:#a8d86e;
+  --r:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;overflow:hidden;height:100vh;width:100vw;}
+
+/* HEADER */
+header{
+  position:fixed;top:0;left:0;right:0;height:54px;
+  background:var(--bg2);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:14px;padding:0 18px;z-index:2000;
+}
+.logo{font-size:18px;font-weight:800;letter-spacing:-.5px;}
+.logo span{color:var(--accent);}
+.badge{background:var(--bg4);border:1px solid var(--border2);color:var(--text2);font-size:10px;font-family:'JetBrains Mono',monospace;padding:2px 7px;border-radius:4px;}
+.hsep{width:1px;height:22px;background:var(--border2);}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:7px;border:1px solid var(--border2);background:var(--bg3);color:var(--text);font-family:'Syne',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap;}
+.btn:hover{background:var(--bg4);border-color:var(--accent);color:var(--accent);}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;}
+.btn.primary:hover{background:#4a7de0;border-color:#4a7de0;color:#fff;}
+.btn svg{width:13px;height:13px;flex-shrink:0;}
+.hright{margin-left:auto;display:flex;gap:8px;align-items:center;}
+
+/* FILTER BAR */
+.fbar{
+  position:fixed;top:54px;left:0;right:0;height:44px;
+  background:var(--bg2);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:6px;padding:0 18px;z-index:1999;overflow-x:auto;
+}
+.fbar::-webkit-scrollbar{height:3px;}
+.fbar::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+.flabel{font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-right:4px;flex-shrink:0;}
+.chip{padding:4px 10px;border-radius:16px;border:1px solid var(--border2);background:transparent;color:var(--text2);font-family:'Syne',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap;flex-shrink:0;}
+.chip:hover{border-color:var(--accent);color:var(--accent);}
+.chip.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+/* CANVAS */
+#wrap{position:fixed;top:98px;left:0;right:0;bottom:0;overflow:auto;}
+#canvas{position:relative;width:4000px;height:3000px;}
+
+/* SVG LAYER */
+#svg-layer{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:1;}
+
+/* TABLE CARDS */
+.tcard{
+  position:absolute;min-width:210px;max-width:260px;
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--r);z-index:10;
+  transition:box-shadow .2s,border-color .2s,opacity .2s,transform .2s;
+}
+.tcard:hover{box-shadow:0 6px 32px rgba(0,0,0,.7);z-index:50;}
+.tcard.dragging{box-shadow:0 14px 50px rgba(0,0,0,.85);z-index:200;border-color:var(--accent);transform:scale(1.015);}
+.tcard.hidden{opacity:0;pointer-events:none;transform:scale(.93);}
+.tcard.faded{opacity:.18;}
+.tcard.highlighted{box-shadow:0 0 0 2px var(--accent),0 6px 32px rgba(91,141,239,.25);z-index:60;}
+
+.thead{
+  padding:9px 11px 7px;border-bottom:1px solid var(--border);
+  cursor:grab;border-radius:var(--r) var(--r) 0 0;
+  display:flex;align-items:center;gap:7px;
+}
+.thead:active{cursor:grabbing;}
+.ticon{width:24px;height:24px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;}
+.tname{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:var(--text);}
+.tmod{margin-left:auto;font-size:9px;font-family:'JetBrains Mono',monospace;color:var(--text3);text-transform:uppercase;}
+
+.tbody{padding:4px 0;}
+.crow{display:flex;align-items:center;gap:5px;padding:3px 11px;font-family:'JetBrains Mono',monospace;font-size:10.5px;}
+.crow:hover{background:var(--bg3);}
+.crow.pk-row{background:rgba(61,207,142,.04);}
+.crow.fk-row{background:rgba(91,141,239,.04);}
+.cname{color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ctype{color:var(--text3);font-size:9.5px;}
+.pk-badge{background:#1e3a28;color:var(--green);border:1px solid #2a5038;font-size:8px;padding:1px 4px;border-radius:3px;font-weight:700;flex-shrink:0;}
+.fk-badge{background:#1a2a3e;color:var(--accent);border:1px solid #1e3354;font-size:8px;padding:1px 4px;border-radius:3px;font-weight:700;flex-shrink:0;}
+.tfoot{padding:5px 11px;border-top:1px solid var(--border);font-size:9.5px;color:var(--text3);font-family:'JetBrains Mono',monospace;display:flex;justify-content:space-between;}
+
+/* Module color bands */
+.mod-auth{--mc:var(--purple);}
+.mod-admin{--mc:var(--green);}
+.mod-pedagogy{--mc:var(--amber);}
+.mod-eval{--mc:var(--coral);}
+.mod-attendance{--mc:var(--accent);}
+.mod-finance{--mc:var(--teal);}
+.mod-events{--mc:var(--pink);}
+.mod-library{--mc:#aaa;}
+.mod-comms{--mc:var(--sky);}
+.mod-university{--mc:var(--lime);}
+.mod-system{--mc:var(--amber);}
+.tcard{border-top:2px solid var(--mc);}
+.thead{background:color-mix(in srgb,var(--mc) 7%,var(--bg2));}
+.ticon{background:color-mix(in srgb,var(--mc) 14%,transparent);color:var(--mc);}
+
+/* TOOLTIP */
+.rel-tooltip{
+  position:fixed;background:var(--bg2);border:1px solid var(--border2);
+  border-radius:6px;padding:6px 10px;font-family:'JetBrains Mono',monospace;
+  font-size:11px;color:var(--text);pointer-events:none;z-index:3000;
+  box-shadow:0 4px 16px rgba(0,0,0,.6);opacity:0;transition:opacity .15s;
+  max-width:240px;line-height:1.6;
+}
+.rel-tooltip.show{opacity:1;}
+
+/* STATS */
+.stats{
+  position:fixed;bottom:16px;right:18px;
+  background:var(--bg2);border:1px solid var(--border2);border-radius:8px;
+  padding:8px 14px;display:flex;gap:14px;font-size:10px;
+  font-family:'JetBrains Mono',monospace;color:var(--text2);
+  box-shadow:0 4px 20px rgba(0,0,0,.5);z-index:2000;
+}
+.stats strong{color:var(--text);}
+
+/* MINIMAP */
+.minimap{
+  position:fixed;bottom:16px;left:18px;
+  width:160px;height:100px;
+  background:var(--bg2);border:1px solid var(--border2);border-radius:8px;
+  overflow:hidden;z-index:2000;cursor:pointer;
+  box-shadow:0 4px 20px rgba(0,0,0,.5);
+}
+.minimap-canvas{position:relative;width:100%;height:100%;}
+.mm-card{position:absolute;border-radius:2px;opacity:.8;}
+.mm-viewport{position:absolute;border:1px solid var(--accent);border-radius:3px;pointer-events:none;opacity:.6;}
+
+/* LEGEND */
+.legend{
+  position:fixed;top:110px;right:18px;
+  background:var(--bg2);border:1px solid var(--border);border-radius:8px;
+  padding:10px 12px;z-index:1999;font-size:10px;font-family:'JetBrains Mono',monospace;
+}
+.legend-title{color:var(--text3);margin-bottom:6px;font-size:9px;text-transform:uppercase;letter-spacing:.5px;}
+.legend-row{display:flex;align-items:center;gap:6px;color:var(--text2);margin-bottom:4px;}
+.legend-line{width:24px;height:2px;border-radius:1px;}
+.legend-line.pk{background:var(--green);}
+.legend-line.fk{background:var(--accent);border:none;}
+.legend-line.dash{background:transparent;border-top:2px dashed var(--amber);}
+
+@media print{
+  header,.fbar,.stats,.minimap,.legend,.rel-tooltip{display:none!important;}
+  #wrap{position:static;overflow:visible;}
+  #canvas{width:auto!important;height:auto!important;display:flex;flex-wrap:wrap;gap:16px;padding:16px;}
+  #svg-layer{display:none!important;}
+  .tcard{position:static!important;break-inside:avoid;opacity:1!important;transform:none!important;width:220px!important;}
+  .tcard.hidden{display:none!important;}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">MySch<span>olaria</span></div>
+  <div class="badge">ERD v2</div>
+  <div class="badge" id="hbadge">48 tables · 11 modules</div>
+  <div class="hsep"></div>
+  <button class="btn" onclick="resetLayout()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+    Reset
+  </button>
+  <button class="btn" onclick="toggleRelations()" id="btn-rels">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6h-1a2 2 0 0 0-2 2v10"/><path d="M6 18h1a2 2 0 0 0 2-2V6"/><circle cx="18" cy="4" r="2"/><circle cx="6" cy="20" r="2"/></svg>
+    Relations ON
+  </button>
+  <div class="hright">
+    <button class="btn" onclick="zoomOut()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+    </button>
+    <span id="zoom-label" style="font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--text2);min-width:36px;text-align:center;">100%</span>
+    <button class="btn" onclick="zoomIn()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+    </button>
+    <div class="hsep"></div>
+    <button class="btn primary" onclick="exportPDF()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Exporter PDF
+    </button>
+  </div>
+</header>
+
+<div class="fbar">
+  <span class="flabel">MODULE :</span>
+  <button class="chip active" data-mod="all" onclick="filterMod('all')">Tout</button>
+  <button class="chip" data-mod="auth" onclick="filterMod('auth')">🔐 Auth</button>
+  <button class="chip" data-mod="admin" onclick="filterMod('admin')">🏫 Admin</button>
+  <button class="chip" data-mod="pedagogy" onclick="filterMod('pedagogy')">📚 Pédagogie</button>
+  <button class="chip" data-mod="eval" onclick="filterMod('eval')">📝 Évaluation</button>
+  <button class="chip" data-mod="attendance" onclick="filterMod('attendance')">📅 Présences</button>
+  <button class="chip" data-mod="finance" onclick="filterMod('finance')">💰 Finances</button>
+  <button class="chip" data-mod="events" onclick="filterMod('events')">🎉 Événements</button>
+  <button class="chip" data-mod="library" onclick="filterMod('library')">📖 Bibliothèque</button>
+  <button class="chip" data-mod="comms" onclick="filterMod('comms')">💬 Comms</button>
+  <button class="chip" data-mod="university" onclick="filterMod('university')">🎓 Universitaire</button>
+  <button class="chip" data-mod="system" onclick="filterMod('system')">⚙️ Système</button>
+</div>
+
+<div id="wrap">
+  <div id="canvas">
+    <svg id="svg-layer" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arr-default" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M0 0L10 4L0 8" fill="none" stroke="#5b8def" stroke-width="1.2"/>
+        </marker>
+        <marker id="arr-green" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M0 0L10 4L0 8" fill="none" stroke="#3dcf8e" stroke-width="1.2"/>
+        </marker>
+        <marker id="arr-amber" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M0 0L10 4L0 8" fill="none" stroke="#f0a429" stroke-width="1.2"/>
+        </marker>
+        <!-- Crow's foot markers -->
+        <marker id="cf-many" viewBox="0 0 12 12" refX="1" refY="6" markerWidth="10" markerHeight="10" orient="auto">
+          <line x1="1" y1="1" x2="9" y2="6" stroke="#5b8def" stroke-width="1.2"/>
+          <line x1="1" y1="11" x2="9" y2="6" stroke="#5b8def" stroke-width="1.2"/>
+          <line x1="1" y1="6" x2="9" y2="6" stroke="#5b8def" stroke-width="1.2"/>
+        </marker>
+        <marker id="cf-one" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="10" markerHeight="10" orient="auto-start-reverse">
+          <line x1="8" y1="1" x2="8" y2="11" stroke="#5b8def" stroke-width="1.2"/>
+          <line x1="5" y1="1" x2="5" y2="11" stroke="#5b8def" stroke-width="1.2"/>
+        </marker>
+      </defs>
+    </svg>
+  </div>
+</div>
+
+<div class="legend">
+  <div class="legend-title">Légende</div>
+  <div class="legend-row"><div class="legend-line pk"></div><span>PK — Clé primaire</span></div>
+  <div class="legend-row"><div class="legend-line fk"></div><span>FK → relation</span></div>
+  <div class="legend-row"><div class="legend-line dash"></div><span>Relation optionnelle</span></div>
+</div>
+
+<div class="minimap" id="minimap" onclick="minimapClick(event)">
+  <div class="minimap-canvas" id="mm-canvas"></div>
+  <div class="mm-viewport" id="mm-viewport"></div>
+</div>
+
+<div class="stats">
+  <div><strong id="stat-v">48</strong> visibles</div>
+  <div><strong id="stat-r">0</strong> relations</div>
+  <div style="color:var(--text3)">Drag · Scroll · Ctrl+Scroll zoom</div>
+</div>
+
+<div class="rel-tooltip" id="tooltip"></div>
+
+<script>
+// ─────────────────────────────────────────────
+// DATA
+// ─────────────────────────────────────────────
+const TABLES = [
+  // ── AUTH CUSTOM (remplace auth.users Supabase) ──
+  {id:'users',mod:'auth',icon:'🔑',cols:[
+    {n:'id',t:'uuid',pk:true},
+    {n:'email',t:'text'},{n:'password_hash',t:'text'},
+    {n:'google_id',t:'text'},{n:'github_id',t:'text'},
+    {n:'avatar_url',t:'text'},
+    {n:'is_verified',t:'bool'},{n:'is_active',t:'bool'},{n:'is_banned',t:'bool'},
+    {n:'failed_attempts',t:'int'},{n:'locked_until',t:'timestamp'},
+    {n:'verify_token',t:'text'},{n:'verify_expires',t:'timestamp'},
+    {n:'reset_token',t:'text'},{n:'reset_expires',t:'timestamp'},
+    {n:'last_login_at',t:'timestamp'},{n:'created_at',t:'timestamp'},{n:'updated_at',t:'timestamp'}
+  ]},
+  {id:'refresh_tokens',mod:'auth',icon:'🔄',cols:[
+    {n:'id',t:'uuid',pk:true},
+    {n:'user_id',t:'uuid',fk:'users'},
+    {n:'token_hash',t:'text'},{n:'device_info',t:'text'},
+    {n:'ip_address',t:'inet'},{n:'expires_at',t:'timestamp'},
+    {n:'revoked_at',t:'timestamp'},{n:'created_at',t:'timestamp'}
+  ]},
+  {id:'oauth_accounts',mod:'auth',icon:'🌐',cols:[
+    {n:'id',t:'uuid',pk:true},
+    {n:'user_id',t:'uuid',fk:'users'},
+    {n:'provider',t:'enum'},{n:'provider_id',t:'text'},
+    {n:'access_token',t:'text'},{n:'expires_at',t:'timestamp'},
+    {n:'created_at',t:'timestamp'}
+  ]},
+  {id:'profiles',mod:'auth',icon:'👤',cols:[
+    {n:'id',t:'uuid',pk:true,fk:'users'},{n:'full_name',t:'text'},{n:'avatar_url',t:'text'},{n:'phone',t:'text'},{n:'address',t:'text'},{n:'date_of_birth',t:'date'},{n:'gender',t:'text'},{n:'nationality',t:'text'},{n:'created_at',t:'timestamp'},{n:'updated_at',t:'timestamp'}
+  ]},
+  {id:'user_roles',mod:'auth',icon:'🛡️',cols:[
+    {n:'id',t:'uuid',pk:true},{n:'user_id',t:'uuid',fk:'users'},{n:'role',t:'enum'}
+  ]},
+  {id:'establishments',mod:'auth',icon:'🏢',cols:[
+    {n:'id',t:'uuid',pk:true},{n:'name',t:'text'},{n:'code',t:'text'},{n:'type',t:'enum'},{n:'address',t:'text'},{n:'phone',t:'text'},{n:'email',t:'text'},{n:'logo_url',t:'text'}
+  ]},
+  {id:'students',mod:'admin',icon:'🎒',cols:[
+    {n:'id',t:'uuid',pk:true},{n:'profile_id',t:'uuid',fk:'profiles'},{n:'establishment_id',t:'uuid',fk:'establishments'},{n:'student_number',t:'text'},{n:'enrollment_date',t:'date'},{n:'class_id',t:'uuid',fk:'classes'},{n:'status',t:'enum'},{n:'parent_id',t:'uuid',fk:'profiles'},{n:'emergency_contact',t:'text'},{n:'medical_notes',t:'text'}
+  ]},
+  {id:'student_documents',mod:'admin',icon:'📄',cols:[
+    {n:'id',t:'uuid',pk:true},{n:'student_id',t:'uuid',fk:'students'},{n:'type',t:'enum'},{n:'file_url',t:'text'},{n:'uploaded_at',t:'timestamp'},{n:'verified',t:'bool'}
+  ]},
+  {id:'staff',mod:'admin',icon:'👔',cols:[
+    {n:'id',t:'uuid',pk:true},{n:'profile_id',t:'uuid',fk:'profiles'},{n:'establishment_id',t:'uuid',fk:'establishments'},{n:'position',t:'text'},{n:'department',t:'text'},{n:'hire_date',t:'date'},{n:'contract_type',t:'enum'},{n:'salary',t:'decimal'}
+  ]},
+  {id:'teachers',mod:'admin',icon:'👩‍🏫',cols:[
+    {n:'id',t:'uuid',pk:true},{n:'profile_id',t:'uuid',fk:'profiles'},{n:'establishment_id',t:'uuid',fk:'establishments'},{n:'employee_number',t:'text'},{n:'specialization',t:'text'},{n:'hire_date',t:'date'},{n:'contract_type',t:'enum'},{n:'hourly_rate',t:'decimal'}
+  ]},
+  {id:'staff_absences',mod:'admin',icon:'🏖️',cols:[
+    {n:'id',t:'uuid',pk:true},{n:'user_id',t:'uuid',fk:'profiles'},{n:'start_date',t:'date'},{n:'end_date',t:'date'},{n:'reason',t:'text'},{n:'type',t:'enum'},{n:'approved_by',t:'uuid',fk:'profiles'}
+  ]},
+  {id:'classes',mod:'admin',icon:'🏛️',cols:[
+    {n:'id',t:'uuid',pk:true},{n:'establishment_id',t:'uuid',fk:'establishments'},{n:'name',t:'text'},{n:'level',t:'text'},{n:'academic_year',t:'text'},{n:'main_teacher_id',t:'uuid',fk:'teachers'},{n:'capacity',t:'int'},{n:'room_id',t:'uuid',fk:'rooms'}
+  ]},
+  {id:'class_groups',mod:'admin',icon:'👥',cols:[
+    {n:'id',t:'uuid',pk:true},{n:'class_id',t:'uuid',fk:'classes'},{n:'name',t:'text'},{n:'type',t:'text'}
+  ]},
+  {id:'rooms',mod:'admin',icon:'🚪',cols:[
+    {n:'id',t:'uuid',pk:true},{n:'establishment_id',t:'uuid',fk:'establishments'},{n:'name',t:'text'},{n:'type',t:'enum'},{n:'capacity',t:'int'},{n:'equipment',t:'jsonb'},{n:'floor',t:'int'}
+  ]},
+  {id:'room_reservations',mod:'admin',icon:'📅',cols:[
+    {n:'id',t:'uuid',pk:true},{n:'room_id',t:'uuid',fk:'rooms'},{n:'user_id',t:'uuid',fk:'profiles'},{n:'start_at',t:'timestamp'},{n:'end_at',t:'timestamp'},{n:'purpose',t:'text'},{n:'status',t:'enum'}
+  ]},
+  {id:'school_calendar',mod:'admin',icon:'📆',cols:[
+    {n:'id',t:'uuid',pk:true},{n:'establishment_id',t:'uuid',fk:'establishments'},{n:'event_type',t:'text'},{n:'title',t:'text'},{n:'start_date',t:'date'},{n:'end_date',t:'date'},{n:'description',t:'text'}
+  ]},
+  {id:'subjects',mod:'pedagogy',icon:'📖',cols:[
+    {n:'id',t:'uuid',pk:true},{n:'code',t:'text'},{n:'name',t:'text'},{n:'level',t:'text'},{n:'coefficient',t:'int'},{n:'hours_per_week',t:'int'},{n:'description',t:'text'}
+  ]},
+  {id:'programs',mod:'pedagogy',icon:'🎓',cols:[
+    {n:'id',t:'uuid',pk:true},{n:'code',t:'text'},{n:'name',t:'text'},{n:'cycle',t:'enum'},{n:'duration_years',t:'int'},{n:'total_ects',t:'int'},{n:'head_id',t:'uuid',fk:'profiles'}
+  ]},
+  {id:'program_subjects',mod:'pedagogy',icon:'🔗',cols:[
+    {n:'program_id',t:'uuid',fk:'programs'},{n:'subject_id',t:'uuid',fk:'subjects'},{n:'semester',t:'int'},{n:'ects',t:'int'},{n:'mandatory',t:'bool'}
+  ]},
+  {id:'class_subjects',mod:'pedagogy',icon:'📋',cols:[
+    {n:'id',t:'uuid',pk:true},{n:'class_id',t:'uuid',fk:'classes'},{n:'subject_id',t:'uuid',fk:'subjects'},{n:'teacher_id',t:'uuid',fk:'teachers'},{n:'weekly_hours',t:'int'}
+  ]},
+  {id:'timetable',mod:'pedagogy',icon:'🕐',cols:[
+    {n:'id',t:'uuid',pk:true},{n:'class_id',t:'uuid',fk:'classes'},{n:'subject_id',t:'uuid',fk:'subjects'},{n:'teacher_id',t:'uuid',fk:'teachers'},{n:'room_id',t:'uuid',fk:'rooms'},{n:'day_of_week',t:'int'},{n:'start_time',t:'time'},{n:'end_time',t:'time'},{n:'week_type',t:'enum'}
+  ]},
+  {id:'coursebook',mod:'pedagogy',icon:'📓',cols:[
+    {n:'id',t:'uuid',pk:true},{n:'class_subject_id',t:'uuid',fk:'class_subjects'},{n:'teacher_id',t:'uuid',fk:'teachers'},{n:'date',t:'date'},{n:'topic',t:'text'},{n:'content',t:'text'},{n:'homework',t:'text'}
+  ]},
+  {id:'homework_assignments',mod:'pedagogy',icon:'✏️',cols:[
+    {n:'id',t:'uuid',pk:true},{n:'class_subject_id',t:'uuid',fk:'class_subjects'},{n:'title',t:'text'},{n:'description',t:'text'},{n:'due_date',t:'date'},{n:'attachments',t:'jsonb'}
+  ]},
+  {id:'homework_submissions',mod:'pedagogy',icon:'📬',cols:[
+    {n:'id',t:'uuid',pk:true},{n:'assignment_id',t:'uuid',fk:'homework_assignments'},{n:'student_id',t:'uuid',fk:'students'},{n:'submitted_at',t:'timestamp'},{n:'file_url',t:'text'},{n:'grade',t:'float'},{n:'feedback',t:'text'}
+  ]},
+  {id:'internships',mod:'pedagogy',icon:'🏗️',cols:[
+    {n:'id',t:'uuid',pk:true},{n:'student_id',t:'uuid',fk:'students'},{n:'company_name',t:'text'},{n:'tutor_name',t:'text'},{n:'start_date',t:'date'},{n:'end_date',t:'date'},{n:'topic',t:'text'},{n:'mentor_teacher_id',t:'uuid',fk:'teachers'},{n:'status',t:'enum'},{n:'final_grade',t:'float'}
+  ]},
+  {id:'exams',mod:'eval',icon:'📝',cols:[
+    {n:'id',t:'uuid',pk:true},{n:'class_subject_id',t:'uuid',fk:'class_subjects'},{n:'title',t:'text'},{n:'type',t:'enum'},{n:'date',t:'date'},{n:'duration_minutes',t:'int'},{n:'room_id',t:'uuid',fk:'rooms'},{n:'coefficient',t:'float'},{n:'max_score',t:'float'}
+  ]},
+  {id:'grades',mod:'eval',icon:'⭐',cols:[
+    {n:'id',t:'uuid',pk:true},{n:'student_id',t:'uuid',fk:'students'},{n:'exam_id',t:'uuid',fk:'exams'},{n:'score',t:'float'},{n:'comment',t:'text'},{n:'graded_by',t:'uuid',fk:'profiles'},{n:'graded_at',t:'timestamp'}
+  ]},
+  {id:'report_cards',mod:'eval',icon:'📊',cols:[
+    {n:'id',t:'uuid',pk:true},{n:'student_id',t:'uuid',fk:'students'},{n:'period',t:'enum'},{n:'academic_year',t:'text'},{n:'average',t:'float'},{n:'rank',t:'int'},{n:'decision',t:'text'},{n:'pdf_url',t:'text'},{n:'published_at',t:'timestamp'}
+  ]},
+  {id:'report_card_lines',mod:'eval',icon:'📈',cols:[
+    {n:'id',t:'uuid',pk:true},{n:'report_card_id',t:'uuid',fk:'report_cards'},{n:'subject_id',t:'uuid',fk:'subjects'},{n:'average',t:'float'},{n:'class_average',t:'float'},{n:'coefficient',t:'float'},{n:'teacher_comment',t:'text'}
+  ]},
+  {id:'attendance',mod:'attendance',icon:'✅',cols:[
+    {n:'id',t:'uuid',pk:true},{n:'student_id',t:'uuid',fk:'students'},{n:'class_subject_id',t:'uuid',fk:'class_subjects'},{n:'date',t:'date'},{n:'status',t:'enum'},{n:'recorded_by',t:'uuid',fk:'profiles'},{n:'comment',t:'text'}
+  ]},
+  {id:'disciplinary_actions',mod:'attendance',icon:'⚠️',cols:[
+    {n:'id',t:'uuid',pk:true},{n:'student_id',t:'uuid',fk:'students'},{n:'type',t:'enum'},{n:'reason',t:'text'},{n:'date',t:'date'},{n:'decided_by',t:'uuid',fk:'profiles'},{n:'description',t:'text'}
+  ]},
+  {id:'duty_schedule',mod:'attendance',icon:'👮',cols:[
+    {n:'id',t:'uuid',pk:true},{n:'staff_id',t:'uuid',fk:'staff'},{n:'date',t:'date'},{n:'time_slot',t:'text'},{n:'location',t:'text'},{n:'notes',t:'text'}
+  ]},
+  {id:'fee_structures',mod:'finance',icon:'💳',cols:[
+    {n:'id',t:'uuid',pk:true},{n:'establishment_id',t:'uuid',fk:'establishments'},{n:'name',t:'text'},{n:'level',t:'text'},{n:'academic_year',t:'text'},{n:'amount',t:'decimal'},{n:'frequency',t:'enum'}
+  ]},
+  {id:'invoices',mod:'finance',icon:'🧾',cols:[
+    {n:'id',t:'uuid',pk:true},{n:'student_id',t:'uuid',fk:'students'},{n:'invoice_number',t:'text'},{n:'issue_date',t:'date'},{n:'due_date',t:'date'},{n:'total',t:'decimal'},{n:'tax',t:'decimal'},{n:'status',t:'enum'},{n:'pdf_url',t:'text'}
+  ]},
+  {id:'invoice_lines',mod:'finance',icon:'📋',cols:[
+    {n:'id',t:'uuid',pk:true},{n:'invoice_id',t:'uuid',fk:'invoices'},{n:'description',t:'text'},{n:'quantity',t:'int'},{n:'unit_price',t:'decimal'},{n:'total',t:'decimal'}
+  ]},
+  {id:'payments',mod:'finance',icon:'💵',cols:[
+    {n:'id',t:'uuid',pk:true},{n:'invoice_id',t:'uuid',fk:'invoices'},{n:'student_id',t:'uuid',fk:'students'},{n:'amount',t:'decimal'},{n:'method',t:'enum'},{n:'payment_date',t:'date'},{n:'reference',t:'text'},{n:'received_by',t:'uuid',fk:'profiles'},{n:'receipt_url',t:'text'}
+  ]},
+  {id:'scholarships',mod:'finance',icon:'🏅',cols:[
+    {n:'id',t:'uuid',pk:true},{n:'student_id',t:'uuid',fk:'students'},{n:'type',t:'enum'},{n:'amount',t:'decimal'},{n:'academic_year',t:'text'},{n:'status',t:'enum'},{n:'decision_date',t:'date'}
+  ]},
+  {id:'budget_entries',mod:'finance',icon:'📊',cols:[
+    {n:'id',t:'uuid',pk:true},{n:'establishment_id',t:'uuid',fk:'establishments'},{n:'type',t:'enum'},{n:'category',t:'text'},{n:'amount',t:'decimal'},{n:'date',t:'date'},{n:'description',t:'text'},{n:'created_by',t:'uuid',fk:'profiles'}
+  ]},
+  {id:'events',mod:'events',icon:'🎉',cols:[
+    {n:'id',t:'uuid',pk:true},{n:'establishment_id',t:'uuid',fk:'establishments'},{n:'title',t:'text'},{n:'description',t:'text'},{n:'start_at',t:'timestamp'},{n:'end_at',t:'timestamp'},{n:'location',t:'text'},{n:'type',t:'text'},{n:'capacity',t:'int'},{n:'cover_image_url',t:'text'}
+  ]},
+  {id:'event_activities',mod:'events',icon:'🎯',cols:[
+    {n:'id',t:'uuid',pk:true},{n:'event_id',t:'uuid',fk:'events'},{n:'name',t:'text'},{n:'description',t:'text'},{n:'start_at',t:'timestamp'},{n:'end_at',t:'timestamp'},{n:'instructor',t:'text'},{n:'max_participants',t:'int'}
+  ]},
+  {id:'event_fees',mod:'events',icon:'💰',cols:[
+    {n:'id',t:'uuid',pk:true},{n:'event_id',t:'uuid',fk:'events'},{n:'name',t:'text'},{n:'amount',t:'decimal'},{n:'mandatory',t:'bool'}
+  ]},
+  {id:'event_registrations',mod:'events',icon:'📝',cols:[
+    {n:'id',t:'uuid',pk:true},{n:'event_id',t:'uuid',fk:'events'},{n:'student_id',t:'uuid',fk:'students'},{n:'registered_at',t:'timestamp'},{n:'payment_status',t:'enum'},{n:'attended',t:'bool'}
+  ]},
+  {id:'books',mod:'library',icon:'📚',cols:[
+    {n:'id',t:'uuid',pk:true},{n:'isbn',t:'text'},{n:'title',t:'text'},{n:'author',t:'text'},{n:'publisher',t:'text'},{n:'year',t:'int'},{n:'category',t:'text'},{n:'total_copies',t:'int'},{n:'available_copies',t:'int'},{n:'cover_url',t:'text'},{n:'location',t:'text'}
+  ]},
+  {id:'book_loans',mod:'library',icon:'🔖',cols:[
+    {n:'id',t:'uuid',pk:true},{n:'book_id',t:'uuid',fk:'books'},{n:'borrower_id',t:'uuid',fk:'profiles'},{n:'loan_date',t:'date'},{n:'due_date',t:'date'},{n:'return_date',t:'date'},{n:'status',t:'enum'},{n:'fine_amount',t:'decimal'}
+  ]},
+  {id:'messages',mod:'comms',icon:'✉️',cols:[
+    {n:'id',t:'uuid',pk:true},{n:'sender_id',t:'uuid',fk:'profiles'},{n:'recipient_id',t:'uuid',fk:'profiles'},{n:'subject',t:'text'},{n:'body',t:'text'},{n:'attachments',t:'jsonb'},{n:'read_at',t:'timestamp'},{n:'created_at',t:'timestamp'}
+  ]},
+  {id:'conversations',mod:'comms',icon:'💬',cols:[
+    {n:'id',t:'uuid',pk:true},{n:'participants',t:'jsonb'},{n:'last_message_at',t:'timestamp'}
+  ]},
+  {id:'announcements',mod:'comms',icon:'📢',cols:[
+    {n:'id',t:'uuid',pk:true},{n:'establishment_id',t:'uuid',fk:'establishments'},{n:'title',t:'text'},{n:'body',t:'text'},{n:'audience',t:'enum'},{n:'target_class_id',t:'uuid',fk:'classes'},{n:'published_at',t:'timestamp'},{n:'expires_at',t:'timestamp'},{n:'author_id',t:'uuid',fk:'profiles'}
+  ]},
+  {id:'notifications',mod:'comms',icon:'🔔',cols:[
+    {n:'id',t:'uuid',pk:true},{n:'user_id',t:'uuid',fk:'users'},{n:'type',t:'text'},{n:'title',t:'text'},{n:'body',t:'text'},{n:'link',t:'text'},{n:'read_at',t:'timestamp'},{n:'created_at',t:'timestamp'}
+  ]},
+  {id:'theses',mod:'university',icon:'🎓',cols:[
+    {n:'id',t:'uuid',pk:true},{n:'student_id',t:'uuid',fk:'students'},{n:'title',t:'text'},{n:'cycle',t:'enum'},{n:'supervisor_id',t:'uuid',fk:'teachers'},{n:'co_supervisor_id',t:'uuid',fk:'teachers'},{n:'start_date',t:'date'},{n:'defense_date',t:'date'},{n:'status',t:'enum'},{n:'final_grade',t:'float'},{n:'pdf_url',t:'text'}
+  ]},
+  {id:'diplomas',mod:'university',icon:'📜',cols:[
+    {n:'id',t:'uuid',pk:true},{n:'student_id',t:'uuid',fk:'students'},{n:'program_id',t:'uuid',fk:'programs'},{n:'serial_number',t:'text'},{n:'issue_date',t:'date'},{n:'mention',t:'text'},{n:'pdf_url',t:'text'},{n:'signed_by',t:'uuid',fk:'profiles'}
+  ]},
+  {id:'audit_logs',mod:'system',icon:'🔍',cols:[
+    {n:'id',t:'uuid',pk:true},{n:'user_id',t:'uuid',fk:'users'},{n:'action',t:'text'},{n:'entity_type',t:'text'},{n:'entity_id',t:'uuid'},{n:'metadata',t:'jsonb'},{n:'ip_address',t:'inet'},{n:'created_at',t:'timestamp'}
+  ]},
+  {id:'settings',mod:'system',icon:'⚙️',cols:[
+    {n:'id',t:'uuid',pk:true},{n:'establishment_id',t:'uuid',fk:'establishments'},{n:'key',t:'text'},{n:'value',t:'jsonb'},{n:'updated_at',t:'timestamp'}
+  ]},
+  {id:'backups',mod:'system',icon:'💾',cols:[
+    {n:'id',t:'uuid',pk:true},{n:'filename',t:'text'},{n:'size_bytes',t:'int'},{n:'created_at',t:'timestamp'},{n:'created_by',t:'uuid',fk:'users'},{n:'status',t:'enum'}
+  ]},
+];
+
+// ─────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────
+let positions = {};
+let showRelations = true;
+let currentMod = 'all';
+let zoom = 1;
+const wrap = document.getElementById('wrap');
+const canvas = document.getElementById('canvas');
+const svgLayer = document.getElementById('svg-layer');
+const tooltip = document.getElementById('tooltip');
+
+const COLS = 7, CARD_W = 240, CARD_H_EST = 280, GAP_X = 40, GAP_Y = 40, OFF_X = 30, OFF_Y = 30;
+
+function defaultPositions() {
+  const p = {};
+  TABLES.forEach((t, i) => {
+    const col = i % COLS, row = Math.floor(i / COLS);
+    p[t.id] = { x: OFF_X + col * (CARD_W + GAP_X), y: OFF_Y + row * (CARD_H_EST + GAP_Y) };
+  });
+  return p;
+}
+
+function loadPos() {
+  try { const s = localStorage.getItem('scholara_v3_pos'); return s ? JSON.parse(s) : defaultPositions(); }
+  catch { return defaultPositions(); }
+}
+function savePos() {
+  try { localStorage.setItem('scholara_v3_pos', JSON.stringify(positions)); } catch {}
+}
+
+// ─────────────────────────────────────────────
+// RENDER CARDS
+// ─────────────────────────────────────────────
+function renderCards() {
+  document.querySelectorAll('.tcard').forEach(e => e.remove());
+  TABLES.forEach(t => {
+    const pos = positions[t.id] || { x: 30, y: 30 };
+    const el = makeCard(t, pos);
+    canvas.appendChild(el);
+  });
+  updateRelations();
+  updateMinimap();
+}
+
+function makeCard(t, pos) {
+  const div = document.createElement('div');
+  div.className = `tcard mod-${t.mod}`;
+  div.id = 'card-' + t.id;
+  div.dataset.mod = t.mod;
+  div.style.left = pos.x + 'px';
+  div.style.top = pos.y + 'px';
+
+  const pkN = t.cols.filter(c => c.pk).length;
+  const fkN = t.cols.filter(c => c.fk).length;
+
+  div.innerHTML = `
+    <div class="thead">
+      <div class="ticon">${t.icon}</div>
+      <div class="tname">${t.id}</div>
+      <div class="tmod">${t.mod}</div>
+    </div>
+    <div class="tbody">
+      ${t.cols.map(c => `
+        <div class="crow ${c.pk?'pk-row':c.fk?'fk-row':''}">
+          <span class="cname">${c.n}</span>
+          <span class="ctype">${c.t}</span>
+          ${c.pk?'<span class="pk-badge">PK</span>':''}
+          ${c.fk?`<span class="fk-badge" title="→ ${c.fk}">FK</span>`:''}
+        </div>`).join('')}
+    </div>
+    <div class="tfoot">
+      <span>${t.cols.length} cols</span>
+      <span>${pkN?pkN+'PK ':''}${fkN?fkN+'FK':''}</span>
+    </div>`;
+
+  makeDraggable(div, t.id);
+
+  // Hover highlight
+  div.addEventListener('mouseenter', () => highlightRelated(t.id));
+  div.addEventListener('mouseleave', () => clearHighlight());
+
+  return div;
+}
+
+// ─────────────────────────────────────────────
+// DRAG
+// ─────────────────────────────────────────────
+function makeDraggable(el, id) {
+  const hdr = el.querySelector('.thead');
+  let active = false, ox = 0, oy = 0;
+
+  const start = (cx, cy) => {
+    active = true;
+    const r = el.getBoundingClientRect();
+    ox = (cx - r.left) / zoom;
+    oy = (cy - r.top) / zoom;
+    el.classList.add('dragging');
+    el.style.zIndex = 200;
+  };
+  const move = (cx, cy) => {
+    if (!active) return;
+    const cr = canvas.getBoundingClientRect();
+    const x = Math.max(0, (cx - cr.left) / zoom - ox);
+    const y = Math.max(0, (cy - cr.top) / zoom - oy);
+    el.style.left = x + 'px';
+    el.style.top = y + 'px';
+    positions[id] = { x, y };
+    updateRelations();
+    updateMinimap();
+  };
+  const end = () => {
+    if (!active) return;
+    active = false;
+    el.classList.remove('dragging');
+    el.style.zIndex = 10;
+    savePos();
+  };
+
+  hdr.addEventListener('mousedown', e => { if (e.button === 0) { start(e.clientX, e.clientY); e.preventDefault(); } });
+  document.addEventListener('mousemove', e => move(e.clientX, e.clientY));
+  document.addEventListener('mouseup', end);
+  hdr.addEventListener('touchstart', e => { start(e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
+  document.addEventListener('touchmove', e => { if (active) { move(e.touches[0].clientX, e.touches[0].clientY); e.preventDefault(); } }, { passive: false });
+  document.addEventListener('touchend', end);
+}
+
+// ─────────────────────────────────────────────
+// SVG RELATIONS
+// ─────────────────────────────────────────────
+const MOD_COLORS = {
+  auth:'#9b6dff', admin:'#3dcf8e', pedagogy:'#f0a429', eval:'#e8604c',
+  attendance:'#5b8def', finance:'#2ec4b6', events:'#e870a0',
+  library:'#aaa', comms:'#5bc8f0', university:'#a8d86e', system:'#f0a429'
+};
+
+function getCardRect(id) {
+  const el = document.getElementById('card-' + id);
+  if (!el) return null;
+  return {
+    x: parseInt(el.style.left) || 0,
+    y: parseInt(el.style.top) || 0,
+    w: el.offsetWidth,
+    h: el.offsetHeight
+  };
+}
+
+function getFKRowY(tableId, colName) {
+  const el = document.getElementById('card-' + tableId);
+  if (!el) return null;
+  const rows = el.querySelectorAll('.crow');
+  const t = TABLES.find(t => t.id === tableId);
+  if (!t) return null;
+  const idx = t.cols.findIndex(c => c.n === colName);
+  if (idx < 0) return null;
+  const row = rows[idx];
+  if (!row) return null;
+  const cardTop = parseInt(el.style.top) || 0;
+  const rowRect = row.getBoundingClientRect();
+  const canvasRect = canvas.getBoundingClientRect();
+  return cardTop + (rowRect.top - canvasRect.top) / zoom + row.offsetHeight / 2;
+}
+
+function bestEdge(src, tgt) {
+  const scx = src.x + src.w / 2, scy = src.y + src.h / 2;
+  const tcx = tgt.x + tgt.w / 2, tcy = tgt.y + tgt.h / 2;
+  const dx = tcx - scx, dy = tcy - scy;
+  let sx, sy, tx, ty;
+  if (Math.abs(dx) > Math.abs(dy)) {
+    sx = dx > 0 ? src.x + src.w : src.x; sy = scy;
+    tx = dx > 0 ? tgt.x : tgt.x + tgt.w; ty = tcy;
+  } else {
+    sx = scx; sy = dy > 0 ? src.y + src.h : src.y;
+    tx = tcx; ty = dy > 0 ? tgt.y : tgt.y + tgt.h;
+  }
+  return { sx, sy, tx, ty };
+}
+
+function cubicPath(sx, sy, tx, ty) {
+  const dx = Math.abs(tx - sx), dy = Math.abs(ty - sy);
+  const cx = Math.max(60, dx * 0.5);
+  const cy = Math.max(60, dy * 0.5);
+  const horiz = dx > dy;
+  if (horiz) {
+    const dir = tx > sx ? 1 : -1;
+    return `M${sx},${sy} C${sx+dir*cx},${sy} ${tx-dir*cx},${ty} ${tx},${ty}`;
+  } else {
+    const dir = ty > sy ? 1 : -1;
+    return `M${sx},${sy} C${sx},${sy+dir*cy} ${tx},${ty-dir*cy} ${tx},${ty}`;
+  }
+}
+
+function updateRelations() {
+  // Remove old paths
+  svgLayer.querySelectorAll('path.rel-path,line.rel-path,circle.rel-dot').forEach(e => e.remove());
+  if (!showRelations) return;
+
+  let relCount = 0;
+  const visibleIds = new Set(
+    [...document.querySelectorAll('.tcard:not(.hidden)')].map(e => e.id.replace('card-',''))
+  );
+
+  TABLES.forEach(src => {
+    if (!visibleIds.has(src.id)) return;
+    src.cols.forEach(col => {
+      if (!col.fk) return;
+      const tgtId = col.fk;
+      if (!visibleIds.has(tgtId)) return;
+
+      const srcRect = getCardRect(src.id);
+      const tgtRect = getCardRect(tgtId);
+      if (!srcRect || !tgtRect) return;
+
+      relCount++;
+      const color = MOD_COLORS[src.mod] || '#5b8def';
+
+      // Get FK row Y if possible
+      const fkY = getFKRowY(src.id, col.n);
+      const pkY = tgtRect.y + 30; // approx header center
+
+      let sx, sy, tx, ty;
+      const { sx: bsx, sy: bsy, tx: btx, ty: bty } = bestEdge(srcRect, tgtRect);
+      sx = bsx; tx = btx;
+      // Use row-level Y if available and cards are roughly horizontal
+      if (fkY !== null && Math.abs(srcRect.x - tgtRect.x) > 50) {
+        sy = fkY;
+        ty = pkY;
+        // Adjust X to correct edge
+        const dx = tx - sx;
+        sx = dx > 0 ? srcRect.x + srcRect.w : srcRect.x;
+        tx = dx > 0 ? tgtRect.x : tgtRect.x + tgtRect.w;
+      } else {
+        sy = bsy; ty = bty;
+      }
+
+      const d = cubicPath(sx, sy, tx, ty);
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path.setAttribute('d', d);
+      path.setAttribute('fill', 'none');
+      path.setAttribute('stroke', color);
+      path.setAttribute('stroke-width', '1.5');
+      path.setAttribute('stroke-opacity', '0.55');
+      path.setAttribute('marker-end', `url(#arr-default)`);
+      path.classList.add('rel-path');
+      path.dataset.src = src.id;
+      path.dataset.tgt = tgtId;
+      path.dataset.col = col.n;
+      path.style.transition = 'stroke-opacity .15s';
+
+      // Dot at source
+      const dot = document.createElementNS('http://www.w3.org/2000/svg','circle');
+      dot.setAttribute('cx', sx); dot.setAttribute('cy', sy);
+      dot.setAttribute('r', '3');
+      dot.setAttribute('fill', color);
+      dot.setAttribute('opacity', '0.5');
+      dot.classList.add('rel-dot');
+      dot.dataset.src = src.id;
+
+      // Tooltip on hover
+      path.style.pointerEvents = 'stroke';
+      path.setAttribute('stroke-width-hit', '8');
+      path.addEventListener('mouseenter', e => {
+        path.setAttribute('stroke-opacity','1');
+        path.setAttribute('stroke-width','2.5');
+        showTooltip(e, `<strong>${src.id}</strong>.${col.n}<br>→ <strong>${tgtId}</strong>.id`);
+        highlightCards(src.id, tgtId);
+      });
+      path.addEventListener('mousemove', e => moveTooltip(e));
+      path.addEventListener('mouseleave', () => {
+        path.setAttribute('stroke-opacity','0.55');
+        path.setAttribute('stroke-width','1.5');
+        hideTooltip();
+        clearHighlight();
+      });
+
+      svgLayer.appendChild(dot);
+      svgLayer.appendChild(path);
+    });
+  });
+
+  document.getElementById('stat-r').textContent = relCount;
+}
+
+// ─────────────────────────────────────────────
+// HIGHLIGHT
+// ─────────────────────────────────────────────
+function highlightRelated(tableId) {
+  const related = new Set([tableId]);
+  TABLES.forEach(t => {
+    t.cols.forEach(c => {
+      if (c.fk === tableId) related.add(t.id);
+      if (t.id === tableId && c.fk) related.add(c.fk);
+    });
+  });
+  document.querySelectorAll('.tcard').forEach(el => {
+    const id = el.id.replace('card-','');
+    if (related.has(id)) { el.classList.add('highlighted'); el.classList.remove('faded'); }
+    else { el.classList.add('faded'); el.classList.remove('highlighted'); }
+  });
+  svgLayer.querySelectorAll('path.rel-path').forEach(p => {
+    const active = related.has(p.dataset.src) && related.has(p.dataset.tgt);
+    p.setAttribute('stroke-opacity', active ? '0.9' : '0.08');
+    p.setAttribute('stroke-width', active ? '2' : '1');
+  });
+  svgLayer.querySelectorAll('.rel-dot').forEach(d => {
+    d.setAttribute('opacity', related.has(d.dataset.src) ? '0.8' : '0.1');
+  });
+}
+
+function highlightCards(a, b) {
+  document.querySelectorAll('.tcard').forEach(el => {
+    const id = el.id.replace('card-','');
+    if (id===a||id===b) { el.classList.add('highlighted'); el.classList.remove('faded'); }
+    else el.classList.add('faded');
+  });
+}
+
+function clearHighlight() {
+  document.querySelectorAll('.tcard').forEach(el => { el.classList.remove('highlighted','faded'); });
+  svgLayer.querySelectorAll('path.rel-path').forEach(p => {
+    p.setAttribute('stroke-opacity','0.55');
+    p.setAttribute('stroke-width','1.5');
+  });
+  svgLayer.querySelectorAll('.rel-dot').forEach(d => d.setAttribute('opacity','0.5'));
+}
+
+// ─────────────────────────────────────────────
+// TOOLTIP
+// ─────────────────────────────────────────────
+function showTooltip(e, html) {
+  tooltip.innerHTML = html; tooltip.classList.add('show');
+  moveTooltip(e);
+}
+function moveTooltip(e) {
+  tooltip.style.left = (e.clientX + 14) + 'px';
+  tooltip.style.top = (e.clientY - 10) + 'px';
+}
+function hideTooltip() { tooltip.classList.remove('show'); }
+
+// ─────────────────────────────────────────────
+// FILTER
+// ─────────────────────────────────────────────
+function filterMod(mod) {
+  currentMod = mod;
+  document.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c.dataset.mod === mod));
+
+  const visible = [];
+  document.querySelectorAll('.tcard').forEach(el => {
+    const show = mod === 'all' || el.dataset.mod === mod;
+    el.classList.toggle('hidden', !show);
+    if (show) visible.push(el);
+  });
+
+  if (mod !== 'all') {
+    visible.forEach((el, i) => {
+      const col = i % 5, row = Math.floor(i / 5);
+      const x = OFF_X + col * (CARD_W + GAP_X);
+      const y = OFF_Y + row * (CARD_H_EST + GAP_Y);
+      el.style.transition = 'left .3s, top .3s';
+      el.style.left = x + 'px'; el.style.top = y + 'px';
+      setTimeout(() => el.style.transition = '', 350);
+      const id = el.id.replace('card-','');
+      positions[id] = { x, y };
+    });
+  } else {
+    const saved = loadPos();
+    document.querySelectorAll('.tcard').forEach(el => {
+      const id = el.id.replace('card-','');
+      const p = saved[id];
+      if (p) {
+        el.style.transition = 'left .3s, top .3s, opacity .2s';
+        el.style.left = p.x + 'px'; el.style.top = p.y + 'px';
+        positions[id] = p;
+        setTimeout(() => el.style.transition = '', 350);
+      }
+    });
+  }
+
+  document.getElementById('stat-v').textContent = visible.length;
+  setTimeout(updateRelations, 50);
+  setTimeout(updateMinimap, 100);
+}
+
+// ─────────────────────────────────────────────
+// TOGGLE RELATIONS
+// ─────────────────────────────────────────────
+function toggleRelations() {
+  showRelations = !showRelations;
+  const btn = document.getElementById('btn-rels');
+  btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6h-1a2 2 0 0 0-2 2v10"/><path d="M6 18h1a2 2 0 0 0 2-2V6"/><circle cx="18" cy="4" r="2"/><circle cx="6" cy="20" r="2"/></svg> Relations ${showRelations?'ON':'OFF'}`;
+  btn.style.color = showRelations ? '' : 'var(--text3)';
+  updateRelations();
+}
+
+// ─────────────────────────────────────────────
+// RESET
+// ─────────────────────────────────────────────
+function resetLayout() {
+  positions = defaultPositions();
+  localStorage.removeItem('scholara_v3_pos');
+  currentMod = 'all';
+  document.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c.dataset.mod === 'all'));
+  document.querySelectorAll('.tcard').forEach(el => {
+    const id = el.id.replace('card-','');
+    const p = positions[id];
+    if (!p) return;
+    el.classList.remove('hidden','faded','highlighted');
+    el.style.transition = 'left .4s cubic-bezier(.4,0,.2,1), top .4s cubic-bezier(.4,0,.2,1)';
+    el.style.left = p.x + 'px'; el.style.top = p.y + 'px';
+    setTimeout(() => el.style.transition = '', 450);
+  });
+  document.getElementById('stat-v').textContent = TABLES.length;
+  setTimeout(updateRelations, 80);
+  setTimeout(updateMinimap, 100);
+}
+
+// ─────────────────────────────────────────────
+// ZOOM
+// ─────────────────────────────────────────────
+function applyZoom() {
+  canvas.style.transform = `scale(${zoom})`;
+  canvas.style.transformOrigin = '0 0';
+  document.getElementById('zoom-label').textContent = Math.round(zoom * 100) + '%';
+}
+function zoomIn() { zoom = Math.min(2, zoom + 0.1); applyZoom(); }
+function zoomOut() { zoom = Math.max(0.3, zoom - 0.1); applyZoom(); }
+
+wrap.addEventListener('wheel', e => {
+  if (e.ctrlKey || e.metaKey) {
+    e.preventDefault();
+    zoom = Math.min(2, Math.max(0.3, zoom - e.deltaY * 0.001));
+    applyZoom();
+  }
+}, { passive: false });
+
+// ─────────────────────────────────────────────
+// MINIMAP
+// ─────────────────────────────────────────────
+const MM_W = 160, MM_H = 100, CANVAS_W = 4000, CANVAS_H = 3000;
+const scaleX = MM_W / CANVAS_W, scaleY = MM_H / CANVAS_H;
+
+function updateMinimap() {
+  const mmCanvas = document.getElementById('mm-canvas');
+  mmCanvas.innerHTML = '';
+  const modColors = MOD_COLORS;
+  TABLES.forEach(t => {
+    const p = positions[t.id]; if (!p) return;
+    const el = document.getElementById('card-' + t.id);
+    if (!el || el.classList.contains('hidden')) return;
+    const d = document.createElement('div');
+    d.className = 'mm-card';
+    d.style.cssText = `left:${p.x*scaleX}px;top:${p.y*scaleY}px;width:${(el.offsetWidth||200)*scaleX}px;height:${(el.offsetHeight||260)*scaleY}px;background:${modColors[t.mod]||'#555'};`;
+    mmCanvas.appendChild(d);
+  });
+  updateMinimapViewport();
+}
+
+function updateMinimapViewport() {
+  const vp = document.getElementById('mm-viewport');
+  const sl = wrap.scrollLeft, st = wrap.scrollTop;
+  const vw = wrap.clientWidth / zoom, vh = wrap.clientHeight / zoom;
+  vp.style.left = sl * scaleX + 'px';
+  vp.style.top = st * scaleY + 'px';
+  vp.style.width = vw * scaleX + 'px';
+  vp.style.height = vh * scaleY + 'px';
+}
+
+wrap.addEventListener('scroll', updateMinimapViewport);
+
+function minimapClick(e) {
+  const r = document.getElementById('minimap').getBoundingClientRect();
+  const mx = (e.clientX - r.left) / MM_W, my = (e.clientY - r.top) / MM_H;
+  wrap.scrollLeft = mx * CANVAS_W * zoom - wrap.clientWidth / 2;
+  wrap.scrollTop = my * CANVAS_H * zoom - wrap.clientHeight / 2;
+}
+
+// ─────────────────────────────────────────────
+// PDF EXPORT
+// ─────────────────────────────────────────────
+function exportPDF() {
+  const ov = document.createElement('div');
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:9999;display:flex;align-items:center;justify-content:center;font-family:Syne,sans-serif;';
+  ov.innerHTML = `<div style="background:#13161e;border:1px solid #2a2f3d;border-radius:12px;padding:32px 40px;max-width:460px;text-align:center;">
+    <div style="font-size:36px;margin-bottom:10px">📄</div>
+    <div style="font-size:17px;font-weight:700;color:#e8eaf0;margin-bottom:8px">Export PDF — Scholara ERD</div>
+    <div style="font-size:12px;color:#9ba3b8;margin-bottom:20px;line-height:1.7">
+      La boîte d'impression va s'ouvrir.<br>
+      Sélectionne <strong style="color:#5b8def">«&nbsp;Enregistrer en PDF&nbsp;»</strong> comme destination<br>
+      et active <strong style="color:#5b8def">«&nbsp;Graphiques en arrière-plan&nbsp;»</strong><br>
+      pour conserver le thème sombre.
+    </div>
+    <button onclick="document.body.removeChild(this.closest('div[style*=fixed]'));window.print()"
+      style="background:#5b8def;color:#fff;border:none;padding:10px 24px;border-radius:8px;font-family:Syne,sans-serif;font-size:13px;font-weight:700;cursor:pointer;">
+      Imprimer / PDF →
+    </button>
+    <button onclick="document.body.removeChild(this.closest('div[style*=fixed]'))"
+      style="background:transparent;color:#9ba3b8;border:1px solid #2a2f3d;padding:10px 24px;border-radius:8px;font-family:Syne,sans-serif;font-size:13px;cursor:pointer;margin-left:10px;">
+      Annuler
+    </button>
+  </div>`;
+  document.body.appendChild(ov);
+}
+
+// ─────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────
+positions = loadPos();
+renderCards();
+document.getElementById('stat-v').textContent = TABLES.length;
+
+// Continuous relation refresh on scroll
+wrap.addEventListener('scroll', () => { updateRelations(); updateMinimapViewport(); });
+</script>
+</body>
+</html>
