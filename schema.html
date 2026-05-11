@@ -165,7 +165,7 @@ header{
 <header>
   <div class="logo">MySch<span>olaria</span></div>
   <div class="badge">ERD v2</div>
-  <div class="badge" id="hbadge">48 tables · 11 modules</div>
+  <div class="badge" id="hbadge">55 tables · 11 modules</div>
   <div class="hsep"></div>
   <button class="btn" onclick="resetLayout()">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
@@ -259,219 +259,614 @@ header{
 // ─────────────────────────────────────────────
 // DATA
 // ─────────────────────────────────────────────
+
 const TABLES = [
   // ── AUTH & USERS ──
   {id:'users',mod:'auth',icon:'🔑',cols:[
     {n:'id',t:'uuid',pk:true},
-    {n:'email',t:'text'},{n:'password_hash',t:'text'},
-    {n:'google_id',t:'text'},{n:'github_id',t:'text'},
+    {n:'email',t:'text'},
+    {n:'password_hash',t:'text'},
+    {n:'google_id',t:'text'},
+    {n:'github_id',t:'text'},
     {n:'avatar_url',t:'text'},
-    {n:'is_verified',t:'bool'},{n:'is_active',t:'bool'},{n:'is_banned',t:'bool'},
-    {n:'failed_attempts',t:'int'},{n:'locked_until',t:'timestamp'},
-    {n:'last_login_at',t:'timestamp'},{n:'created_at',t:'timestamp'}
+    {n:'is_verified',t:'bool'},
+    {n:'is_active',t:'bool'},
+    {n:'is_banned',t:'bool'},
+    {n:'failed_attempts',t:'int'},
+    {n:'locked_until',t:'timestamp'},
+    {n:'verify_token',t:'text'},
+    {n:'verify_expires',t:'timestamp'},
+    {n:'reset_token',t:'text'},
+    {n:'reset_expires',t:'timestamp'},
+    {n:'last_login_at',t:'timestamp'},
+    {n:'created_at',t:'timestamp'},
+    {n:'updated_at',t:'timestamp'}
   ]},
   {id:'refresh_tokens',mod:'auth',icon:'🔄',cols:[
-    {n:'id',t:'uuid',pk:true},{n:'user_id',t:'uuid',fk:'users'},
-    {n:'token_hash',t:'text'},{n:'expires_at',t:'timestamp'}
+    {n:'id',t:'uuid',pk:true},
+    {n:'user_id',t:'uuid',fk:'users'},
+    {n:'token_hash',t:'text'},
+    {n:'device_info',t:'text'},
+    {n:'ip_address',t:'inet'},
+    {n:'expires_at',t:'timestamp'},
+    {n:'revoked_at',t:'timestamp'},
+    {n:'created_at',t:'timestamp'}
   ]},
   {id:'oauth_accounts',mod:'auth',icon:'🌐',cols:[
-    {n:'id',t:'uuid',pk:true},{n:'user_id',t:'uuid',fk:'users'},
-    {n:'provider',t:'enum'},{n:'provider_id',t:'text'}
+    {n:'id',t:'uuid',pk:true},
+    {n:'user_id',t:'uuid',fk:'users'},
+    {n:'provider',t:'enum'},
+    {n:'provider_id',t:'text'},
+    {n:'access_token',t:'text'},
+    {n:'expires_at',t:'timestamp'},
+    {n:'created_at',t:'timestamp'}
   ]},
   {id:'profiles',mod:'auth',icon:'👤',cols:[
-    {n:'id',t:'uuid',pk:true,fk:'users'},{n:'full_name',t:'text'},
-    {n:'first_name',t:'text'},{n:'last_name',t:'text'},
-    {n:'avatar_url',t:'text'},{n:'phone',t:'text'},{n:'date_of_birth',t:'date'},
-    {n:'gender',t:'enum'}
+    {n:'id',t:'uuid',pk:true,fk:'users'},
+    {n:'full_name',t:'text'},
+    {n:'avatar_url',t:'text'},
+    {n:'phone',t:'text'},
+    {n:'address',t:'text'},
+    {n:'date_of_birth',t:'date'},
+    {n:'gender',t:'enum'},
+    {n:'nationality',t:'text'},
+    {n:'created_at',t:'timestamp'},
+    {n:'updated_at',t:'timestamp'}
   ]},
   {id:'user_roles',mod:'auth',icon:'🛡️',cols:[
-    {n:'id',t:'uuid',pk:true},{n:'user_id',t:'uuid',fk:'users'},{n:'role',t:'enum'}
+    {n:'id',t:'uuid',pk:true},
+    {n:'user_id',t:'uuid',fk:'users'},
+    {n:'role',t:'enum'},
+    {n:'created_at',t:'timestamp'}
   ]},
 
   // ── ÉTABLISSEMENT & ADMIN ──
   {id:'establishments',mod:'admin',icon:'🏢',cols:[
-    {n:'id',t:'uuid',pk:true},{n:'name',t:'text'},{n:'code',t:'text'},{n:'type',t:'enum'}
+    {n:'id',t:'uuid',pk:true},
+    {n:'name',t:'text'},
+    {n:'code',t:'text'},
+    {n:'type',t:'enum'},
+    {n:'address',t:'text'},
+    {n:'phone',t:'text'},
+    {n:'email',t:'text'},
+    {n:'logo_url',t:'text'},
+    {n:'identification_number',t:'text'},
+    {n:'join_code',t:'text'},
+    {n:'join_code_hash',t:'text'},
+    {n:'admin_code',t:'text'},
+    {n:'admin_code_hash',t:'text'},
+    {n:'is_active',t:'bool'},
+    {n:'owner_id',t:'uuid',fk:'users'},
+    {n:'created_at',t:'timestamp'},
+    {n:'updated_at',t:'timestamp'}
   ]},
   {id:'establishment_members',mod:'admin',icon:'👥',cols:[
-    {n:'id',t:'uuid',pk:true},{n:'establishment_id',t:'uuid',fk:'establishments'},
-    {n:'user_id',t:'uuid',fk:'users'},{n:'role_name',t:'text'}
+    {n:'id',t:'uuid',pk:true},
+    {n:'establishment_id',t:'uuid',fk:'establishments'},
+    {n:'user_id',t:'uuid',fk:'users'},
+    {n:'role',t:'text'},
+    {n:'status',t:'text'},
+    {n:'joined_at',t:'timestamp'}
+  ]},
+  {id:'invitations',mod:'admin',icon:'💌',cols:[
+    {n:'id',t:'uuid',pk:true},
+    {n:'establishment_id',t:'uuid',fk:'establishments'},
+    {n:'email',t:'text'},
+    {n:'token',t:'text'},
+    {n:'role',t:'text'},
+    {n:'expires_at',t:'timestamp'},
+    {n:'used_at',t:'timestamp'},
+    {n:'created_by',t:'uuid',fk:'users'},
+    {n:'created_at',t:'timestamp'}
   ]},
   {id:'students',mod:'admin',icon:'🎒',cols:[
-    {n:'id',t:'uuid',pk:true},{n:'profile_id',t:'uuid',fk:'profiles'},
-    {n:'establishment_id',t:'uuid',fk:'establishments'},{n:'student_number',t:'text'},
-    {n:'class_id',t:'uuid',fk:'classes'},{n:'status',t:'enum'}
+    {n:'id',t:'uuid',pk:true},
+    {n:'profile_id',t:'uuid',fk:'profiles'},
+    {n:'establishment_id',t:'uuid',fk:'establishments'},
+    {n:'student_number',t:'text'},
+    {n:'enrollment_date',t:'date'},
+    {n:'class_id',t:'uuid',fk:'classes'},
+    {n:'status',t:'enum'},
+    {n:'parent_id',t:'uuid',fk:'profiles'},
+    {n:'medical_notes',t:'text'},
+    {n:'photo_url',t:'text'},
+    {n:'created_at',t:'timestamp'},
+    {n:'updated_at',t:'timestamp'}
   ]},
   {id:'teachers',mod:'admin',icon:'👩‍🏫',cols:[
-    {n:'id',t:'uuid',pk:true},{n:'profile_id',t:'uuid',fk:'profiles'},
-    {n:'establishment_id',t:'uuid',fk:'establishments'},{n:'employee_number',t:'text'}
+    {n:'id',t:'uuid',pk:true},
+    {n:'profile_id',t:'uuid',fk:'profiles'},
+    {n:'establishment_id',t:'uuid',fk:'establishments'},
+    {n:'employee_number',t:'text'},
+    {n:'specialization',t:'text'},
+    {n:'hire_date',t:'date'},
+    {n:'contract_type',t:'enum'},
+    {n:'hourly_rate',t:'numeric'},
+    {n:'created_at',t:'timestamp'},
+    {n:'updated_at',t:'timestamp'}
   ]},
   {id:'staff',mod:'admin',icon:'👔',cols:[
-    {n:'id',t:'uuid',pk:true},{n:'profile_id',t:'uuid',fk:'profiles'},
-    {n:'establishment_id',t:'uuid',fk:'establishments'},{n:'position',t:'text'}
+    {n:'id',t:'uuid',pk:true},
+    {n:'profile_id',t:'uuid',fk:'profiles'},
+    {n:'establishment_id',t:'uuid',fk:'establishments'},
+    {n:'position',t:'text'},
+    {n:'department',t:'text'},
+    {n:'hire_date',t:'date'},
+    {n:'contract_type',t:'enum'},
+    {n:'salary',t:'numeric'},
+    {n:'created_at',t:'timestamp'},
+    {n:'updated_at',t:'timestamp'}
   ]},
   {id:'classes',mod:'admin',icon:'🏛️',cols:[
-    {n:'id',t:'uuid',pk:true},{n:'establishment_id',t:'uuid',fk:'establishments'},
-    {n:'name',t:'text'},{n:'level',t:'text'},{n:'academic_year',t:'text'},
-    {n:'main_teacher_id',t:'uuid',fk:'teachers'},{n:'room_id',t:'uuid',fk:'rooms'}
+    {n:'id',t:'uuid',pk:true},
+    {n:'establishment_id',t:'uuid',fk:'establishments'},
+    {n:'name',t:'text'},
+    {n:'level',t:'text'},
+    {n:'academic_year',t:'text'},
+    {n:'main_teacher_id',t:'uuid',fk:'teachers'},
+    {n:'capacity',t:'int'},
+    {n:'room_id',t:'uuid',fk:'rooms'},
+    {n:'created_at',t:'timestamp'},
+    {n:'updated_at',t:'timestamp'}
   ]},
   {id:'class_groups',mod:'admin',icon:'👥',cols:[
-    {n:'id',t:'uuid',pk:true},{n:'class_id',t:'uuid',fk:'classes'},{n:'name',t:'text'}
+    {n:'id',t:'uuid',pk:true},
+    {n:'class_id',t:'uuid',fk:'classes'},
+    {n:'name',t:'text'},
+    {n:'type',t:'text'},
+    {n:'created_at',t:'timestamp'}
   ]},
   {id:'rooms',mod:'admin',icon:'🚪',cols:[
-    {n:'id',t:'uuid',pk:true},{n:'establishment_id',t:'uuid',fk:'establishments'},
-    {n:'name',t:'text'},{n:'capacity',t:'int'}
+    {n:'id',t:'uuid',pk:true},
+    {n:'establishment_id',t:'uuid',fk:'establishments'},
+    {n:'name',t:'text'},
+    {n:'type',t:'text'},
+    {n:'capacity',t:'int'},
+    {n:'equipment',t:'jsonb'},
+    {n:'floor',t:'int'},
+    {n:'created_at',t:'timestamp'}
+  ]},
+  {id:'room_reservations',mod:'admin',icon:'📆',cols:[
+    {n:'id',t:'uuid',pk:true},
+    {n:'room_id',t:'uuid',fk:'rooms'},
+    {n:'user_id',t:'uuid',fk:'profiles'},
+    {n:'start_at',t:'timestamp'},
+    {n:'end_at',t:'timestamp'},
+    {n:'purpose',t:'text'},
+    {n:'status',t:'text'},
+    {n:'created_at',t:'timestamp'}
   ]},
   {id:'student_documents',mod:'admin',icon:'📄',cols:[
-    {n:'id',t:'uuid',pk:true},{n:'student_id',t:'uuid',fk:'students'},{n:'type',t:'text'}
+    {n:'id',t:'uuid',pk:true},
+    {n:'student_id',t:'uuid',fk:'students'},
+    {n:'type',t:'text'},
+    {n:'file_url',t:'text'},
+    {n:'uploaded_at',t:'timestamp'},
+    {n:'verified',t:'bool'}
   ]},
-  {id:'student_parents',mod:'admin',icon:'👪',cols:[
-    {n:'student_id',t:'uuid',fk:'students'},{n:'parent_profile_id',t:'uuid',fk:'profiles'}
+  {id:'staff_absences',mod:'admin',icon:'🏖️',cols:[
+    {n:'id',t:'uuid',pk:true},
+    {n:'user_id',t:'uuid',fk:'profiles'},
+    {n:'start_date',t:'date'},
+    {n:'end_date',t:'date'},
+    {n:'reason',t:'text'},
+    {n:'type',t:'enum'},
+    {n:'approved_by',t:'uuid',fk:'profiles'},
+    {n:'created_at',t:'timestamp'}
   ]},
-  {id:'school_periods',mod:'admin',icon:'📅',cols:[
-    {n:'id',t:'uuid',pk:true},{n:'establishment_id',t:'uuid',fk:'establishments'},
-    {n:'name',t:'text'},{n:'academic_year',t:'text'}
+  {id:'school_calendar',mod:'admin',icon:'🗓️',cols:[
+    {n:'id',t:'uuid',pk:true},
+    {n:'establishment_id',t:'uuid',fk:'establishments'},
+    {n:'event_type',t:'text'},
+    {n:'title',t:'text'},
+    {n:'start_date',t:'date'},
+    {n:'end_date',t:'date'},
+    {n:'description',t:'text'},
+    {n:'created_at',t:'timestamp'}
   ]},
 
   // ── PÉDAGOGIE ──
   {id:'subjects',mod:'pedagogy',icon:'📖',cols:[
-    {n:'id',t:'uuid',pk:true},{n:'code',t:'text'},{n:'name',t:'text'},{n:'coefficient',t:'numeric'}
+    {n:'id',t:'uuid',pk:true},
+    {n:'code',t:'text'},
+    {n:'name',t:'text'},
+    {n:'level',t:'text'},
+    {n:'coefficient',t:'numeric'},
+    {n:'hours_per_week',t:'int'},
+    {n:'description',t:'text'},
+    {n:'created_at',t:'timestamp'}
   ]},
   {id:'programs',mod:'pedagogy',icon:'🎓',cols:[
-    {n:'id',t:'uuid',pk:true},{n:'code',t:'text'},{n:'name',t:'text'},{n:'cycle',t:'enum'}
+    {n:'id',t:'uuid',pk:true},
+    {n:'code',t:'text'},
+    {n:'name',t:'text'},
+    {n:'cycle',t:'enum'},
+    {n:'duration_years',t:'int'},
+    {n:'total_ects',t:'int'},
+    {n:'head_id',t:'uuid',fk:'profiles'},
+    {n:'created_at',t:'timestamp'}
   ]},
   {id:'program_subjects',mod:'pedagogy',icon:'🔗',cols:[
-    {n:'program_id',t:'uuid',fk:'programs'},{n:'subject_id',t:'uuid',fk:'subjects'}
+    {n:'program_id',t:'uuid',fk:'programs'},
+    {n:'subject_id',t:'uuid',fk:'subjects'},
+    {n:'semester',t:'int'},
+    {n:'ects',t:'int'},
+    {n:'mandatory',t:'bool'}
   ]},
   {id:'class_subjects',mod:'pedagogy',icon:'📋',cols:[
-    {n:'id',t:'uuid',pk:true},{n:'class_id',t:'uuid',fk:'classes'},
-    {n:'subject_id',t:'uuid',fk:'subjects'},{n:'teacher_id',t:'uuid',fk:'teachers'}
+    {n:'id',t:'uuid',pk:true},
+    {n:'class_id',t:'uuid',fk:'classes'},
+    {n:'subject_id',t:'uuid',fk:'subjects'},
+    {n:'teacher_id',t:'uuid',fk:'teachers'},
+    {n:'weekly_hours',t:'int'},
+    {n:'created_at',t:'timestamp'}
   ]},
   {id:'timetable',mod:'pedagogy',icon:'🕒',cols:[
-    {n:'id',t:'uuid',pk:true},{n:'class_id',t:'uuid',fk:'classes'},
-    {n:'subject_id',t:'uuid',fk:'subjects'},{n:'teacher_id',t:'uuid',fk:'teachers'},
-    {n:'room_id',t:'uuid',fk:'rooms'},{n:'day_of_week',t:'smallint'}
+    {n:'id',t:'uuid',pk:true},
+    {n:'class_id',t:'uuid',fk:'classes'},
+    {n:'subject_id',t:'uuid',fk:'subjects'},
+    {n:'teacher_id',t:'uuid',fk:'teachers'},
+    {n:'room_id',t:'uuid',fk:'rooms'},
+    {n:'day_of_week',t:'smallint'},
+    {n:'start_time',t:'time'},
+    {n:'end_time',t:'time'},
+    {n:'week_type',t:'enum'},
+    {n:'created_at',t:'timestamp'}
   ]},
   {id:'coursebook',mod:'pedagogy',icon:'📓',cols:[
-    {n:'id',t:'uuid',pk:true},{n:'class_subject_id',t:'uuid',fk:'class_subjects'},
-    {n:'teacher_id',t:'uuid',fk:'teachers'},{n:'date',t:'date'},{n:'topic',t:'text'}
+    {n:'id',t:'uuid',pk:true},
+    {n:'class_subject_id',t:'uuid',fk:'class_subjects'},
+    {n:'teacher_id',t:'uuid',fk:'teachers'},
+    {n:'date',t:'date'},
+    {n:'topic',t:'text'},
+    {n:'content',t:'text'},
+    {n:'homework',t:'text'},
+    {n:'created_at',t:'timestamp'}
+  ]},
+  {id:'homework_assignments',mod:'pedagogy',icon:'✏️',cols:[
+    {n:'id',t:'uuid',pk:true},
+    {n:'class_subject_id',t:'uuid',fk:'class_subjects'},
+    {n:'title',t:'text'},
+    {n:'description',t:'text'},
+    {n:'due_date',t:'date'},
+    {n:'attachments',t:'jsonb'},
+    {n:'created_at',t:'timestamp'}
+  ]},
+  {id:'homework_submissions',mod:'pedagogy',icon:'📬',cols:[
+    {n:'id',t:'uuid',pk:true},
+    {n:'assignment_id',t:'uuid',fk:'homework_assignments'},
+    {n:'student_id',t:'uuid',fk:'students'},
+    {n:'submitted_at',t:'timestamp'},
+    {n:'file_url',t:'text'},
+    {n:'grade',t:'numeric'},
+    {n:'feedback',t:'text'}
   ]},
 
   // ── ÉVALUATION ──
   {id:'exams',mod:'eval',icon:'📝',cols:[
-    {n:'id',t:'uuid',pk:true},{n:'class_subject_id',t:'uuid',fk:'class_subjects'},
-    {n:'title',t:'text'},{n:'type',t:'enum'},{n:'date',t:'date'}
+    {n:'id',t:'uuid',pk:true},
+    {n:'class_subject_id',t:'uuid',fk:'class_subjects'},
+    {n:'title',t:'text'},
+    {n:'type',t:'enum'},
+    {n:'date',t:'date'},
+    {n:'duration_minutes',t:'int'},
+    {n:'room_id',t:'uuid',fk:'rooms'},
+    {n:'coefficient',t:'numeric'},
+    {n:'max_score',t:'numeric'},
+    {n:'created_at',t:'timestamp'}
   ]},
   {id:'grades',mod:'eval',icon:'⭐',cols:[
-    {n:'id',t:'uuid',pk:true},{n:'student_id',t:'uuid',fk:'students'},
-    {n:'exam_id',t:'uuid',fk:'exams'},{n:'score',t:'numeric'}
+    {n:'id',t:'uuid',pk:true},
+    {n:'student_id',t:'uuid',fk:'students'},
+    {n:'exam_id',t:'uuid',fk:'exams'},
+    {n:'score',t:'numeric'},
+    {n:'comment',t:'text'},
+    {n:'graded_by',t:'uuid',fk:'profiles'},
+    {n:'graded_at',t:'timestamp'}
   ]},
   {id:'report_cards',mod:'eval',icon:'📊',cols:[
-    {n:'id',t:'uuid',pk:true},{n:'student_id',t:'uuid',fk:'students'},
-    {n:'period',t:'enum'},{n:'academic_year',t:'text'}
+    {n:'id',t:'uuid',pk:true},
+    {n:'student_id',t:'uuid',fk:'students'},
+    {n:'period',t:'enum'},
+    {n:'academic_year',t:'text'},
+    {n:'average',t:'numeric'},
+    {n:'rank',t:'int'},
+    {n:'decision',t:'text'},
+    {n:'pdf_url',t:'text'},
+    {n:'published_at',t:'timestamp'},
+    {n:'created_at',t:'timestamp'}
   ]},
   {id:'report_card_lines',mod:'eval',icon:'📈',cols:[
-    {n:'id',t:'uuid',pk:true},{n:'report_card_id',t:'uuid',fk:'report_cards'},
-    {n:'subject_id',t:'uuid',fk:'subjects'}
-  ]},
-  {id:'homework_assignments',mod:'pedagogy',icon:'✏️',cols:[
-    {n:'id',t:'uuid',pk:true},{n:'class_subject_id',t:'uuid',fk:'class_subjects'}
-  ]},
-  {id:'homework_submissions',mod:'pedagogy',icon:'📬',cols:[
-    {n:'id',t:'uuid',pk:true},{n:'assignment_id',t:'uuid',fk:'homework_assignments'},
-    {n:'student_id',t:'uuid',fk:'students'}
+    {n:'id',t:'uuid',pk:true},
+    {n:'report_card_id',t:'uuid',fk:'report_cards'},
+    {n:'subject_id',t:'uuid',fk:'subjects'},
+    {n:'average',t:'numeric'},
+    {n:'class_average',t:'numeric'},
+    {n:'coefficient',t:'numeric'},
+    {n:'teacher_comment',t:'text'}
   ]},
 
   // ── PRÉSENCES & DISCIPLINE ──
   {id:'attendance',mod:'attendance',icon:'✅',cols:[
-    {n:'id',t:'uuid',pk:true},{n:'student_id',t:'uuid',fk:'students'},
-    {n:'class_subject_id',t:'uuid',fk:'class_subjects'},{n:'status',t:'enum'}
+    {n:'id',t:'uuid',pk:true},
+    {n:'student_id',t:'uuid',fk:'students'},
+    {n:'class_subject_id',t:'uuid',fk:'class_subjects'},
+    {n:'date',t:'date'},
+    {n:'status',t:'enum'},
+    {n:'recorded_by',t:'uuid',fk:'profiles'},
+    {n:'comment',t:'text'},
+    {n:'created_at',t:'timestamp'}
   ]},
   {id:'disciplinary_actions',mod:'attendance',icon:'⚠️',cols:[
-    {n:'id',t:'uuid',pk:true},{n:'student_id',t:'uuid',fk:'students'},{n:'type',t:'enum'}
+    {n:'id',t:'uuid',pk:true},
+    {n:'student_id',t:'uuid',fk:'students'},
+    {n:'type',t:'enum'},
+    {n:'reason',t:'text'},
+    {n:'date',t:'date'},
+    {n:'decided_by',t:'uuid',fk:'profiles'},
+    {n:'description',t:'text'},
+    {n:'created_at',t:'timestamp'}
   ]},
   {id:'duty_schedule',mod:'attendance',icon:'👮',cols:[
-    {n:'id',t:'uuid',pk:true},{n:'staff_id',t:'uuid',fk:'staff'}
+    {n:'id',t:'uuid',pk:true},
+    {n:'staff_id',t:'uuid',fk:'staff'},
+    {n:'date',t:'date'},
+    {n:'time_slot',t:'text'},
+    {n:'location',t:'text'},
+    {n:'notes',t:'text'},
+    {n:'created_at',t:'timestamp'}
   ]},
 
   // ── FINANCES ──
   {id:'fee_structures',mod:'finance',icon:'💳',cols:[
-    {n:'id',t:'uuid',pk:true},{n:'establishment_id',t:'uuid',fk:'establishments'}
+    {n:'id',t:'uuid',pk:true},
+    {n:'establishment_id',t:'uuid',fk:'establishments'},
+    {n:'name',t:'text'},
+    {n:'level',t:'text'},
+    {n:'academic_year',t:'text'},
+    {n:'amount',t:'numeric'},
+    {n:'frequency',t:'enum'},
+    {n:'created_at',t:'timestamp'}
   ]},
   {id:'invoices',mod:'finance',icon:'🧾',cols:[
-    {n:'id',t:'uuid',pk:true},{n:'student_id',t:'uuid',fk:'students'}
+    {n:'id',t:'uuid',pk:true},
+    {n:'student_id',t:'uuid',fk:'students'},
+    {n:'invoice_number',t:'text'},
+    {n:'issue_date',t:'date'},
+    {n:'due_date',t:'date'},
+    {n:'total',t:'numeric'},
+    {n:'tax',t:'numeric'},
+    {n:'status',t:'enum'},
+    {n:'pdf_url',t:'text'},
+    {n:'created_at',t:'timestamp'},
+    {n:'updated_at',t:'timestamp'}
   ]},
   {id:'invoice_lines',mod:'finance',icon:'📋',cols:[
-    {n:'id',t:'uuid',pk:true},{n:'invoice_id',t:'uuid',fk:'invoices'}
+    {n:'id',t:'uuid',pk:true},
+    {n:'invoice_id',t:'uuid',fk:'invoices'},
+    {n:'description',t:'text'},
+    {n:'quantity',t:'int'},
+    {n:'unit_price',t:'numeric'},
+    {n:'total',t:'numeric'}
   ]},
   {id:'payments',mod:'finance',icon:'💵',cols:[
-    {n:'id',t:'uuid',pk:true},{n:'invoice_id',t:'uuid',fk:'invoices'},
-    {n:'student_id',t:'uuid',fk:'students'}
+    {n:'id',t:'uuid',pk:true},
+    {n:'invoice_id',t:'uuid',fk:'invoices'},
+    {n:'student_id',t:'uuid',fk:'students'},
+    {n:'amount',t:'numeric'},
+    {n:'method',t:'enum'},
+    {n:'payment_date',t:'date'},
+    {n:'reference',t:'text'},
+    {n:'received_by',t:'uuid',fk:'profiles'},
+    {n:'receipt_url',t:'text'},
+    {n:'created_at',t:'timestamp'}
   ]},
   {id:'scholarships',mod:'finance',icon:'🏅',cols:[
-    {n:'id',t:'uuid',pk:true},{n:'student_id',t:'uuid',fk:'students'}
+    {n:'id',t:'uuid',pk:true},
+    {n:'student_id',t:'uuid',fk:'students'},
+    {n:'type',t:'enum'},
+    {n:'amount',t:'numeric'},
+    {n:'academic_year',t:'text'},
+    {n:'status',t:'enum'},
+    {n:'decision_date',t:'date'},
+    {n:'created_at',t:'timestamp'}
   ]},
   {id:'budget_entries',mod:'finance',icon:'📊',cols:[
-    {n:'id',t:'uuid',pk:true},{n:'establishment_id',t:'uuid',fk:'establishments'}
+    {n:'id',t:'uuid',pk:true},
+    {n:'establishment_id',t:'uuid',fk:'establishments'},
+    {n:'type',t:'enum'},
+    {n:'category',t:'text'},
+    {n:'amount',t:'numeric'},
+    {n:'date',t:'date'},
+    {n:'description',t:'text'},
+    {n:'created_by',t:'uuid',fk:'profiles'},
+    {n:'created_at',t:'timestamp'}
   ]},
 
   // ── ÉVÉNEMENTS ──
   {id:'events',mod:'events',icon:'🎉',cols:[
-    {n:'id',t:'uuid',pk:true},{n:'establishment_id',t:'uuid',fk:'establishments'}
+    {n:'id',t:'uuid',pk:true},
+    {n:'establishment_id',t:'uuid',fk:'establishments'},
+    {n:'title',t:'text'},
+    {n:'description',t:'text'},
+    {n:'start_at',t:'timestamp'},
+    {n:'end_at',t:'timestamp'},
+    {n:'location',t:'text'},
+    {n:'type',t:'text'},
+    {n:'capacity',t:'int'},
+    {n:'cover_image_url',t:'text'},
+    {n:'created_at',t:'timestamp'}
   ]},
   {id:'event_activities',mod:'events',icon:'🎯',cols:[
-    {n:'id',t:'uuid',pk:true},{n:'event_id',t:'uuid',fk:'events'}
+    {n:'id',t:'uuid',pk:true},
+    {n:'event_id',t:'uuid',fk:'events'},
+    {n:'name',t:'text'},
+    {n:'description',t:'text'},
+    {n:'start_at',t:'timestamp'},
+    {n:'end_at',t:'timestamp'},
+    {n:'instructor',t:'text'},
+    {n:'max_participants',t:'int'}
+  ]},
+  {id:'event_fees',mod:'events',icon:'💰',cols:[
+    {n:'id',t:'uuid',pk:true},
+    {n:'event_id',t:'uuid',fk:'events'},
+    {n:'name',t:'text'},
+    {n:'amount',t:'numeric'},
+    {n:'mandatory',t:'bool'}
   ]},
   {id:'event_registrations',mod:'events',icon:'📝',cols:[
-    {n:'id',t:'uuid',pk:true},{n:'event_id',t:'uuid',fk:'events'},{n:'student_id',t:'uuid',fk:'students'}
+    {n:'id',t:'uuid',pk:true},
+    {n:'event_id',t:'uuid',fk:'events'},
+    {n:'student_id',t:'uuid',fk:'students'},
+    {n:'registered_at',t:'timestamp'},
+    {n:'payment_status',t:'text'},
+    {n:'attended',t:'bool'}
   ]},
 
   // ── BIBLIOTHÈQUE ──
   {id:'books',mod:'library',icon:'📚',cols:[
-    {n:'id',t:'uuid',pk:true},{n:'isbn',t:'text'},{n:'title',t:'text'}
+    {n:'id',t:'uuid',pk:true},
+    {n:'isbn',t:'text'},
+    {n:'title',t:'text'},
+    {n:'author',t:'text'},
+    {n:'publisher',t:'text'},
+    {n:'year',t:'int'},
+    {n:'category',t:'text'},
+    {n:'total_copies',t:'int'},
+    {n:'available_copies',t:'int'},
+    {n:'cover_url',t:'text'},
+    {n:'location',t:'text'},
+    {n:'created_at',t:'timestamp'}
   ]},
   {id:'book_loans',mod:'library',icon:'🔖',cols:[
-    {n:'id',t:'uuid',pk:true},{n:'book_id',t:'uuid',fk:'books'},{n:'borrower_id',t:'uuid',fk:'profiles'}
+    {n:'id',t:'uuid',pk:true},
+    {n:'book_id',t:'uuid',fk:'books'},
+    {n:'borrower_id',t:'uuid',fk:'profiles'},
+    {n:'loan_date',t:'date'},
+    {n:'due_date',t:'date'},
+    {n:'return_date',t:'date'},
+    {n:'status',t:'enum'},
+    {n:'fine_amount',t:'numeric'},
+    {n:'created_at',t:'timestamp'}
   ]},
 
   // ── COMMUNICATION ──
   {id:'announcements',mod:'comms',icon:'📢',cols:[
-    {n:'id',t:'uuid',pk:true},{n:'establishment_id',t:'uuid',fk:'establishments'},
-    {n:'author_id',t:'uuid',fk:'profiles'}
+    {n:'id',t:'uuid',pk:true},
+    {n:'establishment_id',t:'uuid',fk:'establishments'},
+    {n:'title',t:'text'},
+    {n:'body',t:'text'},
+    {n:'audience',t:'enum'},
+    {n:'target_class_id',t:'uuid',fk:'classes'},
+    {n:'published_at',t:'timestamp'},
+    {n:'expires_at',t:'timestamp'},
+    {n:'author_id',t:'uuid',fk:'profiles'},
+    {n:'created_at',t:'timestamp'}
   ]},
   {id:'messages',mod:'comms',icon:'✉️',cols:[
-    {n:'id',t:'uuid',pk:true},{n:'sender_id',t:'uuid',fk:'profiles'},{n:'recipient_id',t:'uuid',fk:'profiles'}
+    {n:'id',t:'uuid',pk:true},
+    {n:'sender_id',t:'uuid',fk:'profiles'},
+    {n:'recipient_id',t:'uuid',fk:'profiles'},
+    {n:'subject',t:'text'},
+    {n:'body',t:'text'},
+    {n:'attachments',t:'jsonb'},
+    {n:'read_at',t:'timestamp'},
+    {n:'created_at',t:'timestamp'}
+  ]},
+  {id:'conversations',mod:'comms',icon:'💬',cols:[
+    {n:'id',t:'uuid',pk:true},
+    {n:'participants',t:'jsonb'},
+    {n:'last_message_at',t:'timestamp'}
   ]},
   {id:'notifications',mod:'comms',icon:'🔔',cols:[
-    {n:'id',t:'uuid',pk:true},{n:'user_id',t:'uuid',fk:'users'}
+    {n:'id',t:'uuid',pk:true},
+    {n:'user_id',t:'uuid',fk:'users'},
+    {n:'type',t:'text'},
+    {n:'title',t:'text'},
+    {n:'body',t:'text'},
+    {n:'link',t:'text'},
+    {n:'read_at',t:'timestamp'},
+    {n:'created_at',t:'timestamp'}
   ]},
 
   // ── UNIVERSITAIRE ──
   {id:'theses',mod:'university',icon:'🎓',cols:[
-    {n:'id',t:'uuid',pk:true},{n:'student_id',t:'uuid',fk:'students'},
-    {n:'supervisor_id',t:'uuid',fk:'teachers'}
+    {n:'id',t:'uuid',pk:true},
+    {n:'student_id',t:'uuid',fk:'students'},
+    {n:'title',t:'text'},
+    {n:'cycle',t:'enum'},
+    {n:'supervisor_id',t:'uuid',fk:'teachers'},
+    {n:'co_supervisor_id',t:'uuid',fk:'teachers'},
+    {n:'start_date',t:'date'},
+    {n:'defense_date',t:'date'},
+    {n:'status',t:'enum'},
+    {n:'final_grade',t:'numeric'},
+    {n:'pdf_url',t:'text'},
+    {n:'created_at',t:'timestamp'}
   ]},
   {id:'diplomas',mod:'university',icon:'📜',cols:[
-    {n:'id',t:'uuid',pk:true},{n:'student_id',t:'uuid',fk:'students'},
-    {n:'program_id',t:'uuid',fk:'programs'}
+    {n:'id',t:'uuid',pk:true},
+    {n:'student_id',t:'uuid',fk:'students'},
+    {n:'program_id',t:'uuid',fk:'programs'},
+    {n:'serial_number',t:'text'},
+    {n:'issue_date',t:'date'},
+    {n:'mention',t:'text'},
+    {n:'pdf_url',t:'text'},
+    {n:'signed_by',t:'uuid',fk:'profiles'},
+    {n:'created_at',t:'timestamp'}
   ]},
   {id:'internships',mod:'university',icon:'🏗️',cols:[
-    {n:'id',t:'uuid',pk:true},{n:'student_id',t:'uuid',fk:'students'}
+    {n:'id',t:'uuid',pk:true},
+    {n:'student_id',t:'uuid',fk:'students'},
+    {n:'company_name',t:'text'},
+    {n:'tutor_name',t:'text'},
+    {n:'start_date',t:'date'},
+    {n:'end_date',t:'date'},
+    {n:'topic',t:'text'},
+    {n:'mentor_teacher_id',t:'uuid',fk:'teachers'},
+    {n:'status',t:'text'},
+    {n:'final_grade',t:'numeric'},
+    {n:'created_at',t:'timestamp'}
   ]},
 
   // ── SYSTÈME ──
   {id:'audit_logs',mod:'system',icon:'🔍',cols:[
-    {n:'id',t:'uuid',pk:true},{n:'user_id',t:'uuid',fk:'users'}
+    {n:'id',t:'uuid',pk:true},
+    {n:'user_id',t:'uuid',fk:'users'},
+    {n:'action',t:'text'},
+    {n:'entity_type',t:'text'},
+    {n:'entity_id',t:'uuid'},
+    {n:'metadata',t:'jsonb'},
+    {n:'ip_address',t:'inet'},
+    {n:'created_at',t:'timestamp'}
   ]},
   {id:'settings',mod:'system',icon:'⚙️',cols:[
-    {n:'id',t:'uuid',pk:true},{n:'establishment_id',t:'uuid',fk:'establishments'}
+    {n:'id',t:'uuid',pk:true},
+    {n:'establishment_id',t:'uuid',fk:'establishments'},
+    {n:'key',t:'text'},
+    {n:'value',t:'jsonb'},
+    {n:'updated_at',t:'timestamp'}
   ]},
   {id:'backups',mod:'system',icon:'💾',cols:[
-    {n:'id',t:'uuid',pk:true},{n:'created_by',t:'uuid',fk:'users'}
+    {n:'id',t:'uuid',pk:true},
+    {n:'filename',t:'text'},
+    {n:'size_bytes',t:'bigint'},
+    {n:'created_at',t:'timestamp'},
+    {n:'created_by',t:'uuid',fk:'users'},
+    {n:'status',t:'text'}
   ]},
   {id:'subscriptions',mod:'system',icon:'🔄',cols:[
-    {n:'id',t:'uuid',pk:true},{n:'establishment_id',t:'uuid',fk:'establishments'}
+    {n:'id',t:'uuid',pk:true},
+    {n:'establishment_id',t:'uuid',fk:'establishments'},
+    {n:'plan',t:'text'},
+    {n:'status',t:'text'},
+    {n:'started_at',t:'timestamp'},
+    {n:'expires_at',t:'timestamp'},
+    {n:'created_at',t:'timestamp'}
   ]}
 ];
+
+
 // ─────────────────────────────────────────────
 // STATE
 // ─────────────────────────────────────────────
