@@ -1,16 +1,40 @@
 import { useState } from "react";
 import { Link as RouterLink } from "react-router-dom";
-import { Box, Card, CardContent, TextField, Button, Typography, Stack, Link, Alert, useTheme } from "@mui/material";
+import {
+  Box,
+  Card,
+  CardContent,
+  TextField,
+  Button,
+  Typography,
+  Stack,
+  Link,
+  Alert,
+  useTheme,
+} from "@mui/material";
 import MailLockIcon from "@mui/icons-material/MailLock";
+import { forgotpassword } from "@/services/auth.service";
+import { enqueueSnackbar } from "notistack";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
-  const  theme  = useTheme();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const theme = useTheme();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (email) setSent(true);
+    setLoading(true);
+    try {
+      await forgotpassword(email);
+      enqueueSnackbar("Reset link sent successfully", {variant: 'success'})
+      setSent(true);
+    } catch (error: any) {
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

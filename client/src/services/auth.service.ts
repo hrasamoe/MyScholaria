@@ -58,3 +58,14 @@ export async function logout(): Promise<void> {
   localStorage.removeItem("refreshToken");
   localStorage.removeItem("user");
 }
+
+export async function forgotpassword(email: string): Promise<void> {
+  const res = await fetch(`${API_URL}/api/auth/forgot-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message);
+  return data;
+}
