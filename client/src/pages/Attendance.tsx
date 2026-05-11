@@ -1,5 +1,4 @@
 import { useState } from "react";
-import AppLayout from "@/components/AppLayout";
 import PageHeader from "@/components/PageHeader";
 import {
   Button, Card, Box, Typography, Checkbox, FormControlLabel,
@@ -32,7 +31,7 @@ const Attendance = () => {
   const rate = Math.round((presentCount / attendance.length) * 100);
 
   return (
-    <AppLayout>
+    <>
       <PageHeader title="Attendance" subtitle="Mark daily class attendance" />
 
       <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mb: 3 }}>
@@ -76,7 +75,7 @@ const Attendance = () => {
           </Button>
         </Box>
       </Card>
-    </AppLayout>
+    </>
   );
 };
 

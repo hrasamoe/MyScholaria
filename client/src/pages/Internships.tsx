@@ -1,5 +1,4 @@
 import { useState } from "react";
-import AppLayout from "@/components/AppLayout";
 import PageHeader from "@/components/PageHeader";
 import DataTable from "@/components/DataTable";
 import { Button, TextField, Dialog, DialogTitle, DialogContent, DialogActions, Chip, MenuItem } from "@mui/material";
@@ -40,7 +39,7 @@ const Internships = () => {
   ];
 
   return (
-    <AppLayout>
+    <>
       <PageHeader title="Internships" subtitle="Internship & work-study tracking" action={
         <Button variant="contained" color="success" startIcon={<AddIcon />} onClick={() => setOpen(true)}>Add Internship</Button>
       } />
@@ -67,7 +66,7 @@ const Internships = () => {
           <Button variant="contained" onClick={handleAdd}>Save</Button>
         </DialogActions>
       </Dialog>
-    </AppLayout>
+    </>
   );
 };
 

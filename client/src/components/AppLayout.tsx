@@ -1,8 +1,9 @@
 import { ReactNode, useState } from "react";
 import { Box } from "@mui/material";
 import AppSidebar, { DRAWER_WIDTH, COLLAPSED_WIDTH } from "./AppSidebar";
+import { Outlet } from "react-router-dom";
 
-const AppLayout = ({ children }: { children: ReactNode }) => {
+const AppLayout = ({ }: { }) => {
   const [collapsed, setCollapsed] = useState(false);
   const sidebarWidth = collapsed ? COLLAPSED_WIDTH : DRAWER_WIDTH;
 
@@ -20,7 +21,7 @@ const AppLayout = ({ children }: { children: ReactNode }) => {
           transition: (theme) => theme.transitions.create("width"),
         }}
       >
-        {children}
+        <Outlet/>      
       </Box>
     </Box>
   );

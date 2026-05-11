@@ -1,5 +1,4 @@
 import { useState } from "react";
-import AppLayout from "@/components/AppLayout";
 import PageHeader from "@/components/PageHeader";
 import DataTable from "@/components/DataTable";
 import {
@@ -62,7 +61,7 @@ const Students = () => {
   ];
 
   return (
-    <AppLayout>
+    <>
       <PageHeader
         title="Students"
         subtitle={`${students.length} students enrolled`}
@@ -105,7 +104,7 @@ const Students = () => {
           <Button variant="contained" onClick={handleAdd}>Save Student</Button>
         </DialogActions>
       </Dialog>
-    </AppLayout>
+    </>
   );
 };
 

@@ -1,8 +1,11 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-import { ThemeProvider } from "@mui/material/styles";
-import CssBaseline from "@mui/material/CssBaseline";
+import { CssBaseline } from "@mui/material";
 import { SnackbarProvider } from "notistack";
-import theme from "./theme";
+import { AppThemeProvider } from "./hooks/Themecontext";
+import { AuthProvider } from "./hooks/Authcontext";
+import { ProtectedRoute, RoleRoute } from "./hooks/ProtectRoute";
+import AppLayout from "./components/AppLayout";
+
 import Dashboard from "./pages/Dashboard";
 import Students from "./pages/Students";
 import Teachers from "./pages/Teachers";
@@ -43,6 +46,10 @@ import ChangePassword from "./pages/ChangePassword";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import NotFound from "./pages/NotFound";
+import VerifyEmail from "./pages/VerifyEmail";
+import ChangePassword from "./pages/ChangePassword";
+import Terms from "./pages/Terms";
+import Privacy from "./pages/Privacy";
 
 const App = () => (
   <ThemeProvider theme={theme}>

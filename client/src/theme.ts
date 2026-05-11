@@ -1,7 +1,42 @@
-import { createTheme } from "@mui/material/styles";
+import { createTheme, type ThemeOptions } from "@mui/material/styles";
 
-const theme = createTheme({
+const shared: ThemeOptions = {
+  typography: {
+    fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
+    h1: { fontWeight: 700 },
+    h2: { fontWeight: 700 },
+    h3: { fontWeight: 600 },
+    h4: { fontWeight: 600 },
+    h5: { fontWeight: 600 },
+    h6: { fontWeight: 600 },
+  },
+  shape: {
+    borderRadius: 8,
+  },
+  components: {
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          textTransform: "none",
+          fontWeight: 600,
+        },
+      },
+    },
+    MuiCard: {
+      styleOverrides: {
+        root: ({ theme }) => ({
+          boxShadow: "0 1px 3px 0 rgb(0 0 0 / 0.1)",
+          border: `1px solid ${theme.palette.divider}`,
+        }),
+      },
+    },
+  },
+};
+
+export const lightTheme = createTheme({
+  ...shared,
   palette: {
+    mode: "light",
     primary: {
       main: "#1976d2",
       contrastText: "#fff",
@@ -32,36 +67,118 @@ const theme = createTheme({
     },
     divider: "#e2e8f0",
   },
-  typography: {
-    fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
-    h1: { fontWeight: 700 },
-    h2: { fontWeight: 700 },
-    h3: { fontWeight: 600 },
-    h4: { fontWeight: 600 },
-    h5: { fontWeight: 600 },
-    h6: { fontWeight: 600 },
-  },
-  shape: {
-    borderRadius: 8,
+});
+
+export const darkTheme = createTheme({
+  ...shared,
+  palette: {
+    mode: "dark",
+    primary: {
+      main: "#5b8def",
+      contrastText: "#fff",
+    },
+    secondary: {
+      main: "#212636",
+      contrastText: "#e8eaf0",
+    },
+    success: {
+      main: "#3dcf8e",
+      contrastText: "#0d0f14",
+    },
+    warning: {
+      main: "#f0a429",
+      contrastText: "#0d0f14",
+    },
+    error: {
+      main: "#e8604c",
+      contrastText: "#fff",
+    },
+    background: {
+      default: "#0d0f14",
+      paper: "#13161e",
+    },
+    text: {
+      primary: "#e8eaf0",
+      secondary: "#9ba3b8",
+    },
+    divider: "#2a2f3d",
   },
   components: {
-    MuiButton: {
+    ...shared.components,
+    MuiCard: {
       styleOverrides: {
         root: {
-          textTransform: "none",
+          boxShadow: "0 4px 24px rgba(0,0,0,0.5)",
+          border: "1px solid #2a2f3d",
+          backgroundImage: "none", // supprime le lift MUI dark par défaut
+        },
+      },
+    },
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          backgroundImage: "none",
+        },
+      },
+    },
+    MuiDrawer: {
+      styleOverrides: {
+        paper: {
+          backgroundColor: "#13161e",
+          borderRight: "1px solid #2a2f3d",
+        },
+      },
+    },
+    MuiAppBar: {
+      styleOverrides: {
+        root: {
+          backgroundColor: "#13161e",
+          borderBottom: "1px solid #2a2f3d",
+          boxShadow: "none",
+        },
+      },
+    },
+    MuiTableCell: {
+      styleOverrides: {
+        root: {
+          borderBottomColor: "#2a2f3d",
+        },
+        head: {
+          backgroundColor: "#1a1e28",
+          color: "#9ba3b8",
           fontWeight: 600,
         },
       },
     },
-    MuiCard: {
+    MuiTableRow: {
       styleOverrides: {
         root: {
-          boxShadow: "0 1px 3px 0 rgb(0 0 0 / 0.1)",
-          border: "1px solid #e2e8f0",
+          "&:hover": {
+            backgroundColor: "#1a1e28",
+          },
+        },
+      },
+    },
+    MuiChip: {
+      styleOverrides: {
+        root: {
+          borderColor: "#353b4f",
+        },
+      },
+    },
+    MuiOutlinedInput: {
+      styleOverrides: {
+        notchedOutline: {
+          borderColor: "#2a2f3d",
+        },
+      },
+    },
+    MuiDivider: {
+      styleOverrides: {
+        root: {
+          borderColor: "#2a2f3d",
         },
       },
     },
   },
 });
-
-export default theme;

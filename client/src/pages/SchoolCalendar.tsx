@@ -1,5 +1,4 @@
 import { useState } from "react";
-import AppLayout from "@/components/AppLayout";
 import PageHeader from "@/components/PageHeader";
 import { Button, Card, CardContent, Typography, Box, Chip, Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem, Stack } from "@mui/material";
 import Grid from "@mui/material/Grid";
@@ -33,7 +32,7 @@ const SchoolCalendar = () => {
   };
 
   return (
-    <AppLayout>
+    <>
       <PageHeader title="School Calendar" subtitle="Terms, holidays, exams and events" action={
         <Button variant="contained" color="success" startIcon={<AddIcon />} onClick={() => setOpen(true)}>Add Event</Button>
       } />
@@ -79,7 +78,7 @@ const SchoolCalendar = () => {
           <Button variant="contained" onClick={handleAdd}>Save</Button>
         </DialogActions>
       </Dialog>
-    </AppLayout>
+    </>
   );
 };
 

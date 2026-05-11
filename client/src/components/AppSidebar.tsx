@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Drawer,
   List,
@@ -14,6 +14,7 @@ import {
   useMediaQuery,
   useTheme,
   Tooltip,
+  Divider,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import CloseIcon from "@mui/icons-material/Close";
@@ -50,6 +51,9 @@ import VerifiedIcon from "@mui/icons-material/Verified";
 import AssessmentIcon from "@mui/icons-material/Assessment";
 import LockIcon from "@mui/icons-material/Lock";
 import SettingsIcon from "@mui/icons-material/Settings";
+import LogoutIcon from "@mui/icons-material/Logout";
+import { useAuth } from "../hooks/Authcontext";
+import { logout } from "@/services/auth.service";
 
 export const DRAWER_WIDTH = 260;
 export const COLLAPSED_WIDTH = 72;
@@ -101,23 +105,43 @@ const navGroups = [
   {
     label: "Portals",
     items: [
-      { label: "Parent Portal", path: "/portal/parent", icon: <FamilyRestroomIcon /> },
-      { label: "Student Portal", path: "/portal/student", icon: <PersonIcon /> },
+      {
+        label: "Parent Portal",
+        path: "/portal/parent",
+        icon: <FamilyRestroomIcon />,
+      },
+      {
+        label: "Student Portal",
+        path: "/portal/student",
+        icon: <PersonIcon />,
+      },
     ],
   },
   {
     label: "Communication",
     items: [
       { label: "Messages", path: "/messages", icon: <ChatIcon /> },
-      { label: "Announcements", path: "/announcements", icon: <CampaignIcon /> },
+      {
+        label: "Announcements",
+        path: "/announcements",
+        icon: <CampaignIcon />,
+      },
       { label: "Events", path: "/events", icon: <EventIcon /> },
-      { label: "Notifications", path: "/notifications", icon: <NotificationsIcon /> },
+      {
+        label: "Notifications",
+        path: "/notifications",
+        icon: <NotificationsIcon />,
+      },
     ],
   },
   {
     label: "University",
     items: [
-      { label: "Programs (LMD)", path: "/programs", icon: <WorkspacePremiumIcon /> },
+      {
+        label: "Programs (LMD)",
+        path: "/programs",
+        icon: <WorkspacePremiumIcon />,
+      },
       { label: "Theses", path: "/theses", icon: <ScienceIcon /> },
       { label: "Diplomas", path: "/diplomas", icon: <VerifiedIcon /> },
     ],
@@ -142,7 +166,20 @@ const AppSidebar = ({ collapsed, onToggleCollapsed }: AppSidebarProps) => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
   const theme = useTheme();
+  const navigate = useNavigate();
   const isDesktop = useMediaQuery(theme.breakpoints.up("lg"));
+
+  const { clearAuth } = useAuth();
+  const handleLogOut = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.log("Logout error: ", error);
+    } finally {
+      clearAuth();
+      navigate("/auth/signin");
+    }
+  };
 
   const renderContent = (mini: boolean) => (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
@@ -179,6 +216,7 @@ const AppSidebar = ({ collapsed, onToggleCollapsed }: AppSidebarProps) => {
           </IconButton>
         )}
       </Box>
+
       <Box sx={{ flex: 1, overflowY: "auto", py: 1 }}>
         {navGroups.map((group) => (
           <List
@@ -260,39 +298,77 @@ const AppSidebar = ({ collapsed, onToggleCollapsed }: AppSidebarProps) => {
           </List>
         ))}
       </Box>
-      {mini && isDesktop && (
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "center",
-            p: 1,
-            borderTop: 1,
-            borderColor: "divider",
-          }}
-        >
-          <Tooltip title="Expand menu" placement="right" arrow>
-            <IconButton size="small" onClick={onToggleCollapsed}>
-              <MenuIcon />
-            </IconButton>
-          </Tooltip>
-        </Box>
-      )}
+
+      <Box sx={{ p: 1, mt: "auto", borderTop: 1, borderColor: "divider" }}>
+        <ListItem disablePadding sx={{ px: 1 }}>
+          <ListItemButton
+            onClick={handleLogOut}
+            sx={{
+              borderRadius: 1,
+              justifyContent: mini ? "center" : "flex-start",
+              px: mini ? 1 : 2,
+              color: "inherit",
+              "&:hover": {
+                bgcolor: "error.light",
+                color: "error.contrastText",
+                "& .MuiListItemIcon-root": { color: "error.contrastText" },
+              },
+            }}
+          >
+            <ListItemIcon
+              sx={{
+                minWidth: mini ? 0 : 36,
+                justifyContent: "center",
+                color: "inherit",
+              }}
+            >
+              <LogoutIcon />
+            </ListItemIcon>
+            {!mini && (
+              <ListItemText
+                primary="Logout"
+                primaryTypographyProps={{
+                  fontSize: "0.875rem",
+                  fontWeight: 600,
+                }}
+              />
+            )}
+          </ListItemButton>
+        </ListItem>
+
+        {mini && isDesktop && (
+          <Box sx={{ display: "flex", justifyContent: "center", mt: 1 }}>
+            <Tooltip title="Expand menu" placement="right" arrow>
+              <IconButton size="small" onClick={onToggleCollapsed}>
+                <MenuIcon />
+              </IconButton>
+            </Tooltip>
+          </Box>
+        )}
+      </Box>
     </Box>
   );
 
   return (
     <>
-      {/* Mobile toggle */}
       {!isDesktop && (
         <IconButton
           onClick={() => setMobileOpen(true)}
-          sx={{ position: "fixed", top: 8, left: 8, zIndex: 1300, bgcolor: "background.paper", border: 1, borderColor: "divider", boxShadow: 1 }}
+          sx={{
+            position: "fixed",
+            top: 8,
+            left: 8,
+            zIndex: 1300,
+            bgcolor: "background.paper",
+            border: 1,
+            borderColor: "divider",
+            boxShadow: 1,
+          }}
         >
           <MenuIcon />
         </IconButton>
       )}
 
-      {/* Mobile drawer */}
       <Drawer
         variant="temporary"
         open={mobileOpen}
@@ -311,7 +387,6 @@ const AppSidebar = ({ collapsed, onToggleCollapsed }: AppSidebarProps) => {
         {renderContent(false)}
       </Drawer>
 
-      {/* Desktop drawer */}
       <Drawer
         variant="permanent"
         sx={{

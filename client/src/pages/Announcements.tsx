@@ -1,5 +1,4 @@
 import { useState } from "react";
-import AppLayout from "@/components/AppLayout";
 import PageHeader from "@/components/PageHeader";
 import { Button, Card, CardContent, Typography, Chip, Stack, Dialog, DialogTitle, DialogContent, DialogActions, TextField } from "@mui/material";
 import Grid from "@mui/material/Grid";
@@ -28,7 +27,7 @@ const Announcements = () => {
   };
 
   return (
-    <AppLayout>
+    <>
       <PageHeader title="Announcements" subtitle="School-wide bulletin board" action={
         <Button variant="contained" color="success" startIcon={<AddIcon />} onClick={() => setOpen(true)}>New Announcement</Button>
       } />
@@ -69,7 +68,7 @@ const Announcements = () => {
           <Button variant="contained" onClick={handleAdd}>Publish</Button>
         </DialogActions>
       </Dialog>
-    </AppLayout>
+    </>
   );
 };
 

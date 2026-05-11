@@ -1,4 +1,3 @@
-import AppLayout from "@/components/AppLayout";
 import PageHeader from "@/components/PageHeader";
 import { Card, CardContent, Typography, Box, Chip, Stack, Avatar, Divider, List, ListItem, ListItemText, ListItemAvatar } from "@mui/material";
 import Grid from "@mui/material/Grid";
@@ -8,7 +7,7 @@ import MessageIcon from "@mui/icons-material/Message";
 import PaymentIcon from "@mui/icons-material/Payment";
 
 const ParentPortal = () => (
-  <AppLayout>
+  <>
     <PageHeader title="Parent Portal" subtitle="Family overview — Mr. Mohamed Ben Ali" />
 
     <Grid container spacing={2}>
@@ -93,7 +92,7 @@ const ParentPortal = () => (
         </Card>
       </Grid>
     </Grid>
-  </AppLayout>
+  </>
 );
 
 export default ParentPortal;

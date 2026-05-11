@@ -3,7 +3,6 @@ import {
   Box, Card, CardContent, TextField, Button, Typography, Stack,
   IconButton, InputAdornment, Alert, LinearProgress, Divider, List, ListItem, ListItemIcon, ListItemText,
 } from "@mui/material";
-import AppLayout from "@/components/AppLayout";
 import PageHeader from "@/components/PageHeader";
 import LockResetIcon from "@mui/icons-material/LockReset";
 import VisibilityIcon from "@mui/icons-material/Visibility";
@@ -53,7 +52,7 @@ const ChangePassword = () => {
   );
 
   return (
-    <AppLayout>
+    <>
       <PageHeader title="Change Password" subtitle="Update your account password regularly to stay secure" />
       <Box sx={{ display: "flex", justifyContent: "center" }}>
         <Card sx={{ width: "100%", maxWidth: 560 }}>
@@ -116,7 +115,7 @@ const ChangePassword = () => {
           </CardContent>
         </Card>
       </Box>
-    </AppLayout>
+    </>
   );
 };
 

@@ -15,12 +15,13 @@ import {
   FormControlLabel,
   Link,
   Alert,
+  useTheme,
+  CircularProgress,
 } from "@mui/material";
-import SchoolIcon from "@mui/icons-material/School";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
-import GoogleIcon from "@mui/icons-material/Google";
-import AppleIcon from "@mui/icons-material/Apple";
+import { login } from "@/services/auth.service";
+import { useAuth } from "@/hooks/Authcontext";
 import { useSnackbar } from "notistack";
 
 const SignIn = () => {
@@ -29,17 +30,31 @@ const SignIn = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const { enqueueSnackbar } = useSnackbar();
+  const [isLoading, setIsLoading] = useState(false);
+  const theme = useTheme();
   const navigate = useNavigate();
+  const { saveAuth } = useAuth();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) {
       setError("Email and password are required");
       return;
     }
     setError("");
-    enqueueSnackbar("Signed in successfully (mockup)", { variant: "success" });
-    navigate("/");
+    setIsLoading(true);
+    try {
+      const data = await login(email, password);
+      saveAuth(data.user, data.accessToken, data.refreshToken);
+      navigate("/");
+    } catch (err: any) {
+      enqueueSnackbar(`Error: ${err.message}`, {
+        variant: "error",
+      });
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -51,8 +66,7 @@ const SignIn = () => {
         justifyContent: "center",
         bgcolor: "background.default",
         p: 2,
-        background:
-          "linear-gradient(135deg, #e3f2fd 0%, #f7f9fc 50%, #fff 100%)",
+        background: `linear-gradient(135deg, ${theme.palette.background.default} 0%, ${theme.palette.divider} 50%, ${theme.palette.background.paper} 100%)`,
       }}
     >
       <Card sx={{ width: "100%", maxWidth: 440 }}>
@@ -139,7 +153,11 @@ const SignIn = () => {
                 </Link>
               </Stack>
               <Button type="submit" variant="contained" size="large" fullWidth>
-                Sign In
+                {isLoading ? (
+                  <CircularProgress size={22} color="inherit" />
+                ) : (
+                  "Sign In"
+                )}
               </Button>
             </Stack>
           </Box>
@@ -147,7 +165,11 @@ const SignIn = () => {
           <Divider sx={{ my: 3 }}>OR</Divider>
 
           <Stack spacing={1.5}>
-            <Button variant="outlined" fullWidth startIcon={<img src="/google.png" width={20} />}>
+            <Button
+              variant="outlined"
+              fullWidth
+              startIcon={<img src="/google.png" width={20} />}
+            >
               Continue with Google
             </Button>
           </Stack>

@@ -1,5 +1,4 @@
 import { useState } from "react";
-import AppLayout from "@/components/AppLayout";
 import PageHeader from "@/components/PageHeader";
 import DataTable from "@/components/DataTable";
 import { Button, TextField, Dialog, DialogTitle, DialogContent, DialogActions } from "@mui/material";
@@ -49,7 +48,7 @@ const Teachers = () => {
   ];
 
   return (
-    <AppLayout>
+    <>
       <PageHeader title="Teachers" subtitle={`${teachers.length} teachers registered`} action={
         <Button variant="contained" color="success" startIcon={<AddIcon />} onClick={() => setOpen(true)}>Add Teacher</Button>
       } />
@@ -73,7 +72,7 @@ const Teachers = () => {
           <Button variant="contained" onClick={handleAdd}>Save Teacher</Button>
         </DialogActions>
       </Dialog>
-    </AppLayout>
+    </>
   );
 };
 
