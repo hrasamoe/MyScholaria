@@ -5,6 +5,8 @@ import { RegisterInput, LoginInput } from "./auth.schema";
 import { ENV } from "../../config/env";
 import crypto from "crypto";
 import { sendConfirmationEmail } from "../../services/email/confirmation-email";
+import { sendForgotPasswordEmail } from "../../services/email/forgot-password";
+import { populate } from "dotenv";
 
 function generateAccessToken(userId: string) {
   return jwt.sign({ userId }, ENV.JWT_SECRET!, { expiresIn: "15m" });
@@ -14,6 +16,7 @@ function generateRefreshToken(userId: string) {
   return jwt.sign({ userId }, ENV.JWT_SECRET!, { expiresIn: "7d" });
 }
 
+// CONNEXION
 export async function registerUser(data: RegisterInput) {
   const existing = await pool.query("SELECT id FROM users WHERE email = $1", [
     data.email,
@@ -124,4 +127,68 @@ export async function logoutUser(userId: string) {
     "UPDATE refresh_tokens SET revoked_at = NOW() WHERE user_id = $1 AND revoked_at is NULL",
     [userId],
   );
+}
+
+// SECURITY
+export async function forgotPassword(email: string) {
+  const { rows } = await pool.query(
+    `SELECT u.id, p.full_name FROM users u
+    LEFT JOIN profiles p ON p.id = u.id
+    WHERE  u.email = $1 AND u.is_active = true`,
+    [email],
+  );
+  if (rows.length === 0) return;
+  const user = rows[0];
+  const resetToken = crypto.randomBytes(32).toString("hex");
+  const resetExpires = new Date(Date.now() + 60 * 60 * 1000);
+
+  await pool.query(
+    `UPDATE users SET reset_token = $1, reset_expires = $2 WHERE id = $3`,
+    [resetToken, resetExpires, user.id],
+  );
+  await sendForgotPasswordEmail(email, user.full_name, resetToken);
+}
+
+export async function resetPassword(token: string, newPassword: string) {
+  const { rows } = await pool.query(
+    `SELECT id FROM users
+    WHERE reset_token = $1
+    AND reset_expires  > NOW()`,
+    [token],
+  );
+  if (rows.length === 0) throw new Error("Token invalid or expired");
+  const userId = rows[0].id;
+  const hashed = await bcrypt.hash(newPassword, 12);
+
+  await pool.query(
+    `UPDATE users
+    SET password_hash_hash = $1, reset_token  = NULL, reset_expires = NULL
+    WHERE id = $2`,
+    [hashed, userId],
+  );
+
+  const rolesResult = await pool.query(
+    `SELECT role FROM user_roles WHERE user_id = $1`,
+    [userId],
+  );
+  const roles = rolesResult.rows.map((r) => r.role);
+  const { rows: userRows } = await pool.query(
+    `SELECT u.id, u.email, p.full_name FROM users u
+  LEFT JOIN profiles p ON p.id = u.id WHERE u.id = $1`,
+    [userId],
+  );
+  const user = userRows[0];
+  const accessToken = generateAccessToken(userId);
+  const refreshToken = generateRefreshToken(userId);
+  const tokenHash = await bcrypt.hash(refreshToken, 8);
+  await pool.query(
+    `INSERT INTO refresh_tokens (user_id, token_hashm expires_at)
+    VALUES ($1, $2, NOW() + INTERVAL '7 days')`,
+    [userId, tokenHash],
+  );
+  return {
+    user: { id: user.id, email: user.email, full_name: user.full_name, roles },
+    accessToken,
+    refreshToken,
+  };
 }
