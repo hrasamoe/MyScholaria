@@ -4,8 +4,8 @@ import { pool } from "../../db/pool";
 import { RegisterInput, LoginInput } from "./auth.schema";
 import { ENV } from "../../config/env";
 
-function generateAccessToken(userID: string) {
-  return jwt.sign({ userID }, ENV.JWT_SECRET!, { expiresIn: "15m" });
+function generateAccessToken(userId: string) {
+  return jwt.sign({ userId }, ENV.JWT_SECRET!, { expiresIn: "15m" });
 }
 
 function generateRefreshToken(userId: string) {
@@ -32,6 +32,10 @@ export async function registerUser(data: RegisterInput) {
   await pool.query("UPDATE profiles SET full_name = $1 WHERE id = $2", [
     data.full_name,
     user.id,
+  ]);
+  await pool.query("INSERT INTO user_roles (user_id, role) VALUES ($1, $2)", [
+    user.id,
+    data.role || "student",
   ]);
   const accessToken = generateAccessToken(user.id);
   const refreshToken = generateRefreshToken(user.id);
@@ -62,7 +66,7 @@ export async function loginUser(data: LoginInput) {
     `,
     [data.email],
   );
-  const { user } = rows[0];
+  const  user  = rows[0];
   if (!user) {
     throw new Error("Email or password is incorrect");
   }
@@ -81,15 +85,15 @@ export async function loginUser(data: LoginInput) {
   }
   await pool.query("SELECT record_successful_login($1)", [user.id]);
   const rolesResult = await pool.query(
-    "SELECT role FROM user_role WHERE user_id = $1",
+    "SELECT role FROM user_roles WHERE user_id = $1",
     [user.id],
   );
   const roles = rolesResult.rows.map((r) => r.role);
   const accessToken = generateAccessToken(user.id);
   const refreshToken = generateRefreshToken(user.id);
-  const hash_toke = bcrypt.hash(refreshToken, 8);
+  const hash_toke = await bcrypt.hash(refreshToken, 8);
   await pool.query(
-    `INSERT INTO refresh_tokes (user_id, token_hash, expires_at)
+    `INSERT INTO refresh_tokens (user_id, token_hash, expires_at)
     VALUES ($1, $2, NOW() + INTERVAL '7days')
     `,
     [user.id, hash_toke],
@@ -106,9 +110,9 @@ export async function loginUser(data: LoginInput) {
   };
 }
 
-export async function logoutUser(userID: string) {
+export async function logoutUser(userId: string) {
   await pool.query(
     "UPDATE refresh_tokens SET revoked_at = NOW() WHERE user_id = $1 AND revoked_at is NULL",
-    [userID],
+    [userId],
   );
 }
