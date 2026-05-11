@@ -1,23 +1,33 @@
 import { ReactNode } from "react";
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "./Authcontext";
+import { CircularProgress, Box } from "@mui/material";
 
 interface ProtectedRouteProps {
   children?: ReactNode;
 }
 
-export function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { isAuth, isLoading } = useAuth();
+export function ProtectedRoute({ children }: { children?: ReactNode }) {
+  const { isAuth, isLoading, user } = useAuth();
 
-  if (isLoading) return null;
+  console.log("ProtectedRoute:", { isAuth, isLoading, user }); // ← ajoute
 
-  if (!isAuth) {
-    return <Navigate to="/auth/signin" replace />;
-  }
+  if (isLoading)
+    return (
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        minHeight="100vh"
+      >
+        <CircularProgress />
+      </Box>
+    );
+
+  if (!isAuth) return <Navigate to="/auth/signin" replace />;
 
   return children ? <>{children}</> : <Outlet />;
 }
-
 interface RoleRouteProps {
   roles: string[];
   children?: ReactNode;
