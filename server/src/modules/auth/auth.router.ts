@@ -6,7 +6,6 @@ export const authRouter = Router();
 import jwt from "jsonwebtoken";
 import { ENV } from "../../config/env";
 import { pool } from "../../db/pool";
-import { json } from "zod";
 
 authRouter.post("/register", async (req: Request, res: Response) => {
   try {
@@ -47,20 +46,18 @@ authRouter.get("/verify-email", async (req: Request, res: Response) => {
       [token],
     );
     if (rows.length === 0) {
-      return (
-        res.status(400),
-        json({
-          message: "Token invalid or expired",
-        })
-      );
+      return res.status(400).json({
+        message: "Token invalid or expired",
+      });
     }
     const userId = rows[0].id;
     await pool.query(
       `UPDATE users
       SET is_verified = true, verify_token = NULL, verify_expires = NULL
-      WHERE id = $1`[userId],
+      WHERE id = $1`,
+      [userId],
     );
-    res.redirect(`${ENV.CLIENT_URL}/auth/signin?verified=true`);
+    return res.status(200).json({ message: "Email verified" });
   } catch (err: any) {
     res.status(500).json({ message: err.message });
   } finally {

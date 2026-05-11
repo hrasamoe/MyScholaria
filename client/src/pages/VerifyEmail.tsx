@@ -21,9 +21,13 @@ export default function VerifyEmail() {
     fetch(
       `${import.meta.env.VITE_API_URL}/api/auth/verify-email?token=${token}`,
     )
-      .then((res) => {
-        if (res.ok || res.redirected) setStatus("success");
-        else setStatus("error");
+      .then(async (res) => {
+        if (res.ok) {
+          setStatus("success");
+          setTimeout(() => navigate("/auth/signin?verified=true"), 2000);
+        } else {
+          setStatus("error");
+        }
       })
       .catch(() => setStatus("error"));
   }, []);
