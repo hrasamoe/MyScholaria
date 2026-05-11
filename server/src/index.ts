@@ -4,9 +4,11 @@ import helmet from "helmet";
 import { initPool } from "./db/pool";
 import dotenv from "dotenv";
 import path from "path";
+import cron from 'node-cron';
 dotenv.config({ path: path.resolve(__dirname, "../.env") });
 import { setDefaultResultOrder } from "dns";
 import { authRouter } from "./modules/auth/auth.router";
+import { cleanUnverifiedAccounts } from "./modules/auth/auth.service";
 setDefaultResultOrder("ipv4first");
 
 const app = express();
@@ -25,6 +27,10 @@ app.get("/api/health", (_, res) => {
   res.json({ status: "ok", project: "MyScholaria" });
 });
 
+cron.schedule("0 0 * * *", async() => {
+  await cleanUnverifiedAccounts();
+  console.log("Cleaned unverified accounts")
+})
 initPool()
   .then(() => {
     app.listen(PORT, () => {

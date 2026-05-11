@@ -6,8 +6,6 @@ import { ENV } from "../../config/env";
 import crypto from "crypto";
 import { sendConfirmationEmail } from "../../services/email/confirmation-email";
 import { sendForgotPasswordEmail } from "../../services/email/forgot-password";
-import { populate } from "dotenv";
-import { string } from "zod";
 
 function generateAccessToken(userId: string) {
   return jwt.sign({ userId }, ENV.JWT_SECRET!, { expiresIn: "15m" });
@@ -187,7 +185,7 @@ export async function resetPassword(token: string, newPassword: string) {
 
   await pool.query(
     `UPDATE users
-    SET password_hash_hash = $1, reset_token  = NULL, reset_expires = NULL
+    SET password_hash = $1, reset_token  = NULL, reset_expires = NULL
     WHERE id = $2`,
     [hashed, userId],
   );
@@ -207,7 +205,7 @@ export async function resetPassword(token: string, newPassword: string) {
   const refreshToken = generateRefreshToken(userId);
   const tokenHash = await bcrypt.hash(refreshToken, 8);
   await pool.query(
-    `INSERT INTO refresh_tokens (user_id, token_hashm expires_at)
+    `INSERT INTO refresh_tokens (user_id, token_hash, expires_at)
     VALUES ($1, $2, NOW() + INTERVAL '7 days')`,
     [userId, tokenHash],
   );
@@ -216,4 +214,12 @@ export async function resetPassword(token: string, newPassword: string) {
     accessToken,
     refreshToken,
   };
+}
+
+export async function cleanUnverifiedAccounts() {
+  await pool.query(
+    `DELETE FROM USERS
+    WHERE is_verified = false
+    AND verify_expires < NOW()`,
+  );
 }
