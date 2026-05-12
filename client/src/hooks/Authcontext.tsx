@@ -36,7 +36,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch {
       localStorage.removeItem("user");
       setLoading(false);
-    } {setLoading(false)}
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   const saveAuth = (user: User, accessToken: string, refreshToken: string) => {
