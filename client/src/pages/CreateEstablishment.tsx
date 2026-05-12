@@ -193,7 +193,7 @@ const CreateEstablishment = () => {
       setSuccess(true);
 
       setTimeout(() => {
-        navigate("/dashboard");
+        navigate("/");
       }, 2000);
     } catch (err: any) {
       enqueueSnackbar(`Error: ${err.message}`, { variant: "error" });
