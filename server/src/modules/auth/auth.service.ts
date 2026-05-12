@@ -42,7 +42,12 @@ export async function registerUser(data: RegisterInput) {
     user.id,
     data.role || "student",
   ]);
-  await sendConfirmationEmail(data.email, data.full_name, data.schoolName, verifyToken);
+  await sendConfirmationEmail(
+    data.email,
+    data.full_name,
+    data.schoolName,
+    verifyToken,
+  );
   return {
     message: "Account created. Please check your email to verify you account",
   };
@@ -142,9 +147,31 @@ export async function verifyEmail(token: any) {
     WHERE id = $1`,
     [userId],
   );
-  return "Email verified";
+  const rolesResult = await pool.query(
+    "SELECT role FROM user_roles WHERE user_id = $1",
+    [userId],
+  );
+  const roles = rolesResult.rows.map((r) => r.role);
+  const { rows: userRows } = await pool.query(
+    `SELECT u.id, u.email, p.full_name FROM users u
+     LEFT JOIN profiles p ON p.id = u.id WHERE u.id = $1`,
+    [userId],
+  );
+  const user = userRows[0];
+  const accessToken = generateAccessToken(userId);
+  const refreshToken = generateRefreshToken(userId);
+  const tokenHash = await bcrypt.hash(refreshToken, 8);
+  await pool.query(
+    `INSERT INTO refresh_tokens (user_id, token_hash, expires_at)
+     VALUES ($1, $2, NOW() + INTERVAL '7 days')`,
+    [userId, tokenHash],
+  );
+  return {
+    user: { id: user.id, email: user.email, full_name: user.full_name, roles },
+    accessToken,
+    refreshToken,
+  };
 }
-
 export async function logoutUser(userId: string) {
   await pool.query(
     "UPDATE refresh_tokens SET revoked_at = NOW() WHERE user_id = $1 AND revoked_at is NULL",
