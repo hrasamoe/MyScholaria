@@ -2,7 +2,7 @@ import { ReactNode } from "react";
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "./Authcontext";
 import { CircularProgress, Box, Typography } from "@mui/material";
-import { keyframes } from "@mui/material/styles";
+import { keyframes, useTheme } from "@mui/material/styles";
 
 // ✅ Animation de fade-in
 const fadeIn = keyframes`
@@ -40,7 +40,7 @@ interface ProtectedRouteProps {
 
 export function ProtectedRoute({ children }: { children?: ReactNode }) {
   const { isAuth, isLoading, user } = useAuth();
-
+  const theme = useTheme();
   console.log("ProtectedRoute:", { isAuth, isLoading, user });
 
   if (isLoading)
@@ -52,7 +52,7 @@ export function ProtectedRoute({ children }: { children?: ReactNode }) {
           justifyContent: "center",
           alignItems: "center",
           minHeight: "100vh",
-          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+          background: `linear-gradient(135deg, ${theme.palette.background.paper} 0%, ${theme.palette.background.default} 100%)`,
           animation: `${fadeIn} 0.5s ease-in`,
         }}
       >
@@ -76,7 +76,7 @@ export function ProtectedRoute({ children }: { children?: ReactNode }) {
         <CircularProgress
           size={60}
           sx={{
-            color: "white",
+            color: `${theme.palette.text.primary}`,
             mb: 2,
             animation: `${spin} 1s linear infinite`,
           }}
@@ -85,7 +85,7 @@ export function ProtectedRoute({ children }: { children?: ReactNode }) {
         <Typography
           variant="h6"
           sx={{
-            color: "white",
+            color: `${theme.palette.text.primary}`,
             fontWeight: 600,
             animation: `${fadeIn} 1s ease-in-out infinite alternate`,
             mt: 2,
@@ -108,7 +108,7 @@ interface RoleRouteProps {
 
 export function RoleRoute({ roles, children }: RoleRouteProps) {
   const { user, isAuth, isLoading } = useAuth();
-
+  const theme = useTheme();
   if (isLoading)
     return (
       <Box
@@ -118,7 +118,7 @@ export function RoleRoute({ roles, children }: RoleRouteProps) {
           justifyContent: "center",
           alignItems: "center",
           minHeight: "100vh",
-          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+          background: `linear-gradient(135deg, ${theme.palette.background.paper} 0%, ${theme.palette.background.default} 100%)`,
           animation: `${fadeIn} 0.5s ease-in`,
         }}
       >
@@ -142,7 +142,7 @@ export function RoleRoute({ roles, children }: RoleRouteProps) {
         <CircularProgress
           size={60}
           sx={{
-            color: "white",
+            color: `${theme.palette.text.primary}`,
             mb: 2,
             animation: `${spin} 1s linear infinite`,
           }}
@@ -151,7 +151,7 @@ export function RoleRoute({ roles, children }: RoleRouteProps) {
         <Typography
           variant="h6"
           sx={{
-            color: "white",
+            color: `${theme.palette.text.primary}`,
             fontWeight: 600,
             animation: `${fadeIn} 1s ease-in-out infinite alternate`,
             mt: 2,
