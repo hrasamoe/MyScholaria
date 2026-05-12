@@ -15,6 +15,7 @@ export const registerSchema = z.object({
       "librarian",
     ])
     .default("student"),
+    schoolName: z.string().min(4, "Schoolname is too short")
 });
 
 export const loginSchema = z.object({

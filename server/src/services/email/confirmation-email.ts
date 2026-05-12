@@ -1,7 +1,11 @@
 import { ENV } from "../../config/env";
 import { transporter } from "../email.service";
 
-function confirmationTemplate(fullName: string, link: string) {
+function confirmationTemplate(
+  fullName: string,
+  establishmentName: string,
+  link: string,
+) {
   return `
     <!DOCTYPE html>
     <html>
@@ -14,6 +18,7 @@ function confirmationTemplate(fullName: string, link: string) {
         .header h1 { color: #fff; margin: 0; font-size: 24px; }
         .body { padding: 32px; }
         .body p { color: #2d3748; line-height: 1.6; font-size: 15px; }
+        .establishment-box { background: #edf2f7; border-left: 4px solid #1976d2; padding: 12px 16px; margin: 20px 0; border-radius: 4px; }
         .footer { padding: 16px 32px; text-align: center; color: #6b7280; font-size: 12px; border-top: 1px solid #e2e8f0; }
         .expire { background: #f7f9fc; border-radius: 8px; padding: 12px 16px; margin-top: 20px; color: #6b7280; font-size: 13px; }
       </style>
@@ -25,14 +30,15 @@ function confirmationTemplate(fullName: string, link: string) {
         </div>
         <div class="body">
           <p>Hello <strong>${fullName}</strong>,</p>
-          <p>Thank you for signing up on <strong>MyScholaria</strong>. Please confirm your email address by clicking the button below.</p>
+          <p>Thank you for registering <strong>${establishmentName}</strong> on <strong>MyScholaria</strong>.</p>
+          <p>To finalize your account setup and start managing your establishment, please confirm your email address below:</p>
           <a href="${link}"
              style="display:block;width:fit-content;margin:24px auto;background:#1976d2;color:#ffffff !important;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:600;font-size:15px;">
             Confirm my email
           </a>
           <div class="expire">
             ⏱ This link expires in <strong>24 hours</strong>.<br>
-            If you did not create an account, you can safely ignore this email.
+            If you did not initiate this registration, please ignore this email.
           </div>
         </div>
         <div class="footer">
@@ -47,13 +53,14 @@ function confirmationTemplate(fullName: string, link: string) {
 export async function sendConfirmationEmail(
   email: string,
   fullName: string,
+  establishmentName: string,
   token: string,
 ) {
   const link = `${ENV.CLIENT_URL}/auth/verify-email?token=${token}`;
   await transporter.sendMail({
     from: `MyScholaria`,
     to: email,
-    subject: "Confirm your email address - MyScholaria",
-    html: confirmationTemplate(fullName, link),
+    subject: `Confirm your registration: ${establishmentName} - MyScholaria`,
+    html: confirmationTemplate(fullName, establishmentName, link),
   });
 }

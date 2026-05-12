@@ -16,13 +16,14 @@ export async function register(
   password: string,
   full_name: string,
   role: string = "student",
+  schoolName: string,
 ): Promise<AuthResponse> {
   const res = await fetch(`${API_URL}/api/auth/register`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ email, password, full_name, role }),
+    body: JSON.stringify({ email, password, full_name, role, schoolName }),
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.message);

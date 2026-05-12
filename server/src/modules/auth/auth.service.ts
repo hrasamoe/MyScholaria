@@ -42,7 +42,7 @@ export async function registerUser(data: RegisterInput) {
     user.id,
     data.role || "student",
   ]);
-  await sendConfirmationEmail(data.email, data.full_name, verifyToken);
+  await sendConfirmationEmail(data.email, data.full_name, data.schoolName, verifyToken);
   return {
     message: "Account created. Please check your email to verify you account",
   };

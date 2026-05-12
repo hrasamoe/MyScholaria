@@ -98,7 +98,7 @@ const SignUp = () => {
         form.password,
         `${form.firstName} ${form.lastName}`,
         form.role.toLowerCase(),
-        // form.schoolName,
+        form.schoolName,
       );
       enqueueSnackbar("Account created", { variant: "success" });
       setEmailSent(true);
@@ -226,7 +226,7 @@ const SignUp = () => {
                   <TextField
                     fullWidth
                     label="School Name *"
-                    placeholder="e.g. Lycée de Tana"
+                    placeholder="e.g. Milan High School"
                     value={form.schoolName}
                     onChange={(e) =>
                       setForm({ ...form, schoolName: e.target.value })
