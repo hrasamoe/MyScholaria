@@ -24,7 +24,6 @@ export default function VerifyEmail() {
       .then(async (res) => {
         if (res.ok) {
           setStatus("success");
-          setTimeout(() => navigate("/auth/signin?verified=true"), 2000);
         } else {
           setStatus("error");
         }
@@ -44,7 +43,7 @@ export default function VerifyEmail() {
       {status === "loading" && (
         <>
           <CircularProgress />
-          <Typography>Verifying your email...</Typography>
+          <Typography>Vérification de votre e-mail...</Typography>
         </>
       )}
 
@@ -52,13 +51,20 @@ export default function VerifyEmail() {
         <>
           <CheckCircleIcon sx={{ fontSize: 64, color: "success.main" }} />
           <Typography variant="h5" fontWeight={700}>
-            Email verified !
+            E-mail vérifié !
           </Typography>
           <Typography color="text.secondary">
-            Your account is now active.
+            Votre compte est maintenant activé.
+            <br />
+            Veuillez renseigner les informations de votre établissement (code
+            d’identification, adresse) pour continuer.
           </Typography>
-          <Button variant="contained" onClick={() => navigate("/auth/signin")}>
-            Sign in
+          <Button
+            variant="contained"
+            onClick={() => navigate("/auth/etablissement")}
+            sx={{ mt: 2 }}
+          >
+            Continuer
           </Button>
         </>
       )}
@@ -67,13 +73,13 @@ export default function VerifyEmail() {
         <>
           <ErrorIcon sx={{ fontSize: 64, color: "error.main" }} />
           <Typography variant="h5" fontWeight={700}>
-            Invalid link
+            Lien invalide
           </Typography>
           <Typography color="text.secondary">
-            This link is expired or invalid.
+            Ce lien est expiré ou invalide.
           </Typography>
           <Button variant="outlined" onClick={() => navigate("/auth/signup")}>
-            Sign up again
+            S’inscrire de nouveau
           </Button>
         </>
       )}
