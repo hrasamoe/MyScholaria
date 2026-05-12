@@ -36,7 +36,7 @@ const CreateEstablishment = () => {
     code: "",
     type: "school", // primary, middle, high, university, other
     identificationNumber: "",
-    zipCOde: "",
+    zipCode: "",
     country: "",
     // Étape 2 - Contact & Localisation
     address: "",
@@ -423,9 +423,9 @@ const CreateEstablishment = () => {
                     fullWidth
                     label="ZIP CODE *"
                     placeholder="e.g. 101"
-                    value={form.zipCOde}
+                    value={form.zipCode}
                     onChange={(e) =>
-                      setForm({ ...form, phone: e.target.value })
+                      setForm({ ...form, zipCode:  e.target.value })
                     }
                     type="text"
                   />
@@ -435,9 +435,9 @@ const CreateEstablishment = () => {
                     fullWidth
                     label="City *"
                     placeholder="e.g. Antananrivo"
-                    value={form.phone}
+                    value={form.country}
                     onChange={(e) =>
-                      setForm({ ...form, phone: e.target.value })
+                      setForm({ ...form, country: e.target.value })
                     }
                     type="tel"
                   />
