@@ -53,7 +53,7 @@ authRouter.get("/verify-email", async (req: Request, res: Response) => {
   }
 });
 
-authRouter.post("/logout", async (req: Request, res: Response) => {
+authRouter.post("/logout", RequireAuth, async (req: Request, res: Response) => {
   try {
     const { refreshToken } = req.body;
     if (!refreshToken) {
