@@ -48,6 +48,7 @@ import VerifyEmail from "./pages/VerifyEmail";
 import ChangePassword from "./pages/ChangePassword";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
+import CreateEstablishment from "./pages/CreateEstablishment";
 
 const App = () => (
   <AppThemeProvider>
@@ -66,6 +67,14 @@ const App = () => (
             <Route path="/auth/change-password" element={<ChangePassword />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/policy" element={<Privacy />} />
+            <Route
+              path="auth/etablissement"
+              element={
+                <ProtectedRoute>
+                  <CreateEstablishment />
+                </ProtectedRoute>
+              }
+            ></Route>
             <Route
               element={
                 <ProtectedRoute>
