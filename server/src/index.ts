@@ -4,12 +4,13 @@ import helmet from "helmet";
 import { initPool } from "./db/pool";
 import dotenv from "dotenv";
 import path from "path";
-import cron from 'node-cron';
+import cron from "node-cron";
 dotenv.config({ path: path.resolve(__dirname, "../.env") });
 import { setDefaultResultOrder } from "dns";
 import { authRouter } from "./modules/auth/auth.router";
 import { cleanUnverifiedAccounts } from "./modules/auth/auth.service";
 setDefaultResultOrder("ipv4first");
+import { establishementRouter } from "./modules/establishments/establishments.router";
 
 const app = express();
 const PORT = process.env.PORT || 4242;
@@ -22,15 +23,15 @@ app.use(
 app.use(cors({ origin: process.env.CLIENT_URL }));
 app.use(express.json());
 app.use("/api/auth", authRouter);
-
+app.use("/api/establishments", establishementRouter);
 app.get("/api/health", (_, res) => {
   res.json({ status: "ok", project: "MyScholaria" });
 });
 
-cron.schedule("0 0 * * *", async() => {
+cron.schedule("0 0 * * *", async () => {
   await cleanUnverifiedAccounts();
-  console.log("Cleaned unverified accounts")
-})
+  console.log("Cleaned unverified accounts");
+});
 initPool()
   .then(() => {
     app.listen(PORT, () => {
