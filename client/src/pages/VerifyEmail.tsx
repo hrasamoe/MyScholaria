@@ -3,10 +3,12 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { Box, CircularProgress, Typography, Button } from "@mui/material";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import ErrorIcon from "@mui/icons-material/Error";
+import { useAuth } from "@/hooks/Authcontext";
 
 export default function VerifyEmail() {
   const [params] = useSearchParams();
   const navigate = useNavigate();
+  const { saveAuth } = useAuth();
   const [status, setStatus] = useState<"loading" | "success" | "error">(
     "loading",
   );
@@ -22,7 +24,9 @@ export default function VerifyEmail() {
       `${import.meta.env.VITE_API_URL}/api/auth/verify-email?token=${token}`,
     )
       .then(async (res) => {
+        const data = await res.json();
         if (res.ok) {
+          saveAuth(data.user, data.accessToken, data.refreshToken);
           setStatus("success");
         } else {
           setStatus("error");

@@ -34,16 +34,14 @@ const CreateEstablishment = () => {
     // Étape 1 - Info de base
     name: "",
     code: "",
-    type: "school", // primary, middle, high, university, other
+    type: "primary",
     identificationNumber: "",
     zipCode: "",
-    country: "",
-    // Étape 2 - Contact & Localisation
+    city: "",
     address: "",
     phone: "",
     email: "",
 
-    // Étape 3 - Codes d'accès (auto-générés ou manuels)
     joinCode: "",
     adminCode: "",
   });
@@ -155,7 +153,7 @@ const CreateEstablishment = () => {
 
     setError("");
     setIsLoading(true);
-
+    const accessToken = localStorage.getItem("accessToken");
     try {
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/api/establishment/create`,
@@ -163,6 +161,7 @@ const CreateEstablishment = () => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
           },
           body: JSON.stringify({
             name: form.name,
@@ -171,6 +170,8 @@ const CreateEstablishment = () => {
             type: form.type,
             identificationNumber: form.identificationNumber || null,
             address: form.address,
+            city: form.city,
+            zipCode: form.zipCode,
             phone: form.phone,
             email: form.email,
             joinCode: form.joinCode,
@@ -425,7 +426,7 @@ const CreateEstablishment = () => {
                     placeholder="e.g. 101"
                     value={form.zipCode}
                     onChange={(e) =>
-                      setForm({ ...form, zipCode:  e.target.value })
+                      setForm({ ...form, zipCode: e.target.value })
                     }
                     type="text"
                   />
@@ -435,10 +436,8 @@ const CreateEstablishment = () => {
                     fullWidth
                     label="City *"
                     placeholder="e.g. Antananrivo"
-                    value={form.country}
-                    onChange={(e) =>
-                      setForm({ ...form, country: e.target.value })
-                    }
+                    value={form.city}
+                    onChange={(e) => setForm({ ...form, city: e.target.value })}
                     type="tel"
                   />
                 </Grid>
@@ -757,7 +756,8 @@ const CreateEstablishment = () => {
               href="mailto:hrasamoevj@gmail.com"
               sx={{ color: "primary.main", fontWeight: 600 }}
             >
-              {" "}support team
+              {" "}
+              support team
             </Link>
           </Typography>
         </CardContent>
