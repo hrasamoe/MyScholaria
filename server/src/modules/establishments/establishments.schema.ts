@@ -25,7 +25,7 @@ export const establishementSchema = z
     address: z.string().min(5, "Adress must be at least 5 characters"),
     city: z.string().min(2, "City name must be at least 2 characters"),
     zipCode: z.string().min(2, "ZIP code is invalid"),
-    country: z.string().min(2, "Country name must be at least 2 characters"),
+    // country: z.string().min(2, "Country name must be at least 2 characters"),
 
     phone: z
       .string()

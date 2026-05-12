@@ -59,13 +59,13 @@ export async function createEtablishments(data: EstablishmentInput) {
   const establishment = rows[0];
 
   await pool.query(
-    `INSERT INTO school_period (
+    `INSERT INTO school_periods (
     establishment_id,
     name,
     start_date,
     end_date,
     academic_year,
-    is_curremt,
+    is_current,
     created_at
     )
     VALUES ($1, $2, $3, $4, $5, $6, $7)`,
@@ -81,7 +81,7 @@ export async function createEtablishments(data: EstablishmentInput) {
   );
 
   await pool.query(
-    `INSERT INTO fee_srtuctures(
+    `INSERT INTO fee_structures(
     establishment_id,
     name,
     academic_year,
@@ -95,7 +95,7 @@ export async function createEtablishments(data: EstablishmentInput) {
       "Droit d'inscription",
       "2025-2026",
       "0",
-      "Annuel",
+      "annual",
       new Date(),
     ],
   );
@@ -150,15 +150,17 @@ export async function createEtablishments(data: EstablishmentInput) {
     [establishment.id, data.owner_id, "admin", new Date(), true],
   );
 
-  await pool.query(
-    `INSERT INTO user_roles (
-      user_id, 
-      role, 
-      created_at
-    )
-    VALUES ($1, $2, $3)`,
-    [data.owner_id, "establishment_admin", new Date()],
+  const existingRole = await pool.query(
+    `SELECT id FROM user_roles WHERE user_id = $1 AND role = $2`,
+    [data.owner_id, "admin"],
   );
+  if (existingRole.rows.length === 0) {
+    await pool.query(
+      `INSERT INTO user_roles (user_id, role, created_at)
+       VALUES ($1, $2, $3)`,
+      [data.owner_id, "admin", new Date()],
+    );
+  }
 
   await pool.query(
     `INSERT INTO audit_logs (

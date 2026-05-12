@@ -23,7 +23,7 @@ app.use(
 app.use(cors({ origin: process.env.CLIENT_URL }));
 app.use(express.json());
 app.use("/api/auth", authRouter);
-app.use("/api/establishments", establishementRouter);
+app.use("/api/establishment", establishementRouter);
 app.get("/api/health", (_, res) => {
   res.json({ status: "ok", project: "MyScholaria" });
 });
