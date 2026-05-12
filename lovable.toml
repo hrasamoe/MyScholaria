@@ -1,2 +1,0 @@
-[run]
-dev = "cd client && bun run dev"

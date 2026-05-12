@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const createEtablishments = z
+export const establishementSchema = z
   .object({
     code: z
       .string()
@@ -49,4 +49,4 @@ export const createEtablishments = z
     path: ["adminCode"],
   });
 
-export type EstablishmentInput = z.infer<typeof createEtablishments>;
+export type EstablishmentInput = z.infer<typeof establishementSchema>;
