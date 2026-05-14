@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import {
   Box,
@@ -27,8 +27,10 @@ export default function VerifyEmailMember() {
   );
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-
+  const hasVerified = useRef(false);
   useEffect(() => {
+    if (hasVerified.current) return;
+    hasVerified.current = true;
     const verifyEmail = async () => {
       const token = params.get("token");
       if (!token) {
@@ -90,7 +92,7 @@ export default function VerifyEmailMember() {
     };
 
     verifyEmail();
-  }, [params, saveAuth, enqueueSnackbar]);
+  }, []);
 
   return (
     <Box
