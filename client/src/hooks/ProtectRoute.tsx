@@ -4,7 +4,6 @@ import { useAuth } from "./Authcontext";
 import { CircularProgress, Box, Typography } from "@mui/material";
 import { keyframes, useTheme } from "@mui/material/styles";
 
-// ✅ Animation de fade-in
 const fadeIn = keyframes`
   from {
     opacity: 0;
@@ -14,7 +13,6 @@ const fadeIn = keyframes`
   }
 `;
 
-// ✅ Animation de bounce pour le logo
 const bounce = keyframes`
   0%, 100% {
     transform: translateY(0);
@@ -24,7 +22,6 @@ const bounce = keyframes`
   }
 `;
 
-// ✅ Animation de rotation
 const spin = keyframes`
   from {
     transform: rotate(0deg);
@@ -166,6 +163,68 @@ export function RoleRoute({ roles, children }: RoleRouteProps) {
   const hasRole = userRoles.some((r) => roles.includes(r));
 
   if (!isAuth || !hasRole) {
+    return <Navigate to="/" replace />;
+  }
+
+  return children ? <>{children}</> : <Outlet />;
+}
+
+export function GuestGuard({ children }: { children: React.ReactNode }) {
+  const theme = useTheme();
+  const { isLoading, isAuth, user } = useAuth();
+  if (isLoading)
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "100vh",
+          background: `linear-gradient(135deg, ${theme.palette.background.paper} 0%, ${theme.palette.background.default} 100%)`,
+          animation: `${fadeIn} 0.5s ease-in`,
+        }}
+      >
+        <Box
+          sx={{
+            mb: 3,
+            animation: `${bounce} 2s infinite`,
+          }}
+        >
+          <img
+            src="/download.png"
+            alt="Loading"
+            style={{
+              width: 80,
+              height: 80,
+              objectFit: "contain",
+            }}
+          />
+        </Box>
+
+        <CircularProgress
+          size={60}
+          sx={{
+            color: `${theme.palette.text.primary}`,
+            mb: 2,
+            animation: `${spin} 1s linear infinite`,
+          }}
+        />
+
+        <Typography
+          variant="h6"
+          sx={{
+            color: `${theme.palette.text.primary}`,
+            fontWeight: 600,
+            animation: `${fadeIn} 1s ease-in-out infinite alternate`,
+            mt: 2,
+          }}
+        >
+          Checking permissions...
+        </Typography>
+      </Box>
+    );
+  if (isAuth && user) {
     return <Navigate to="/" replace />;
   }
 

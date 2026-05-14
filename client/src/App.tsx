@@ -3,7 +3,7 @@ import { CssBaseline } from "@mui/material";
 import { SnackbarProvider } from "notistack";
 import { AppThemeProvider } from "./hooks/Themecontext";
 import { AuthProvider } from "./hooks/Authcontext";
-import { ProtectedRoute, RoleRoute } from "./hooks/ProtectRoute";
+import { GuestGuard, ProtectedRoute, RoleRoute } from "./hooks/ProtectRoute";
 import AppLayout from "./components/AppLayout";
 
 import VerifyEmailMember from "./pages/VerifyEmailMember";
@@ -62,12 +62,22 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route
-              path="/auth/verify-email-member"
-              element={<VerifyEmailMember />}
+              path="/auth/signin"
+              element={
+                <GuestGuard>
+                  {" "}
+                  <SignIn />
+                </GuestGuard>
+              }
             />
-
-            <Route path="/auth/signin" element={<SignIn />} />
-            <Route path="/auth/signup" element={<SignUp />} />
+            <Route
+              path="/auth/signup"
+              element={
+                <GuestGuard>
+                  <SignUp />
+                </GuestGuard>
+              }
+            />
             <Route path="/auth/forgot-password" element={<ForgotPassword />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/policy" element={<Privacy />} />
@@ -81,10 +91,13 @@ const App = () => (
               <Route path="/auth/verify-email" element={<VerifyEmail />} />
               <Route path="/auth/reset-password" element={<ResetPassword />} />
               <Route
+                path="/auth/verify-email-member"
+                element={<VerifyEmailMember />}
+              />{" "}
+              <Route
                 path="/auth/change-password"
                 element={<ChangePassword />}
               />
-             
             </Route>
 
             <Route
