@@ -84,10 +84,7 @@ const App = () => (
                 path="/auth/change-password"
                 element={<ChangePassword />}
               />
-              <Route
-                path="/auth/verify-email-member"
-                element={<VerifyEmailMember />}
-              />
+             
             </Route>
 
             <Route
