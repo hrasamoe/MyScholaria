@@ -259,7 +259,7 @@ export async function verifyEmailWithEstablishment(token: any) {
   const establishmentId = rows[0].pending_establishment_id;
 
   await pool.query(
-    `UPDATE users SET is_verified = true, verify_token = NULL, verify_expires = NULL
+    `UPDATE users SET is_verified = true, verify_token = NULL, verify_expires = NULL, pending_establishment_id = NULL
      WHERE id = $1`,
     [userId],
   );

@@ -168,11 +168,10 @@ export async function joinEstablishment(data: JoinInput) {
     await client.query("BEGIN");
 
     const exist = await client.query(
-      `SELECT user_id FROM establishment_members WHERE user_id = $1`,
-      [data.userID],
+      `SELECT user_id FROM establishment_members WHERE user_id = $1 AND establishment_id = $2`,
+      [data.userID, data.establishmentID],
     );
-    if (exist.rows.length > 0)
-      throw new Error("You are already in the establishment");
+    if (exist.rows.length > 0) return;
 
     await client.query(
       `INSERT INTO establishment_members (
