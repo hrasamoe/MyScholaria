@@ -1,14 +1,29 @@
 import { useState } from "react";
 import {
-  Box, Card, CardContent, TextField, Button, Typography, Stack,
-  IconButton, InputAdornment, Alert, LinearProgress, Divider, List, ListItem, ListItemIcon, ListItemText,
+  Box,
+  Card,
+  CardContent,
+  TextField,
+  Button,
+  Typography,
+  Stack,
+  Divider,
+  IconButton,
+  InputAdornment,
+  LinearProgress,
+  Alert,
+  useTheme,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
 } from "@mui/material";
-import PageHeader from "@/components/PageHeader";
-import LockResetIcon from "@mui/icons-material/LockReset";
+import { Grid } from "@mui/material";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import RadioButtonUncheckedIcon from "@mui/icons-material/RadioButtonUnchecked";
+import LockResetIcon from "@mui/icons-material/LockReset";
 import { useSnackbar } from "notistack";
 
 const checks = (pw: string) => ({
@@ -18,58 +33,168 @@ const checks = (pw: string) => ({
   special: /[^A-Za-z0-9]/.test(pw),
 });
 
-const ChangePassword = () => {
+interface ChangePasswordProps {
+  token?: string;
+}
+
+const ChangePassword = ({ token }: ChangePasswordProps) => {
   const [current, setCurrent] = useState("");
   const [next, setNext] = useState("");
   const [confirm, setConfirm] = useState("");
   const [show, setShow] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const { enqueueSnackbar } = useSnackbar();
+  const theme = useTheme();
 
   const c = checks(next);
   const score = Object.values(c).filter(Boolean).length * 25;
   const valid = Object.values(c).every(Boolean);
-  const color: any = score < 50 ? "error" : score < 75 ? "warning" : "success";
+  const color: "error" | "warning" | "success" =
+    score < 50 ? "error" : score < 75 ? "warning" : "success";
+  const strengthLabel =
+    score < 50 ? "Weak" : score < 75 ? "Fair" : score < 100 ? "Good" : "Strong";
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!current || !next || !confirm) { setError("All fields are required"); return; }
-    if (!valid) { setError("Password does not meet requirements"); return; }
-    if (next !== confirm) { setError("New passwords do not match"); return; }
-    if (next === current) { setError("New password must differ from current"); return; }
+  const resetAll = () => {
+    setCurrent("");
+    setNext("");
+    setConfirm("");
     setError("");
-    enqueueSnackbar("Password changed successfully (mockup)", { variant: "success" });
-    setCurrent(""); setNext(""); setConfirm("");
+    setSuccess("");
+  };
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if ((!token && !current) || !next || !confirm) {
+      setError("All fields are required");
+      setSuccess("");
+      return;
+    }
+    if (!valid) {
+      setError("Password does not meet requirements");
+      setSuccess("");
+      return;
+    }
+    if (next !== confirm) {
+      setError("New passwords do not match");
+      setSuccess("");
+      return;
+    }
+    if (!token && next === current) {
+      setError("New password must differ from current");
+      setSuccess("");
+      return;
+    }
+    setError("");
+    setSuccess("Password changed successfully (mockup)");
+    enqueueSnackbar("Password changed successfully (mockup)", {
+      variant: "success",
+    });
+    setCurrent("");
+    setNext("");
+    setConfirm("");
   };
 
   const Req = ({ ok, label }: { ok: boolean; label: string }) => (
     <ListItem dense disableGutters>
       <ListItemIcon sx={{ minWidth: 28 }}>
-        {ok ? <CheckCircleIcon color="success" fontSize="small" /> : <RadioButtonUncheckedIcon fontSize="small" color="disabled" />}
+        {ok ? (
+          <CheckCircleIcon color="success" fontSize="small" />
+        ) : (
+          <RadioButtonUncheckedIcon fontSize="small" color="disabled" />
+        )}
       </ListItemIcon>
-      <ListItemText primary={<Typography variant="body2" color={ok ? "success.main" : "text.secondary"}>{label}</Typography>} />
+      <ListItemText
+        primary={
+          <Typography
+            variant="body2"
+            color={ok ? "success.main" : "text.secondary"}
+          >
+            {label}
+          </Typography>
+        }
+      />
     </ListItem>
   );
 
   return (
-    <>
-      <PageHeader title="Change Password" subtitle="Update your account password regularly to stay secure" />
-      <Box sx={{ display: "flex", justifyContent: "center" }}>
-        <Card sx={{ width: "100%", maxWidth: 560 }}>
-          <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
-            <Stack direction="row" alignItems="center" spacing={1} mb={2}>
-              <LockResetIcon color="primary" />
-              <Typography variant="subtitle1" fontWeight={700}>Update password</Typography>
-            </Stack>
-            <Divider sx={{ mb: 3 }} />
+    <Box
+      sx={{
+        minHeight: "100vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        p: 2,
+        background: `linear-gradient(135deg, ${theme.palette.background.default} 0%, ${theme.palette.divider} 50%, ${theme.palette.background.paper} 100%)`,
+      }}
+    >
+      <Card sx={{ width: "100%", maxWidth: 520, my: 3 }}>
+        <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
+          <Stack spacing={1} alignItems="center" mb={3}>
+            <Box
+              sx={{
+                width: 56,
+                height: 56,
+                borderRadius: 2,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                bgcolor: "primary.light",
+                mb: 1,
+              }}
+            >
+              <LockResetIcon color="primary" sx={{ fontSize: 36 }} />
+            </Box>
+            <Typography variant="h5" fontWeight={700}>
+              Change your password
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Update your account password regularly to stay secure.
+            </Typography>
+          </Stack>
 
-            {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          )}
+          {success && (
+            <Alert severity="success" sx={{ mb: 2 }}>
+              {success}
+            </Alert>
+          )}
 
-            <Box component="form" onSubmit={handleSubmit}>
-              <Stack spacing={2}>
+          <Box component="form" onSubmit={handleSubmit}>
+            <Grid container spacing={2}>
+              {!token && (
+                <Grid size={12}>
+                  <TextField
+                    fullWidth
+                    label="Current password"
+                    type={show ? "text" : "password"}
+                    autoComplete="current-password"
+                    value={current}
+                    onChange={(e) => setCurrent(e.target.value)}
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton onClick={() => setShow(!show)} edge="end">
+                            {show ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                </Grid>
+              )}
+              <Grid size={12}>
                 <TextField
-                  fullWidth label="Current password" type={show ? "text" : "password"}
-                  value={current} onChange={(e) => setCurrent(e.target.value)} autoComplete="current-password"
+                  fullWidth
+                  label="New password"
+                  type={show ? "text" : "password"}
+                  autoComplete="new-password"
+                  value={next}
+                  onChange={(e) => setNext(e.target.value)}
                   InputProps={{
                     endAdornment: (
                       <InputAdornment position="end">
@@ -80,24 +205,47 @@ const ChangePassword = () => {
                     ),
                   }}
                 />
-                <TextField
-                  fullWidth label="New password" type={show ? "text" : "password"}
-                  value={next} onChange={(e) => setNext(e.target.value)} autoComplete="new-password"
-                />
                 {next && (
-                  <Box>
-                    <LinearProgress variant="determinate" value={score} color={color} sx={{ height: 6, borderRadius: 3 }} />
+                  <Box sx={{ mt: 1 }}>
+                    <LinearProgress
+                      variant="determinate"
+                      value={score}
+                      color={color}
+                      sx={{ height: 6, borderRadius: 3 }}
+                    />
+                    <Typography variant="caption" color={`${color}.main`}>
+                      Password strength: {strengthLabel}
+                    </Typography>
                   </Box>
                 )}
+              </Grid>
+              <Grid size={12}>
                 <TextField
-                  fullWidth label="Confirm new password" type={show ? "text" : "password"}
-                  value={confirm} onChange={(e) => setConfirm(e.target.value)} autoComplete="new-password"
+                  fullWidth
+                  label="Confirm new password"
+                  type={show ? "text" : "password"}
+                  autoComplete="new-password"
+                  value={confirm}
+                  onChange={(e) => setConfirm(e.target.value)}
                   error={!!confirm && confirm !== next}
-                  helperText={!!confirm && confirm !== next ? "Passwords do not match" : ""}
+                  helperText={
+                    !!confirm && confirm !== next
+                      ? "Passwords do not match"
+                      : ""
+                  }
                 />
-
-                <Box sx={{ bgcolor: "background.default", p: 2, borderRadius: 1 }}>
-                  <Typography variant="caption" color="text.secondary" fontWeight={600}>PASSWORD REQUIREMENTS</Typography>
+              </Grid>
+              <Grid size={12}>
+                <Box
+                  sx={{ bgcolor: "background.default", p: 2, borderRadius: 1 }}
+                >
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    fontWeight={600}
+                  >
+                    PASSWORD REQUIREMENTS
+                  </Typography>
                   <List dense sx={{ py: 0 }}>
                     <Req ok={c.length} label="At least 8 characters" />
                     <Req ok={c.upper} label="One uppercase letter" />
@@ -105,17 +253,20 @@ const ChangePassword = () => {
                     <Req ok={c.special} label="One special character" />
                   </List>
                 </Box>
-
+              </Grid>
+              <Grid size={12}>
                 <Stack direction="row" spacing={1} justifyContent="flex-end">
-                  <Button onClick={() => { setCurrent(""); setNext(""); setConfirm(""); setError(""); }}>Cancel</Button>
-                  <Button type="submit" variant="contained">Update Password</Button>
+                  <Button onClick={resetAll}>Cancel</Button>
+                  <Button type="submit" variant="contained">
+                    Update Password
+                  </Button>
                 </Stack>
-              </Stack>
-            </Box>
-          </CardContent>
-        </Card>
-      </Box>
-    </>
+              </Grid>
+            </Grid>
+          </Box>
+        </CardContent>
+      </Card>
+    </Box>
   );
 };
 
