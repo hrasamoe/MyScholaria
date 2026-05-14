@@ -1,11 +1,34 @@
 import { Router, Request, Response } from "express";
+import { establishementSchema, joinSchema } from "./establishments.schema";
 import {
-  establishementSchema,
-} from "./establishments.schema";
-import { createEtablishments } from "./establishement.service";
+  createEtablishments,
+  joinEstablishment,
+} from "./establishement.service";
 import { AuthRequest, RequireAuth } from "../../middleware/auth.middleware";
 
 export const establishementRouter = Router();
+
+establishementRouter.post(
+  "/join",
+  RequireAuth,
+  async (req: Request, res: Response) => {
+    try {
+      const data = joinSchema.parse({
+        userID: req.body.userID,
+        establishmentID: req.body.establishmentID,
+        role: req.body.role,
+      });
+      const newMember = await joinEstablishment(data);
+      res.status(201).json({
+        message: "New member add on the establishment",
+      });
+    } catch (err: any) {
+      if (err.errors)
+        return res.status(400).json({ message: err.errors[0].message });
+      res.status(500).json({ message: err.message });
+    }
+  },
+);
 
 establishementRouter.post(
   "/create",

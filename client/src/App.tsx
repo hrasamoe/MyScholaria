@@ -6,6 +6,7 @@ import { AuthProvider } from "./hooks/Authcontext";
 import { ProtectedRoute, RoleRoute } from "./hooks/ProtectRoute";
 import AppLayout from "./components/AppLayout";
 
+import VerifyEmailMember from "./pages/VerifyEmailMember";
 import Dashboard from "./pages/Dashboard";
 import Students from "./pages/Students";
 import Teachers from "./pages/Teachers";
@@ -60,21 +61,35 @@ const App = () => (
       >
         <BrowserRouter>
           <Routes>
+            <Route
+              path="/auth/verify-email-member"
+              element={<VerifyEmailMember />}
+            />
+
             <Route path="/auth/signin" element={<SignIn />} />
             <Route path="/auth/signup" element={<SignUp />} />
             <Route path="/auth/forgot-password" element={<ForgotPassword />} />
-            <Route path="/auth/reset-password" element={<ResetPassword />} />
-            <Route path="/auth/change-password" element={<ChangePassword />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/policy" element={<Privacy />} />
-            <Route
-              path="auth/etablissement"
-              element={
-                <ProtectedRoute>
-                  <CreateEstablishment />
-                </ProtectedRoute>
-              }
-            ></Route>
+            <Route path="/auth/verify-email" element={<VerifyEmail />} />
+
+            <Route element={<ProtectedRoute></ProtectedRoute>}>
+              <Route
+                path="/auth/etablissement"
+                element={<CreateEstablishment />}
+              />
+              <Route path="/auth/verify-email" element={<VerifyEmail />} />
+              <Route path="/auth/reset-password" element={<ResetPassword />} />
+              <Route
+                path="/auth/change-password"
+                element={<ChangePassword />}
+              />
+              <Route
+                path="/auth/verify-email-member"
+                element={<VerifyEmailMember />}
+              />
+            </Route>
+
             <Route
               element={
                 <ProtectedRoute>
@@ -137,7 +152,6 @@ const App = () => (
                 }
               />
             </Route>
-            <Route path="/auth/verify-email" element={<VerifyEmail />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

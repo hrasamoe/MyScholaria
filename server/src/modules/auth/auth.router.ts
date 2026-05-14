@@ -1,12 +1,18 @@
 import { Router, Request, Response } from "express";
-import { registerSchema, loginSchema } from "./auth.schema";
+import {
+  registerSchema,
+  loginSchema,
+  registerMemberSchema,
+} from "./auth.schema";
 import {
   forgotPassword,
   loginUser,
   logoutUser,
-  registerUser,
+  registerUserAsAdmin,
+  registerUserAsMember,
   resetPassword,
   verifyEmail,
+  verifyEmailWithEstablishment,
 } from "./auth.service";
 import { RequireAuth, AuthRequest } from "../../middleware/auth.middleware";
 export const authRouter = Router();
@@ -17,7 +23,7 @@ import { pool } from "../../db/pool";
 authRouter.post("/register", async (req: Request, res: Response) => {
   try {
     const data = registerSchema.parse(req.body);
-    const result = await registerUser(data);
+    const result = await registerUserAsAdmin(data);
     res.status(201).json(result);
   } catch (err: any) {
     if (err.errors) {
@@ -26,6 +32,29 @@ authRouter.post("/register", async (req: Request, res: Response) => {
     res.status(400).json({ message: err.message });
   }
 });
+
+authRouter.get("/verify-email-member", async (req: Request, res: Response) => {
+  try {
+    const { token } = req.query;
+    const result = await verifyEmailWithEstablishment(token);
+    res.status(200).json(result);
+  } catch (error: any) {
+    res.status(400).json({ message: error.message });
+  }
+});
+authRouter.post("/register-member", async (req: Request, res: Response) => {
+  try {
+    const data = registerMemberSchema.parse(req.body);
+    const result = await registerUserAsMember(data);
+    res.status(201).json(result);
+  } catch (error: any) {
+    if (error.errors) {
+      return res.status(400).json({ message: error.errors[0].message });
+    }
+    res.status(400).json({ message: error.message });
+  }
+});
+
 authRouter.post("/login", async (req: Request, res: Response) => {
   try {
     const data = loginSchema.parse(req.body);

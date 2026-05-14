@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 import { pool } from "../../db/pool";
 import crypto from "crypto";
-import { EstablishmentInput } from "./establishments.schema";
+import { EstablishmentInput, JoinInput } from "./establishments.schema";
 import { pathToFileURL } from "url";
 
 export async function createEtablishments(data: EstablishmentInput) {
@@ -144,10 +144,11 @@ export async function createEtablishments(data: EstablishmentInput) {
       user_id, 
       role_name, 
       joined_at, 
-      is_active
+      is_active,
+      is_aproved
     )
-    VALUES ($1, $2, $3, $4, $5)`,
-    [establishment.id, data.owner_id, "admin", new Date(), true],
+    VALUES ($1, $2, $3, $4, $5, $6)`,
+    [establishment.id, data.owner_id, "admin", new Date(), true, true],
   );
 
   const existingRole = await pool.query(
@@ -207,4 +208,27 @@ export async function createEtablishments(data: EstablishmentInput) {
   );
 
   return establishment;
+}
+
+export async function joinEstablishment(data: JoinInput) {
+  const exist = await pool.query(
+    `SELECT user_id FROM establishment_members WHERE user_id = $1`,
+    [data.userID],
+  );
+  if (exist.rows.length > 0) {
+    throw new Error("You are already on the establishment");
+  }
+  await pool.query(
+    `INSERT INTO establishment_members (
+    establishment_id,
+    user_id,
+    role_name,
+    joined_at,
+    is_active,
+    is_aproved
+    ) 
+    VALUES ($1, $2, $3, $4, $5, $6)
+    `,
+    [data.establishmentID, data.userID, data.role, new Date(), true, false],
+  );
 }

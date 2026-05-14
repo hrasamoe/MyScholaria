@@ -15,7 +15,7 @@ export async function register(
   email: string,
   password: string,
   full_name: string,
-  role: string = "student",
+  role: string = "admin",
   schoolName: string,
 ): Promise<AuthResponse> {
   const res = await fetch(`${API_URL}/api/auth/register`, {
@@ -65,6 +65,33 @@ export async function forgotpassword(email: string): Promise<void> {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message);
+  return data;
+}
+
+export async function registerMember(
+  email: string,
+  password: string,
+  joinCode: string,
+  full_name: string,
+  role: string = "student",
+  schoolID: string,
+): Promise<AuthResponse> {
+  const res = await fetch(`${API_URL}/api/auth/register-member`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      email,
+      password,
+      joinCode,
+      full_name,
+      role,
+      schoolID,
+    }),
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.message);

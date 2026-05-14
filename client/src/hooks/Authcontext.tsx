@@ -11,6 +11,7 @@ interface User {
   email: string;
   full_name: string;
   roles: string[];
+  establishment_id?: string;
 }
 
 interface AuthContextType {
@@ -19,6 +20,7 @@ interface AuthContextType {
   isAuth: boolean;
   saveAuth: (user: User, accessToken: string, refreshToken: string) => void;
   clearAuth: () => void;
+  updateUser: (user: Partial<User>) => void;
 }
 
 export const AuthContext = createContext<AuthContextType>(
@@ -32,10 +34,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const saved = localStorage.getItem("user");
     try {
-      if (saved && saved !== "undefined") setUser(JSON.parse(saved));
+      if (saved && saved !== "undefined") {
+        const parsedUser = JSON.parse(saved);
+        setUser(parsedUser);
+      }
     } catch {
       localStorage.removeItem("user");
-      setLoading(false);
     } finally {
       setLoading(false);
     }
@@ -55,6 +59,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   };
 
+  const updateUser = (updates: Partial<User>) => {
+    if (user) {
+      const updatedUser = { ...user, ...updates };
+      setUser(updatedUser);
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -63,6 +75,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isAuth: !!user,
         saveAuth,
         clearAuth,
+        updateUser,
       }}
     >
       {children}

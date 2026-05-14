@@ -1,6 +1,6 @@
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { useState } from "react";
-import { Link as RouterLink, useNavigate } from "react-router-dom";
+import { Link as RouterLink } from "react-router-dom";
 import {
   Box,
   Card,
@@ -12,10 +12,6 @@ import {
   Divider,
   IconButton,
   InputAdornment,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   CircularProgress,
   Checkbox,
   FormControlLabel,
@@ -28,8 +24,7 @@ import Grid from "@mui/material/Grid";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import { useSnackbar } from "notistack";
-import { register } from "../services/auth.service";
-import { useAuth } from "../hooks/Authcontext";
+import { register, registerMember } from "../services/auth.service";
 
 const passwordStrength = (pw: string) => {
   let s = 0;
@@ -45,8 +40,10 @@ const SignUp = () => {
     firstName: "",
     lastName: "",
     email: "",
-    role: "Student",
+    role: "student",
     schoolName: "",
+    schoolID: "",
+    joinCode: "",
     password: "",
     confirm: "",
     terms: false,
@@ -54,10 +51,8 @@ const SignUp = () => {
   const [emailSent, setEmailSent] = useState(false);
   const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState("");
-  const { saveAuth } = useAuth();
   const { enqueueSnackbar } = useSnackbar();
   const [isLoading, setIsLoading] = useState(false);
-  const navigate = useNavigate();
   const theme = useTheme();
 
   const strength = passwordStrength(form.password);
@@ -74,38 +69,53 @@ const SignUp = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     if (!form.firstName || !form.lastName || !form.email || !form.password) {
       setError("Please fill all required fields");
       return;
     }
-    if (form.role === "Admin" && !form.schoolName) {
-      setError("School name is required for administrators");
-      return;
-    }
+
     if (form.password !== form.confirm) {
       setError("Passwords do not match");
       return;
     }
+
     if (!form.terms) {
       setError("You must accept the terms");
       return;
     }
+
     setError("");
     setIsLoading(true);
     try {
-      await register(
-        form.email,
-        form.password,
-        `${form.firstName} ${form.lastName}`,
-        form.role.toLowerCase(),
-        form.schoolName,
-      );
+      const fullName = `${form.firstName} ${form.lastName}`;
+
+      if (form.role === "admin") {
+        if (!form.schoolName) throw new Error("School name is required");
+        await register(
+          form.email,
+          form.password,
+          fullName,
+          form.role,
+          form.schoolName,
+        );
+      } else {
+        if (!form.schoolID || !form.joinCode)
+          throw new Error("ID and Join Code are required");
+        await registerMember(
+          form.email,
+          form.password,
+          form.joinCode,
+          fullName,
+          form.role,
+          form.schoolID,
+        );
+      }
+
       enqueueSnackbar("Account created", { variant: "success" });
       setEmailSent(true);
     } catch (err: any) {
-      enqueueSnackbar(`An error occurred: ${err.message}`, {
-        variant: "error",
-      });
+      enqueueSnackbar(`Error: ${err.message}`, { variant: "error" });
       setError(err.message);
     } finally {
       setIsLoading(false);
@@ -141,7 +151,6 @@ const SignUp = () => {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        bgcolor: "background.default",
         p: 2,
         background: `linear-gradient(135deg, ${theme.palette.background.default} 0%, ${theme.palette.divider} 50%, ${theme.palette.background.paper} 100%)`,
       }}
@@ -186,15 +195,15 @@ const SignUp = () => {
                 <Stack direction="row" spacing={1}>
                   <Button
                     fullWidth
-                    variant={form.role === "Admin" ? "contained" : "outlined"}
-                    onClick={() => setForm({ ...form, role: "Admin" })}
+                    variant={form.role === "admin" ? "contained" : "outlined"}
+                    onClick={() => setForm({ ...form, role: "admin" })}
                   >
                     Admin
                   </Button>
                   <Button
                     fullWidth
-                    variant={form.role !== "Admin" ? "contained" : "outlined"}
-                    onClick={() => setForm({ ...form, role: "Student" })}
+                    variant={form.role !== "admin" ? "contained" : "outlined"}
+                    onClick={() => setForm({ ...form, role: "student" })}
                   >
                     Member
                   </Button>
@@ -222,18 +231,44 @@ const SignUp = () => {
                 />
               </Grid>
 
+              {form.role === "admin" ? (
                 <Grid size={12}>
                   <TextField
                     fullWidth
                     label="School Name *"
-                    placeholder="e.g. Milan High School"
+                    placeholder="e.g. International High School"
                     value={form.schoolName}
                     onChange={(e) =>
                       setForm({ ...form, schoolName: e.target.value })
                     }
                   />
                 </Grid>
-            
+              ) : (
+                <>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <TextField
+                      fullWidth
+                      label="Establishment ID *"
+                      placeholder="e.g. MSN-456"
+                      value={form.schoolID}
+                      onChange={(e) =>
+                        setForm({ ...form, schoolID: e.target.value })
+                      }
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <TextField
+                      fullWidth
+                      label="Join Code *"
+                      placeholder="Enter code"
+                      value={form.joinCode}
+                      onChange={(e) =>
+                        setForm({ ...form, joinCode: e.target.value })
+                      }
+                    />
+                  </Grid>
+                </>
+              )}
 
               <Grid size={12}>
                 <TextField
@@ -244,26 +279,6 @@ const SignUp = () => {
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
                 />
               </Grid>
-
-              {/* {form.role !== "Admin" && (
-                <Grid size={12}>
-                  <FormControl fullWidth>
-                    <InputLabel>Role</InputLabel>
-                    <Select
-                      value={form.role}
-                      label="Role"
-                      onChange={(e) =>
-                        setForm({ ...form, role: e.target.value })
-                      }
-                    >
-                      <MenuItem value="Student">Student</MenuItem>
-                      <MenuItem value="Parent">Parent</MenuItem>
-                      <MenuItem value="Teacher">Teacher</MenuItem>
-                      <MenuItem value="Staff">Staff</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
-              )} */}
 
               <Grid size={12}>
                 <TextField
@@ -304,6 +319,7 @@ const SignUp = () => {
                   </Box>
                 )}
               </Grid>
+
               <Grid size={12}>
                 <TextField
                   fullWidth
@@ -315,6 +331,7 @@ const SignUp = () => {
                   }
                 />
               </Grid>
+
               <Grid size={12}>
                 <FormControlLabel
                   control={
@@ -328,7 +345,7 @@ const SignUp = () => {
                   label={
                     <Typography variant="body2">
                       I accept the{" "}
-                      <Link component={RouterLink} to="/terms" target="_blank">
+                      <Link component={RouterLink} target="_blank" to="/terms">
                         Terms
                       </Link>{" "}
                       and{" "}
@@ -339,6 +356,7 @@ const SignUp = () => {
                   }
                 />
               </Grid>
+
               <Grid size={12}>
                 <Button
                   type="submit"
@@ -349,7 +367,7 @@ const SignUp = () => {
                 >
                   {isLoading ? (
                     <CircularProgress size={24} color="inherit" />
-                  ) : form.role === "Admin" ? (
+                  ) : form.role === "admin" ? (
                     "Register School"
                   ) : (
                     "Create Account"

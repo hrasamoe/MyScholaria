@@ -49,4 +49,21 @@ export const establishementSchema = z
     path: ["adminCode"],
   });
 
+export const joinSchema = z.object({
+  userID: z.string().min(2, "TOken misssing"),
+  establishmentID: z.string().min(2, "Missing establishment ID"),
+  role: z
+    .enum([
+      "admin",
+      "teacher",
+      "accountant",
+      "supervisor",
+      "parent",
+      "student",
+      "librarian",
+    ])
+    .default("student"),
+});
+
+export type JoinInput = z.infer<typeof joinSchema>;
 export type EstablishmentInput = z.infer<typeof establishementSchema>;
