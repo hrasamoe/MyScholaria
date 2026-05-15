@@ -124,7 +124,7 @@ const Terms = () => (
 
           <Section n="7" title="Data Protection & Privacy">
             <P>
-              Our handling of personal data is described in detail in our <Link component={RouterLink} to="/privacy">Privacy Policy</Link>,
+              Our handling of personal data is described in detail in our <Link component={RouterLink} to="/policy">Privacy Policy</Link>,
               which forms an integral part of these Terms. We act as a data processor on behalf of
               Institutions for student, parent and staff data, and we comply with applicable data
               protection laws including the GDPR, FERPA (where relevant), and local equivalents.

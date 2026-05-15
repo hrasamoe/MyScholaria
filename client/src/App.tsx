@@ -82,7 +82,10 @@ const App = () => (
             <Route path="/terms" element={<Terms />} />
             <Route path="/policy" element={<Privacy />} />
             <Route path="/auth/verify-email" element={<VerifyEmail />} />
-
+            <Route
+              path="/auth/verify-email-member"
+              element={<VerifyEmailMember />}
+            />
             <Route element={<ProtectedRoute></ProtectedRoute>}>
               <Route
                 path="/auth/etablissement"
@@ -90,10 +93,6 @@ const App = () => (
               />
               <Route path="/auth/verify-email" element={<VerifyEmail />} />
               <Route path="/auth/reset-password" element={<ResetPassword />} />
-              <Route
-                path="/auth/verify-email-member"
-                element={<VerifyEmailMember />}
-              />{" "}
               <Route
                 path="/auth/change-password"
                 element={<ChangePassword />}
