@@ -153,15 +153,14 @@ const CreateEstablishment = () => {
 
     setError("");
     setIsLoading(true);
-    const accessToken = localStorage.getItem("accessToken");
     try {
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/api/establishment/create`,
         {
           method: "POST",
+          credentials: "include",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
           },
           body: JSON.stringify({
             name: form.name,

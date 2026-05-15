@@ -38,13 +38,7 @@ const SignIn = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-
-  // Temp data between steps
   const [tempUser, setTempUser] = useState<any>(null);
-  const [tempTokens, setTempTokens] = useState<{
-    accessToken: string;
-    refreshToken: string;
-  } | null>(null);
 
   const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
@@ -97,8 +91,8 @@ const SignIn = () => {
       };
 
       saveAuth(fullUser);
-
-      navigate(result.data.is_aproved ? "/" : "/pending-approval");
+      enqueueSnackbar("Signed in successfully", { variant: "success" });
+      navigate(result.data.is_aproved ? "/" : "/pending-approval"); 
     } catch (err: any) {
       setError(err.message);
     } finally {

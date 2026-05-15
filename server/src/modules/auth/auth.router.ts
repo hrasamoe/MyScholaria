@@ -23,7 +23,6 @@ export const authRouter = Router();
 import jwt from "jsonwebtoken";
 import { ENV } from "../../config/env";
 import { pool } from "../../db/pool";
-import { en } from "zod/locales";
 
 function setAuthCookies(
   res: Response,
@@ -104,6 +103,7 @@ authRouter.get("/verify-email", async (req: Request, res: Response) => {
   try {
     const { token } = req.query;
     const result = await verifyEmail(token);
+    setAuthCookies(res, result.accessToken, result.refreshToken);
     res.status(201).json(result);
   } catch (err: any) {
     if (err.errors) {
