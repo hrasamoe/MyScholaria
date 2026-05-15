@@ -2,7 +2,7 @@ import PageHeader from "@/components/PageHeader";
 import LightModeIcon from "@mui/icons-material/LightMode";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
 const API_URL = import.meta.env.VITE_API_URL;
-
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import {
   Card,
   CardContent,
@@ -15,6 +15,8 @@ import {
   Box,
   Button,
   TextField,
+  InputAdornment,
+  IconButton,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import SecurityIcon from "@mui/icons-material/Security";
@@ -24,6 +26,7 @@ import ColorLensIcon from "@mui/icons-material/ColorLens";
 import { useEffect, useRef, useState } from "react";
 import { useThemeMode } from "@/hooks/Themecontext";
 import { getMyEstablishments } from "@/services/establishment.service";
+import { useAuth } from "@/hooks/Authcontext";
 
 const Settings = () => {
   const { isDark, toggle } = useThemeMode();
@@ -33,18 +36,22 @@ const Settings = () => {
   const handleSwitch = (event) => {
     setChecked(event.target.checked);
   };
+  const handleCopy = (text: string) => {
+    if (text) {
+      navigator.clipboard.writeText(text);
+    }
+  };
+  const { user } = useAuth();
   const isSearching = useRef(false);
   useEffect(() => {
-    const userString = localStorage.getItem("user");
-    if (!userString || isSearching.current) return;
-    const user = JSON.parse(userString);
+    if (isSearching.current) return;
     const userID = user.id;
     isSearching.current = true;
     setLoading(true);
 
     getMyEstablishments(userID)
       .then((establishments) => {
-        console.log("establishments reçu:", establishments); // ← vérifiez ici
+        console.log("establishments reçu:", establishments);
         setEstablishments(establishments);
       })
       .catch((error) => {
@@ -176,7 +183,7 @@ const Settings = () => {
               >
                 <BusinessIcon color="primary" />
                 <Typography variant="subtitle1" fontWeight={700}>
-                  Multi-campus
+                  Establishment Information
                 </Typography>
               </Box>
               <Divider sx={{ mb: 2 }} />
@@ -193,25 +200,131 @@ const Settings = () => {
                         establishment?.name ||
                         ""
                       }
-                      // disabled
                     />
                   </Grid>
                   <Grid size={{ xs: 12, sm: 6 }}>
                     <TextField
                       fullWidth
-                      label="Active campuses"
-                      defaultValue="Tunis, Sousse, Sfax"
+                      label="Code"
+                      value={establishment?.code || ""}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <TextField
+                      fullWidth
+                      label="Identification Number"
+                      value={establishment?.identification_number || ""}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <TextField
+                      fullWidth
+                      label="Type"
+                      value={
+                        establishment?.type === "university"
+                          ? "University"
+                          : "Test"
+                      }
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <TextField
+                      fullWidth
+                      label="Email"
+                      value={establishment?.email || ""}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <TextField
+                      fullWidth
+                      label="Phone"
+                      value={establishment?.phone || ""}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 8 }}>
+                    <TextField
+                      fullWidth
+                      label="Address"
+                      value={establishment?.address || ""}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 4 }}>
+                    <TextField
+                      fullWidth
+                      label="Zip Code"
+                      value={
+                        establishment?.zip_code || establishment?.zipCode || ""
+                      }
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <TextField
+                      fullWidth
+                      label="Join Code"
+                      value={
+                        establishment?.join_code ||
+                        establishment?.joinCode ||
+                        ""
+                      }
+                      slotProps={{
+                        input: {
+                          style: { fontFamily: "Roboto, sans-serif" },
+                          endAdornment: (
+                            <InputAdornment position="end">
+                              <IconButton
+                                onClick={() =>
+                                  handleCopy(
+                                    establishment?.join_code ||
+                                      establishment?.joinCode ||
+                                      "",
+                                  )
+                                }
+                                edge="end"
+                              >
+                                <ContentCopyIcon fontSize="small" />
+                              </IconButton>
+                            </InputAdornment>
+                          ),
+                        },
+                      }}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <TextField
+                      fullWidth
+                      label="Admin Code"
+                      value={
+                        establishment?.admin_code ||
+                        establishment?.adminCode ||
+                        ""
+                      }
+                      slotProps={{
+                        input: {
+                          style: { fontFamily: "Roboto, sans-serif" },
+                          endAdornment: (
+                            <InputAdornment position="end">
+                              <IconButton
+                                onClick={() =>
+                                  handleCopy(
+                                    establishment?.admin_code ||
+                                      establishment?.adminCode ||
+                                      "",
+                                  )
+                                }
+                                edge="end"
+                              >
+                                <ContentCopyIcon fontSize="small" />
+                              </IconButton>
+                            </InputAdornment>
+                          ),
+                        },
+                      }}
                     />
                   </Grid>
                 </Grid>
               ) : (
                 <Typography color="error">No establishment found</Typography>
               )}
-              <Stack direction="row" spacing={1} mt={2}>
-                <Chip label="Tunis (main)" color="primary" />
-                <Chip label="Sousse" />
-                <Chip label="Sfax" />
-              </Stack>
             </CardContent>
           </Card>
         </Grid>

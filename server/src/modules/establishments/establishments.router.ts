@@ -88,7 +88,6 @@ establishementRouter.post(
   async (req: Request, res: Response) => {
     try {
       const { userID } = req.body;
-      console.log("POST /my - Received userID:", userID);
       const myEstablishment = await getMyEstablishment(userID);
       res.status(200).json({
         message: "My establishment retrieved successfully",

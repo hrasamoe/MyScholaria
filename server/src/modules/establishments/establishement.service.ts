@@ -205,8 +205,8 @@ export async function getMyEstablishment(userID: string | undefined) {
       `SELECT * FROM establishments WHERE id = $1`,
       [myEstablishment.establishment_id],
     );
-    myEstablishment.establishment_name = myEstablishments[0].name;
-    return myEstablishment;
+  const  response = myEstablishments[0];
+    return response;
   } catch (error) {
     await client.query("ROLLBACK");
     throw error;

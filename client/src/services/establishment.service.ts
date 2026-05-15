@@ -46,6 +46,7 @@ export async function createEstablishment(
 export async function getMyEstablishments(userID: string): Promise<any[]> {
   const res = await fetch(`${API_URL}/api/establishment/my`, {
     method: "POST",
+    credentials: 'include',
     headers: {
       "Content-Type": "application/json",
     },

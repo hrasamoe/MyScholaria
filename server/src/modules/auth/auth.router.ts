@@ -218,38 +218,33 @@ authRouter.get(
     try {
       const { rows } = await pool.query(
         `SELECT u.id, u.email, p.full_name,
-              em.is_aproved, e.name AS establishment_name, e.id AS establishment_id
+              em.is_aproved, e.name AS establishment_name, e.id AS establishment_id,
+              array_agg(ur.role) AS roles
        FROM users u
        LEFT JOIN profiles p ON p.id = u.id
        LEFT JOIN establishment_members em ON em.user_id = u.id AND em.is_active = true
        LEFT JOIN establishments e ON e.id = em.establishment_id
+       LEFT JOIN user_roles ur ON ur.user_id = u.id
        WHERE u.id = $1
-       LIMIT 1`,
+       GROUP BY u.id, u.email, p.full_name, em.is_aproved, e.name, e.id`,
         [req.userId],
       );
       if (rows.length === 0)
         return res.status(401).json({ message: "User not found" });
-
-      const rolesResult = await pool.query(
-        "SELECT role FROM user_roles WHERE user_id = $1",
-        [req.userId],
-      );
-      const roles = rolesResult.rows.map((r: any) => r.role);
       const u = rows[0];
-
-      res.status(200).json({
+      res.json({
         user: {
           id: u.id,
           email: u.email,
           full_name: u.full_name,
-          roles,
+          roles: u.roles,
           establishment_id: u.establishment_id ?? null,
           establishment_name: u.establishment_name ?? null,
           is_aproved: u.is_aproved ?? false,
         },
       });
-    } catch {
-      res.status(500).json({ message: "Server error" });
+    } catch (err: any) {
+      res.status(500).json({ message: err.message });
     }
   },
 );
