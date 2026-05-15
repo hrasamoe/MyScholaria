@@ -31,9 +31,9 @@ export async function createEstablishment(
 ): Promise<EstablishmentResponse> {
   const res = await fetch(`${API_URL}/api/establishment/create`, {
     method: "POST",
+    credentials: "include",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
     },
     body: JSON.stringify(data),
   });

@@ -4,14 +4,19 @@ import {
   createEtablishments,
   getMyEstablishment,
   joinEstablishment,
+  selectEstablishment,
 } from "./establishement.service";
-import { AuthRequest, RequireAuth } from "../../middleware/auth.middleware";
+import {
+  AuthRequest,
+  RequireAuth,
+  RequireAuthOnly,
+} from "../../middleware/auth.middleware";
 
 export const establishementRouter = Router();
 
 establishementRouter.post(
   "/join",
-  RequireAuth,
+  RequireAuthOnly,
   async (req: Request, res: Response) => {
     try {
       const data = joinSchema.parse({
@@ -77,20 +82,37 @@ establishementRouter.post(
   },
 );
 
-establishementRouter.post("/my", async (req: Request, res: Response) => {
-  try {
-    const { userID } = req.body;
-    console.log("POST /my - Received userID:", userID);
-    const myEstablishment = await getMyEstablishment(userID);
-    res.status(200).json({
-      message: "My establishment retrieved successfully",
-      data: myEstablishment,
-    });
-  } catch (error: any) {
-    console.error("POST /my - Error:", error.message);
-    res.status(400).json({
-      message: error.message,
-    });
-  }
-});
+establishementRouter.post(
+  "/my",
+  RequireAuth,
+  async (req: Request, res: Response) => {
+    try {
+      const { userID } = req.body;
+      console.log("POST /my - Received userID:", userID);
+      const myEstablishment = await getMyEstablishment(userID);
+      res.status(200).json({
+        message: "My establishment retrieved successfully",
+        data: myEstablishment,
+      });
+    } catch (error: any) {
+      console.error("POST /my - Error:", error.message);
+      res.status(400).json({
+        message: error.message,
+      });
+    }
+  },
+);
 
+establishementRouter.post(
+  "/select",
+  RequireAuthOnly,
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const { code, joinCode } = req.body;
+      const result = await selectEstablishment(req.userId!, code, joinCode);
+      res.status(200).json({ message: "Establishment selected", data: result });
+    } catch (err: any) {
+      res.status(400).json({ message: err.message });
+    }
+  },
+);

@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
+import cookieParser from "cookie-parser";
 import { initPool } from "./db/pool";
 import dotenv from "dotenv";
 import path from "path";
@@ -20,7 +21,13 @@ app.use(
     contentSecurityPolicy: false,
   }),
 );
-app.use(cors({ origin: process.env.CLIENT_URL }));
+app.use(
+  cors({
+    origin: process.env.CLIENT_URL,
+    credentials: true,
+  }),
+);
+app.use(cookieParser());
 app.use(express.json());
 app.use("/api/auth", authRouter);
 app.use("/api/establishment", establishementRouter);

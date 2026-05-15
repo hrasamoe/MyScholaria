@@ -214,3 +214,51 @@ export async function getMyEstablishment(userID: string | undefined) {
     client.release();
   }
 }
+
+export async function selectEstablishment(
+  userID: string,
+  code: string,
+  joinCode: string,
+) {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    const { rows: estRows } = await client.query(
+      `SELECT * FROM establishments WHERE code = $1 AND is_active = true`,
+      [code],
+    );
+    if (estRows.length === 0) throw new Error("Establishment not found");
+
+    const establishment = estRows[0];
+
+    const match = await bcrypt.compare(joinCode, establishment.join_code_hash);
+    if (!match) throw new Error("Incorrect join code");
+
+    const { rows: memberRows } = await client.query(
+      `SELECT em.is_aproved, em.role_name
+       FROM establishment_members em
+       WHERE em.user_id = $1 AND em.establishment_id = $2 AND em.is_active = true`,
+      [userID, establishment.id],
+    );
+
+    if (memberRows.length === 0)
+      throw new Error("You are not a member of this establishment");
+
+    const member = memberRows[0];
+
+    await client.query("COMMIT");
+
+    return {
+      establishment_id: establishment.id,
+      establishment_name: establishment.name,
+      is_aproved: member.is_aproved,
+      role_name: member.role_name,
+    };
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
+}

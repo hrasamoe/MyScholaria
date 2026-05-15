@@ -4,6 +4,7 @@ import { Box, CircularProgress, Typography, Button } from "@mui/material";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import ErrorIcon from "@mui/icons-material/Error";
 import { useAuth } from "@/hooks/Authcontext";
+const API_URL = import.meta.env.VITE_API_URL;
 
 export default function VerifyEmail() {
   const [params] = useSearchParams();
@@ -19,20 +20,17 @@ export default function VerifyEmail() {
       setStatus("error");
       return;
     }
-
-    fetch(
-      `${import.meta.env.VITE_API_URL}/api/auth/verify-email?token=${token}`,
-    )
-      .then(async (res) => {
-        const data = await res.json();
-        if (res.ok) {
-          saveAuth(data.user, data.accessToken, data.refreshToken);
-          setStatus("success");
-        } else {
-          setStatus("error");
-        }
-      })
-      .catch(() => setStatus("error"));
+    fetch(`${API_URL}/api/auth/verify-email?token=${token}`, {
+      credentials: "include",
+    }).then(async (res) => {
+      const data = await res.json();
+      if (res.ok) {
+        saveAuth(data.user); 
+        setStatus("success");
+      } else {
+        setStatus("error");
+      }
+    });
   }, []);
 
   return (

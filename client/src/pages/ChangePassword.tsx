@@ -25,6 +25,7 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import RadioButtonUncheckedIcon from "@mui/icons-material/RadioButtonUnchecked";
 import LockResetIcon from "@mui/icons-material/LockReset";
 import { useSnackbar } from "notistack";
+import { useSearchParams } from "react-router-dom";
 
 const checks = (pw: string) => ({
   length: pw.length >= 8,
@@ -37,11 +38,13 @@ interface ChangePasswordProps {
   token?: string;
 }
 
-const ChangePassword = ({ token }: ChangePasswordProps) => {
+const ChangePassword = () => {
   const [current, setCurrent] = useState("");
   const [next, setNext] = useState("");
   const [confirm, setConfirm] = useState("");
   const [show, setShow] = useState(false);
+  const [searchParams] = useSearchParams();
+  const token = searchParams.get("token");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const { enqueueSnackbar } = useSnackbar();

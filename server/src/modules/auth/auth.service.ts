@@ -186,9 +186,25 @@ export async function loginUser(data: LoginInput) {
      VALUES ($1, $2, NOW() + INTERVAL '7 days')`,
     [user.id, tokenHash],
   );
-
+  const memberResult = await pool.query(
+    `SELECT em.is_aproved, e.name AS establishment_name, e.id as establishment_id
+  FROM establishment_members em
+  JOIN establishments e ON e.id = em.establishment_id
+  WHERE  em.user_id = $1 AND em.is_active = true
+  LIMIT 1`,
+    [user.id],
+  );
+  const member = memberResult.rows[0];
   return {
-    user: { id: user.id, email: user.email, full_name: user.full_name, roles },
+    user: {
+      id: user.id,
+      email: user.email,
+      full_name: user.full_name,
+      roles,
+      establishment_id: member?.establishment_id ?? null,
+      establishment_name: member?.establishment_name ?? null,
+      is_aproved: member?.is_aproved ?? false,
+    },
     accessToken,
     refreshToken,
   };
@@ -268,6 +284,12 @@ export async function verifyEmailWithEstablishment(token: any) {
     "SELECT role FROM user_roles WHERE user_id = $1",
     [userId],
   );
+  const establishmentResult = await pool.query(
+    `SELECT name FROM establishments WHERE id = $1`,
+    [establishmentId],
+  );
+  const establishmentName = establishmentResult.rows[0]?.name ?? null;
+
   const roles = rolesResult.rows.map((r) => r.role);
 
   const accessToken = generateAccessToken(userId);
@@ -281,7 +303,15 @@ export async function verifyEmailWithEstablishment(token: any) {
   );
 
   return {
-    user: { id: userId, email: userEmail, full_name: rows[0].full_name, roles },
+    user: {
+      id: userId,
+      email: userEmail,
+      full_name: rows[0].full_name,
+      roles,
+      establishment_id: establishmentId,
+      establishment_name: establishmentName,
+      is_aproved: false,
+    },
     establishment_id: establishmentId,
     accessToken,
     refreshToken,

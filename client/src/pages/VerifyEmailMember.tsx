@@ -41,41 +41,24 @@ export default function VerifyEmailMember() {
       try {
         const res = await fetch(
           `${API_URL}/api/auth/verify-email-member?token=${token}`,
+          {
+            credentials: "include",
+          },
         );
         const data = await res.json();
-
         if (res.ok) {
-          const userWithEstablishment = {
-            ...data.user,
-            establishment_id: data.establishment_id,
-          };
-          saveAuth(userWithEstablishment, data.accessToken, data.refreshToken);
-
-          try {
-            const joinRes = await fetch(`${API_URL}/api/establishment/join`, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${data.accessToken}`,
-              },
-              body: JSON.stringify({
-                userID: data.user.id,
-                establishmentID: data.establishment_id,
-                role: data.user.roles[0] || "student",
-              }),
-            });
-
-            if (!joinRes.ok) {
-              console.error("Failed to join establishment");
-            }
-          } catch (joinError) {
-            console.error("Join error:", joinError);
-          }
-
-          setStatus("success");
-          enqueueSnackbar("Email verified! Waiting for approval...", {
-            variant: "success",
+          saveAuth(data.user);
+          await fetch(`${API_URL}/api/establishment/join`, {
+            method: "POST",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              userID: data.user.id,
+              establishmentID: data.establishment_id,
+              role: data.user.roles[0] || "student",
+            }),
           });
+          setStatus("success");
         } else {
           setStatus("error");
           enqueueSnackbar(data.message || "Verification failed", {

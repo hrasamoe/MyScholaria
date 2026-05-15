@@ -7,8 +7,6 @@ export interface AuthResponse {
     full_name: string;
     roles: string[];
   };
-  accessToken: string;
-  refreshToken: string;
 }
 
 export async function register(
@@ -20,6 +18,7 @@ export async function register(
 ): Promise<AuthResponse> {
   const res = await fetch(`${API_URL}/api/auth/register`, {
     method: "POST",
+    credentials: "include",
     headers: {
       "Content-Type": "application/json",
     },
@@ -36,6 +35,7 @@ export async function login(
 ): Promise<AuthResponse> {
   const res = await fetch(`${API_URL}/api/auth/login`, {
     method: "POST",
+    credentials: "include",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, password }),
   });
@@ -49,20 +49,29 @@ export async function logout(): Promise<void> {
   const refreshToken = localStorage.getItem("refreshToken");
   await fetch(`${API_URL}/api/auth/logout`, {
     method: "POST",
+    credentials: "include",
     headers: {
       "Content-Type": "application/json",
     },
 
     body: JSON.stringify({ refreshToken }),
   });
-  localStorage.removeItem("accessToken");
-  localStorage.removeItem("refreshToken");
   localStorage.removeItem("user");
+}
+
+export async function getMe(): Promise<AuthResponse> {
+  const res = await fetch(`${API_URL}/api/auth/me`, {
+    credentials: "include",
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message);
+  return data;
 }
 
 export async function forgotpassword(email: string): Promise<void> {
   const res = await fetch(`${API_URL}/api/auth/forgot-password`, {
     method: "POST",
+    credentials: "include",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email }),
   });
@@ -81,6 +90,7 @@ export async function registerMember(
 ): Promise<AuthResponse> {
   const res = await fetch(`${API_URL}/api/auth/register-member`, {
     method: "POST",
+    credentials: "include",
     headers: {
       "Content-Type": "application/json",
     },

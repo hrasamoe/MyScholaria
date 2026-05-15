@@ -49,7 +49,6 @@ const Settings = () => {
       })
       .catch((error) => {
         console.error("FETCH ERROR:", error);
-        alert("Erreur: " + error.message); // ← pour voir immédiatement
       })
       .finally(() => {
         setLoading(false);

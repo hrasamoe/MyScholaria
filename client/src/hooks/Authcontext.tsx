@@ -6,11 +6,14 @@ import {
   type ReactNode,
 } from "react";
 
+import { getMe, logout as lougoutServide } from "@/services/auth.service";
 interface User {
   id: string;
   email: string;
   full_name: string;
   roles: string[];
+  establishment_name?: string;
+  is_aproved?: boolean;
   establishment_id?: string;
 }
 
@@ -18,7 +21,7 @@ interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   isAuth: boolean;
-  saveAuth: (user: User, accessToken: string, refreshToken: string) => void;
+  saveAuth: (user: User) => void;
   clearAuth: () => void;
   updateUser: (user: Partial<User>) => void;
 }
@@ -32,39 +35,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setLoading] = useState(true);
 
   useEffect(() => {
-    const saved = localStorage.getItem("user");
-    try {
-      if (saved && saved !== "undefined") {
-        const parsedUser = JSON.parse(saved);
-        setUser(parsedUser);
-      }
-    } catch {
-      localStorage.removeItem("user");
-    } finally {
-      setLoading(false);
-    }
+    getMe()
+      .then((data) => setUser(data.user))
+      .catch(() => setUser(null))
+      .finally(() => setLoading(false));
   }, []);
 
-  const saveAuth = (user: User, accessToken: string, refreshToken: string) => {
-    localStorage.setItem("user", JSON.stringify(user));
-    localStorage.setItem("accessToken", accessToken);
-    localStorage.setItem("refreshToken", refreshToken);
+  const saveAuth = (user: User) => {
     setUser(user);
   };
 
-  const clearAuth = () => {
-    localStorage.removeItem("user");
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
+  const clearAuth = async () => {
+    await lougoutServide();
     setUser(null);
   };
 
   const updateUser = (updates: Partial<User>) => {
-    if (user) {
-      const updatedUser = { ...user, ...updates };
-      setUser(updatedUser);
-      localStorage.setItem("user", JSON.stringify(updatedUser));
-    }
+    if (user) setUser({ ...user, ...updates });
   };
 
   return (

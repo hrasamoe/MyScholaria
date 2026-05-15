@@ -3,7 +3,12 @@ import { CssBaseline } from "@mui/material";
 import { SnackbarProvider } from "notistack";
 import { AppThemeProvider } from "./hooks/Themecontext";
 import { AuthProvider } from "./hooks/Authcontext";
-import { GuestGuard, ProtectedRoute, RoleRoute } from "./hooks/ProtectRoute";
+import {
+  GuestGuard,
+  PendinRoute,
+  ProtectedRoute,
+  RoleRoute,
+} from "./hooks/ProtectRoute";
 import AppLayout from "./components/AppLayout";
 
 import VerifyEmailMember from "./pages/VerifyEmailMember";
@@ -50,6 +55,7 @@ import ChangePassword from "./pages/ChangePassword";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import CreateEstablishment from "./pages/CreateEstablishment";
+import PendingApproval from "./pages/PendingEvaluation";
 
 const App = () => (
   <AppThemeProvider>
@@ -82,6 +88,8 @@ const App = () => (
             <Route path="/terms" element={<Terms />} />
             <Route path="/policy" element={<Privacy />} />
             <Route path="/auth/verify-email" element={<VerifyEmail />} />
+            <Route path="/auth/reset-password" element={<ResetPassword />} />
+            <Route path="/auth/change-password" element={<ChangePassword />} />
             <Route
               path="/auth/verify-email-member"
               element={<VerifyEmailMember />}
@@ -92,18 +100,20 @@ const App = () => (
                 element={<CreateEstablishment />}
               />
               <Route path="/auth/verify-email" element={<VerifyEmail />} />
-              <Route path="/auth/reset-password" element={<ResetPassword />} />
-              <Route
-                path="/auth/change-password"
-                element={<ChangePassword />}
-              />
             </Route>
-
             <Route
+              path="/pending-aproval"
               element={
                 <ProtectedRoute>
-                  <AppLayout />
+                  <PendingApproval />
                 </ProtectedRoute>
+              }
+            />
+            <Route
+              element={
+                <PendinRoute>
+                  <AppLayout />
+                </PendinRoute>
               }
             >
               <Route path="/" element={<Dashboard />} />
