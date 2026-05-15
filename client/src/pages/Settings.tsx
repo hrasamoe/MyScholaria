@@ -27,12 +27,14 @@ import { useEffect, useRef, useState } from "react";
 import { useThemeMode } from "@/hooks/Themecontext";
 import { getMyEstablishments } from "@/services/establishment.service";
 import { useAuth } from "@/hooks/Authcontext";
+import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 
 const Settings = () => {
   const { isDark, toggle } = useThemeMode();
   const [establishment, setEstablishments] = useState<any>(null);
   const [checked, setChecked] = useState(isDark);
   const [loading, setLoading] = useState(false);
+  const isOnline = useOnlineStatus();
   const handleSwitch = (event) => {
     setChecked(event.target.checked);
   };
@@ -44,7 +46,7 @@ const Settings = () => {
   const { user } = useAuth();
   const isSearching = useRef(false);
   useEffect(() => {
-    if (isSearching.current) return;
+    // if (isSearching.current) return;
     const userID = user.id;
     isSearching.current = true;
     setLoading(true);
@@ -59,7 +61,7 @@ const Settings = () => {
       .finally(() => {
         setLoading(false);
       });
-  }, []);
+  }, [isOnline]);
   return (
     <>
       <PageHeader
@@ -100,7 +102,6 @@ const Settings = () => {
             </CardContent>
           </Card>
         </Grid>
-
         <Grid size={{ xs: 12, md: 6 }}>
           <Card>
             <CardContent>
@@ -174,159 +175,166 @@ const Settings = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid size={12}>
-          <Card>
-            <CardContent>
-              <Box
-                sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}
-              >
-                <BusinessIcon color="primary" />
-                <Typography variant="subtitle1" fontWeight={700}>
-                  Establishment Information
-                </Typography>
-              </Box>
-              <Divider sx={{ mb: 2 }} />
-              {loading ? (
-                <Typography>Loading...</Typography>
-              ) : establishment ? (
-                <Grid container spacing={2}>
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <TextField
-                      fullWidth
-                      label="Establishment name"
-                      value={
-                        establishment?.establishment_name ||
-                        establishment?.name ||
-                        ""
-                      }
-                    />
+        {isOnline ? (
+          <Grid size={12}>
+            <Card>
+              <CardContent>
+                <Box
+                  sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}
+                >
+                  <BusinessIcon color="primary" />
+                  <Typography variant="subtitle1" fontWeight={700}>
+                    Establishment Information
+                  </Typography>
+                </Box>
+                <Divider sx={{ mb: 2 }} />
+
+                {loading ? (
+                  <Typography>Loading...</Typography>
+                ) : establishment ? (
+                  <Grid container spacing={2}>
+                    <Grid size={{ xs: 12, sm: 6 }}>
+                      <TextField
+                        fullWidth
+                        label="Establishment name"
+                        value={
+                          establishment?.establishment_name ||
+                          establishment?.name ||
+                          ""
+                        }
+                      />
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 6 }}>
+                      <TextField
+                        fullWidth
+                        label="Code"
+                        value={establishment?.code || ""}
+                      />
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 6 }}>
+                      <TextField
+                        fullWidth
+                        label="Identification Number"
+                        value={establishment?.identification_number || ""}
+                      />
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 6 }}>
+                      <TextField
+                        fullWidth
+                        label="Type"
+                        value={
+                          establishment?.type === "university"
+                            ? "University"
+                            : "Test"
+                        }
+                      />
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 6 }}>
+                      <TextField
+                        fullWidth
+                        label="Email"
+                        value={establishment?.email || ""}
+                      />
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 6 }}>
+                      <TextField
+                        fullWidth
+                        label="Phone"
+                        value={establishment?.phone || ""}
+                      />
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 8 }}>
+                      <TextField
+                        fullWidth
+                        label="Address"
+                        value={establishment?.address || ""}
+                      />
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 4 }}>
+                      <TextField
+                        fullWidth
+                        label="Zip Code"
+                        value={
+                          establishment?.zip_code ||
+                          establishment?.zipCode ||
+                          ""
+                        }
+                      />
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 6 }}>
+                      <TextField
+                        fullWidth
+                        label="Join Code"
+                        value={
+                          establishment?.join_code ||
+                          establishment?.joinCode ||
+                          ""
+                        }
+                        slotProps={{
+                          input: {
+                            style: { fontFamily: "Roboto, sans-serif" },
+                            endAdornment: (
+                              <InputAdornment position="end">
+                                <IconButton
+                                  onClick={() =>
+                                    handleCopy(
+                                      establishment?.join_code ||
+                                        establishment?.joinCode ||
+                                        "",
+                                    )
+                                  }
+                                  edge="end"
+                                >
+                                  <ContentCopyIcon fontSize="small" />
+                                </IconButton>
+                              </InputAdornment>
+                            ),
+                          },
+                        }}
+                      />
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 6 }}>
+                      <TextField
+                        fullWidth
+                        label="Admin Code"
+                        value={
+                          establishment?.admin_code ||
+                          establishment?.adminCode ||
+                          ""
+                        }
+                        slotProps={{
+                          input: {
+                            style: { fontFamily: "Roboto, sans-serif" },
+                            endAdornment: (
+                              <InputAdornment position="end">
+                                <IconButton
+                                  onClick={() =>
+                                    handleCopy(
+                                      establishment?.admin_code ||
+                                        establishment?.adminCode ||
+                                        "",
+                                    )
+                                  }
+                                  edge="end"
+                                >
+                                  <ContentCopyIcon fontSize="small" />
+                                </IconButton>
+                              </InputAdornment>
+                            ),
+                          },
+                        }}
+                      />
+                    </Grid>
                   </Grid>
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <TextField
-                      fullWidth
-                      label="Code"
-                      value={establishment?.code || ""}
-                    />
-                  </Grid>
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <TextField
-                      fullWidth
-                      label="Identification Number"
-                      value={establishment?.identification_number || ""}
-                    />
-                  </Grid>
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <TextField
-                      fullWidth
-                      label="Type"
-                      value={
-                        establishment?.type === "university"
-                          ? "University"
-                          : "Test"
-                      }
-                    />
-                  </Grid>
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <TextField
-                      fullWidth
-                      label="Email"
-                      value={establishment?.email || ""}
-                    />
-                  </Grid>
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <TextField
-                      fullWidth
-                      label="Phone"
-                      value={establishment?.phone || ""}
-                    />
-                  </Grid>
-                  <Grid size={{ xs: 12, sm: 8 }}>
-                    <TextField
-                      fullWidth
-                      label="Address"
-                      value={establishment?.address || ""}
-                    />
-                  </Grid>
-                  <Grid size={{ xs: 12, sm: 4 }}>
-                    <TextField
-                      fullWidth
-                      label="Zip Code"
-                      value={
-                        establishment?.zip_code || establishment?.zipCode || ""
-                      }
-                    />
-                  </Grid>
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <TextField
-                      fullWidth
-                      label="Join Code"
-                      value={
-                        establishment?.join_code ||
-                        establishment?.joinCode ||
-                        ""
-                      }
-                      slotProps={{
-                        input: {
-                          style: { fontFamily: "Roboto, sans-serif" },
-                          endAdornment: (
-                            <InputAdornment position="end">
-                              <IconButton
-                                onClick={() =>
-                                  handleCopy(
-                                    establishment?.join_code ||
-                                      establishment?.joinCode ||
-                                      "",
-                                  )
-                                }
-                                edge="end"
-                              >
-                                <ContentCopyIcon fontSize="small" />
-                              </IconButton>
-                            </InputAdornment>
-                          ),
-                        },
-                      }}
-                    />
-                  </Grid>
-                  <Grid size={{ xs: 12, sm: 6 }}>
-                    <TextField
-                      fullWidth
-                      label="Admin Code"
-                      value={
-                        establishment?.admin_code ||
-                        establishment?.adminCode ||
-                        ""
-                      }
-                      slotProps={{
-                        input: {
-                          style: { fontFamily: "Roboto, sans-serif" },
-                          endAdornment: (
-                            <InputAdornment position="end">
-                              <IconButton
-                                onClick={() =>
-                                  handleCopy(
-                                    establishment?.admin_code ||
-                                      establishment?.adminCode ||
-                                      "",
-                                  )
-                                }
-                                edge="end"
-                              >
-                                <ContentCopyIcon fontSize="small" />
-                              </IconButton>
-                            </InputAdornment>
-                          ),
-                        },
-                      }}
-                    />
-                  </Grid>
-                </Grid>
-              ) : (
-                <Typography color="error">No establishment found</Typography>
-              )}
-            </CardContent>
-          </Card>
-        </Grid>
+                ) : (
+                  <Typography color="error">No establishment found</Typography>
+                )}
+              </CardContent>
+            </Card>
+          </Grid>
+        ) : (
+          <></>
+        )}
       </Grid>
     </>
   );
