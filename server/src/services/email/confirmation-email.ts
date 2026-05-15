@@ -57,10 +57,15 @@ export async function sendConfirmationEmail(
   token: string,
 ) {
   const link = `${ENV.CLIENT_URL}/auth/verify-email?token=${token}`;
-  await transporter.sendMail({
-    from: `MyScholaria`,
-    to: email,
-    subject: `Confirm your registration: ${establishmentName} - MyScholaria`,
-    html: confirmationTemplate(fullName, establishmentName, link),
-  });
+  try {
+    await transporter.sendMail({
+      from: `MyScholaria`,
+      to: email,
+      subject: `Confirm your registration: ${establishmentName} - MyScholaria`,
+      html: confirmationTemplate(fullName, establishmentName, link),
+    });
+  } catch (error) {
+    console.error("Erreur lors de l'envoi de l'email de confirmation :", error);
+    throw error;
+  }
 }
