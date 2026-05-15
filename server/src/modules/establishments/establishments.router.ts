@@ -2,6 +2,7 @@ import { Router, Request, Response } from "express";
 import { establishementSchema, joinSchema } from "./establishments.schema";
 import {
   createEtablishments,
+  getMyEstablishment,
   joinEstablishment,
 } from "./establishement.service";
 import { AuthRequest, RequireAuth } from "../../middleware/auth.middleware";
@@ -75,3 +76,21 @@ establishementRouter.post(
     }
   },
 );
+
+establishementRouter.post("/my", async (req: Request, res: Response) => {
+  try {
+    const { userID } = req.body;
+    console.log("POST /my - Received userID:", userID);
+    const myEstablishment = await getMyEstablishment(userID);
+    res.status(200).json({
+      message: "My establishment retrieved successfully",
+      data: myEstablishment,
+    });
+  } catch (error: any) {
+    console.error("POST /my - Error:", error.message);
+    res.status(400).json({
+      message: error.message,
+    });
+  }
+});
+

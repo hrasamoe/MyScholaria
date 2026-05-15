@@ -43,16 +43,16 @@ export async function createEstablishment(
   return result;
 }
 
-export async function getMyEstablishments(accessToken: string): Promise<any[]> {
-  const res = await fetch(`${API_URL}/api/establishment/my-establishments`, {
-    method: "GET",
+export async function getMyEstablishments(userID: string): Promise<any[]> {
+  const res = await fetch(`${API_URL}/api/establishment/my`, {
+    method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
     },
+    body: JSON.stringify({ userID }),
   });
 
   const result = await res.json();
   if (!res.ok) throw new Error(result.message);
-  return result.data || [];
+  return result.data;
 }

@@ -188,3 +188,29 @@ export async function joinEstablishment(data: JoinInput) {
     client.release();
   }
 }
+
+export async function getMyEstablishment(userID: string | undefined) {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const { rows } = await client.query(
+      `SELECT * FROM establishment_members
+        WHERE user_id = $1`,
+      [userID],
+    );
+    if (rows.length === 0) throw new Error("You are not in such establishment");
+
+    const myEstablishment = rows[0];
+    const { rows: myEstablishments } = await client.query(
+      `SELECT * FROM establishments WHERE id = $1`,
+      [myEstablishment.establishment_id],
+    );
+    myEstablishment.establishment_name = myEstablishments[0].name;
+    return myEstablishment;
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+}
