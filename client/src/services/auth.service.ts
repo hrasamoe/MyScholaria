@@ -60,12 +60,19 @@ export async function logout(): Promise<void> {
 }
 
 export async function getMe(): Promise<AuthResponse> {
-  const res = await fetch(`${API_URL}/api/auth/me`, {
-    credentials: "include",
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.message);
-  return data;
+  try {
+    const res = await fetch(`${API_URL}/api/auth/me`, {
+      credentials: "include",
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message);
+    return data;
+  } catch (error: any) {
+    if (!error.status) {
+      error.status = "NETORK_ERROR";
+    }
+    throw error;
+  }
 }
 
 export async function forgotpassword(email: string): Promise<void> {

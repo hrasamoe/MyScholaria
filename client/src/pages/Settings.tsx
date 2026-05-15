@@ -51,7 +51,6 @@ const Settings = () => {
 
     getMyEstablishments(userID)
       .then((establishments) => {
-        console.log("establishments reçu:", establishments);
         setEstablishments(establishments);
       })
       .catch((error) => {

@@ -219,14 +219,14 @@ authRouter.get(
       const { rows } = await pool.query(
         `SELECT u.id, u.email, p.full_name,
               em.is_aproved, e.name AS establishment_name, e.id AS establishment_id,
-              array_agg(ur.role) AS roles
+              ur.role AS roles
        FROM users u
        LEFT JOIN profiles p ON p.id = u.id
        LEFT JOIN establishment_members em ON em.user_id = u.id AND em.is_active = true
        LEFT JOIN establishments e ON e.id = em.establishment_id
        LEFT JOIN user_roles ur ON ur.user_id = u.id
        WHERE u.id = $1
-       GROUP BY u.id, u.email, p.full_name, em.is_aproved, e.name, e.id`,
+       GROUP BY u.id, u.email, p.full_name, em.is_aproved, e.name, e.id, ur.role`,
         [req.userId],
       );
       if (rows.length === 0)
@@ -237,7 +237,7 @@ authRouter.get(
           id: u.id,
           email: u.email,
           full_name: u.full_name,
-          roles: u.roles,
+          roles: u.roles ? [u.roles] : [], 
           establishment_id: u.establishment_id ?? null,
           establishment_name: u.establishment_name ?? null,
           is_aproved: u.is_aproved ?? false,
