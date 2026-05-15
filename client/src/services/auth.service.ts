@@ -16,17 +16,23 @@ export async function register(
   role: string = "admin",
   schoolName: string,
 ): Promise<AuthResponse> {
-  const res = await fetch(`${API_URL}/api/auth/register`, {
-    method: "POST",
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ email, password, full_name, role, schoolName }),
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.message);
-  return data;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30000); // 30s
+
+  try {
+    const res = await fetch(`${API_URL}/api/auth/register`, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password, full_name, role, schoolName }),
+      signal: controller.signal,
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message);
+    return data;
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 export async function login(

@@ -1,21 +1,22 @@
+import dotenv from "dotenv";
+import path from "path";
+dotenv.config({ path: path.resolve(__dirname, "../.env") });
+
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import cookieParser from "cookie-parser";
-import { initPool } from "./db/pool";
-import dotenv from "dotenv";
-import path from "path";
 import cron from "node-cron";
-dotenv.config({ path: path.resolve(__dirname, "../.env") });
 import { setDefaultResultOrder } from "dns";
+import { initPool } from "./db/pool";
 import { authRouter } from "./modules/auth/auth.router";
 import { cleanUnverifiedAccounts } from "./modules/auth/auth.service";
-setDefaultResultOrder("ipv4first");
 import { establishementRouter } from "./modules/establishments/establishments.router";
 
-const app = express();
-const PORT = process.env.PORT || 4242;
+setDefaultResultOrder("ipv4first");
 
+const app = express();
+const PORT = process.env.PORT || 3434;
 app.use(
   helmet({
     contentSecurityPolicy: false,

@@ -27,7 +27,7 @@ export async function registerUserAsAdmin(data: RegisterInput) {
     );
     if (existing.rows.length > 0) throw new Error("Email already in use");
 
-    const hashed_password = await bcrypt.hash(data.password, 12);
+    const hashed_password = await bcrypt.hash(data.password, 10);
     const verifyToken = crypto.randomBytes(32).toString("hex");
     const verifyExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
@@ -94,7 +94,7 @@ export async function registerUserAsMember(data: RegisterMemberInput) {
     );
     if (!match) throw new Error("Incorrect join code");
 
-    const hashed_password = await bcrypt.hash(data.password, 12);
+    const hashed_password = await bcrypt.hash(data.password, 10);
     const verifyToken = crypto.randomBytes(32).toString("hex");
     const verifyExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
 

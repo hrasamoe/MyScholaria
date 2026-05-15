@@ -1,5 +1,6 @@
 import { ENV } from "../../config/env";
-import { transporter } from "../email.service";
+// import { transporter } from "../email.service";
+import { resend } from "../email.service";
 
 function forgotPasswordTemplate(fullName: string, link: string) {
   return `
@@ -53,10 +54,16 @@ export async function sendForgotPasswordEmail(
   token: string,
 ) {
   const link = `${ENV.CLIENT_URL}/auth/change-password?token=${token}`;
-  await transporter.sendMail({
-    from: `MyScholaria`,
-    to: email,
-    subject: "Reset your password - MyScholaria",
-    html: forgotPasswordTemplate(fullName, link),
-  });
+  try {
+    const { data, error } = await resend.emails.send({
+      from: "MyScholaria <no-reply@ibc-hub.me>",
+      to: email,
+      subject: "Reset your password - MyScholaria",
+      html: forgotPasswordTemplate(fullName, link),
+    });
+    if (error) throw error;
+  } catch (error) {
+    console.error("Error sending forgot password email:", error);
+    throw error;
+  }
 }

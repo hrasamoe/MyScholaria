@@ -1,5 +1,6 @@
 import { ENV } from "../../config/env";
-import { transporter } from "../email.service";
+// import { transporter } from "../email.service";
+import { resend } from "../email.service";
 
 function pendingValidationTemplate(
   fullName: string,
@@ -58,10 +59,16 @@ export async function sendPendingValidationEmail(
   token: string,
 ) {
   const link = `${ENV.CLIENT_URL}/auth/verify-email-member?token=${token}`;
-  await transporter.sendMail({
-    from: `MyScholaria`,
-    to: email,
-    subject: `Action Required: Verify your account for ${establishmentName}`,
-    html: pendingValidationTemplate(fullName, establishmentName, link),
-  });
+  try {
+    const { data, error } = await resend.emails.send({
+      from: "MyScholaria <no-reply@ibc-hub.me>",
+      to: email,
+      subject: `Action Required: Verify your account for ${establishmentName}`,
+      html: pendingValidationTemplate(fullName, establishmentName, link),
+    });
+    if (error) throw error;
+  } catch (error) {
+    console.error("Error sending pending validation email:", error);
+    throw error;
+  }
 }

@@ -1,5 +1,5 @@
 import { ENV } from "../../config/env";
-import { transporter } from "../email.service";
+import { resend } from "../email.service";
 
 function confirmationTemplate(
   fullName: string,
@@ -58,12 +58,13 @@ export async function sendConfirmationEmail(
 ) {
   const link = `${ENV.CLIENT_URL}/auth/verify-email?token=${token}`;
   try {
-    await transporter.sendMail({
-      from: `MyScholaria`,
+    const { data, error } = await resend.emails.send({
+      from: "MyScholaria <no-reply@ibc-hub.me>",
       to: email,
       subject: `Confirm your registration: ${establishmentName} - MyScholaria`,
       html: confirmationTemplate(fullName, establishmentName, link),
     });
+    if (error) throw error;
   } catch (error) {
     console.error("Erreur lors de l'envoi de l'email de confirmation :", error);
     throw error;
