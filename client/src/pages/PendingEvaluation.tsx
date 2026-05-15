@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import {
   Box,
   Card,
@@ -35,6 +35,9 @@ const PendingApproval = () => {
     navigate("/auth/signin");
   };
 
+  if (user.is_aproved) {
+    return <Navigate to="/" replace />;
+  }
   return (
     <Box
       sx={{
