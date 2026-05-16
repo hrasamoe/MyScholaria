@@ -33,20 +33,21 @@ function setAuthCookies(
   res.cookie("accessToken", accessToken, {
     httpOnly: true,
     secure: isProd,
-    sameSite: isProd ? "strict" : "lax",
+    sameSite: "none",
     maxAge: 15 * 60 * 1000,
   });
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
     secure: isProd,
-    sameSite: isProd ? "strict" : "lax",
+    sameSite: "none",
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 }
 
 function clearAuthCookies(res: Response) {
-  res.clearCookie("accessToken");
-  res.clearCookie("refreshToken");
+  const options = { httpOnly: true, secure: true, sameSite: "none" as const };
+  res.clearCookie("accessToken", options);
+  res.clearCookie("refreshToken", options);
 }
 
 authRouter.post("/register", async (req: Request, res: Response) => {
@@ -237,7 +238,7 @@ authRouter.get(
           id: u.id,
           email: u.email,
           full_name: u.full_name,
-          roles: u.roles ? [u.roles] : [], 
+          roles: u.roles ? [u.roles] : [],
           establishment_id: u.establishment_id ?? null,
           establishment_name: u.establishment_name ?? null,
           is_aproved: u.is_aproved ?? false,
