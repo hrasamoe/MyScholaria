@@ -41,6 +41,7 @@ export async function RequireAuthOnly(
   res: Response,
   next: NextFunction,
 ) {
+  console.log("🍪 Cookies reçus:", req.cookies);
   const token = req.cookies?.accessToken;
   if (!token) {
     return res.status(401).json({ message: "Token missing" });
