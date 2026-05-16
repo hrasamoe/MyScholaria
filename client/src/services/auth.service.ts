@@ -71,7 +71,11 @@ export async function getMe(): Promise<AuthResponse> {
       credentials: "include",
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.message);
+    if (!res.ok) {
+      const error: any = new Error(data.message);
+      error.status = res.status; 
+      throw error;
+    }
     return data;
   } catch (error: any) {
     if (!error.status) {

@@ -55,6 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const saveAuth = (user: User) => {
     setUser(user);
+    localStorage.setItem("myscholaria_user", JSON.stringify(user))
   };
 
   const clearAuth = async () => {

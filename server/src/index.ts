@@ -17,6 +17,8 @@ setDefaultResultOrder("ipv4first");
 
 const app = express();
 const PORT = process.env.PORT || 3434;
+
+console.log("CLIENT URL: ", process.env.CLIENT_URL);
 app.use(
   helmet({
     contentSecurityPolicy: false,
@@ -24,7 +26,16 @@ app.use(
 );
 app.use(
   cors({
-    origin: process.env.CLIENT_URL,
+    origin: (origin, callback) => {
+      console.log("Request from origin:", origin);
+      const allowed = process.env.CLIENT_URL;
+      if (!origin || origin === allowed) {
+        callback(null, true);
+      } else {
+        console.error(`CORS blocked: ${origin} !== ${allowed}`);
+        callback(new Error(`CORS blocked for origin: ${origin}`));
+      }
+    },
     credentials: true,
   }),
 );
