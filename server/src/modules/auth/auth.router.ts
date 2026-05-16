@@ -29,16 +29,16 @@ function setAuthCookies(
   accessToken: string,
   refreshToken: string,
 ) {
-  const isProd = process.env.NODE_ENV === "producion";
+  // const isProd = process.env.NODE_ENV === "producion";
   res.cookie("accessToken", accessToken, {
     httpOnly: true,
-    secure: isProd,
+    secure: true,
     sameSite: "none",
     maxAge: 15 * 60 * 1000,
   });
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
-    secure: isProd,
+    secure: true,
     sameSite: "none",
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });

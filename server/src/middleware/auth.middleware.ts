@@ -12,7 +12,9 @@ export async function RequireAuth(
   res: Response,
   next: NextFunction,
 ) {
-  const token = req.cookies?.accessToken;
+  const token =
+    req.cookies?.accessToken ||
+    req.headers.authorization?.replace("Bearer ", "");
 
   if (!token) {
     return res.status(401).json({ message: "Token missing" });
@@ -41,8 +43,11 @@ export async function RequireAuthOnly(
   res: Response,
   next: NextFunction,
 ) {
-  console.log("🍪 Cookies reçus:", req.cookies);
-  const token = req.cookies?.accessToken;
+  const token =
+    req.cookies?.accessToken ||
+    req.headers.authorization?.replace("Bearer ", "");
+  console.log("🍪 Cookies reçus:", );
+
   if (!token) {
     return res.status(401).json({ message: "Token missing" });
   }

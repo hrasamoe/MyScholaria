@@ -9,6 +9,11 @@ export interface AuthResponse {
   };
 }
 
+function authHeader() {
+  const token = localStorage.getItem("accessToken");
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 export async function register(
   email: string,
   password: string,
@@ -65,15 +70,17 @@ export async function logout(): Promise<void> {
   localStorage.removeItem("user");
 }
 
+
 export async function getMe(): Promise<AuthResponse> {
   try {
     const res = await fetch(`${API_URL}/api/auth/me`, {
       credentials: "include",
+      headers: { ...authHeader },
     });
     const data = await res.json();
     if (!res.ok) {
       const error: any = new Error(data.message);
-      error.status = res.status; 
+      error.status = res.status;
       throw error;
     }
     return data;

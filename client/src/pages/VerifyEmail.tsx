@@ -25,7 +25,11 @@ export default function VerifyEmail() {
     }).then(async (res) => {
       const data = await res.json();
       if (res.ok) {
-        saveAuth(data.user); 
+        if (data.accessToken)
+          localStorage.setItem("accessToken", data.accessToken);
+        if (data.refreshToken)
+          localStorage.setItem("refreshToken", data.refreshToken);
+        saveAuth(data.user);
         setStatus("success");
       } else {
         setStatus("error");
