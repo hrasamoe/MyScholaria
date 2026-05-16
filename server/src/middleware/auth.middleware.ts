@@ -18,21 +18,17 @@ export async function RequireAuth(
     return res.status(401).json({ message: "Token missing" });
   }
   try {
-    const playload = jwt.verify(token, ENV.JWT_SECRET) as { userId: string };
-    req.userId = playload.userId;
+    const payload = jwt.verify(token, ENV.JWT_SECRET) as { userId: string };
+    req.userId = payload.userId;
 
     const { rows } = await pool.query(
-      `
-      SELECT em.is_aproved
-      FROM establishment_members em
-      WHERE em.user_id =  $1 AND em.is_aproved = true
-      LIMIT  1`,
-      [playload.userId],
+      `SELECT is_aproved FROM establishment_members
+       WHERE user_id = $1 AND is_active = true LIMIT 1`,
+      [payload.userId],
     );
-    if (rows.length > 0 && !rows[0].is_aproved)
-    {
-      return res.status(403).json({message: "Account pending aproval"})
-    } 
+    if (rows.length > 0 && !rows[0].is_aproved) {
+      return res.status(403).json({ message: "Account pending aproval" });
+    }
     next();
   } catch {
     return res.status(401).json({ message: "Token invalid or expired" });
@@ -40,18 +36,20 @@ export async function RequireAuth(
   }
 }
 
-
-export async function RequireAuthOnly(req: AuthRequest, res: Response, next: NextFunction){
+export async function RequireAuthOnly(
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction,
+) {
   const token = req.cookies?.accessToken;
-  if (!token) 
-  {
-    return res.status(401).json({message: "Token missing"});
+  if (!token) {
+    return res.status(401).json({ message: "Token missing" });
   }
   try {
-    const playload = jwt.verify(token, ENV.JWT_SECRET) as {userId: string};
+    const playload = jwt.verify(token, ENV.JWT_SECRET) as { userId: string };
     req.userId = playload.userId;
     next();
   } catch {
-    return res.status(401).json({message: "TOken invalid or missing"})
+    return res.status(401).json({ message: "TOken invalid or missing" });
   }
-} 
+}

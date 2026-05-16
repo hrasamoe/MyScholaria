@@ -38,7 +38,7 @@ establishementRouter.post(
 
 establishementRouter.post(
   "/create",
-  RequireAuth,
+  RequireAuthOnly,
   async (req: AuthRequest, res: Response) => {
     try {
       const data = establishementSchema.parse({
