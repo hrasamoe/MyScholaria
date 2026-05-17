@@ -52,9 +52,5 @@ console.clear = function () {
 
 showSecurityMessage();
 
-setInterval(() => {
-  originalClear();
-  showSecurityMessage();
-}, 5000);
 
 createRoot(document.getElementById("root")!).render(<App />);
