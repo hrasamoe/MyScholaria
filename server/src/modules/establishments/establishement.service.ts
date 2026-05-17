@@ -205,7 +205,7 @@ export async function getMyEstablishment(userID: string | undefined) {
       `SELECT * FROM establishments WHERE id = $1`,
       [myEstablishment.establishment_id],
     );
-  const  response = myEstablishments[0];
+    const response = myEstablishments[0];
     return response;
   } catch (error) {
     await client.query("ROLLBACK");
@@ -258,6 +258,35 @@ export async function selectEstablishment(
   } catch (err) {
     await client.query("ROLLBACK");
     throw err;
+  } finally {
+    client.release();
+  }
+}
+
+export async function findPendingMember(establishmentID: string) {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const { rows: pendingUsers } = await client.query(
+      `SELECT 
+        u.id AS user_id,
+        CONCAT(p.first_name, ' ', p.last_name) AS name,
+        u.email,
+        m.role_name AS role,
+        m.is_active,
+        m.is_aproved,
+        m.joined_at
+      FROM establishment_members m
+      INNER JOIN users u ON m.user_id = u.id
+      INNER JOIN profiles p ON u.id = p.id
+      WHERE m.is_aproved = false AND m.establishment_id = $1`,
+      [establishmentID],
+    );
+    await client.query("COMMIT");
+    return pendingUsers;
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
   } finally {
     client.release();
   }

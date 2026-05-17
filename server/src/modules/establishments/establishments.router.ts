@@ -2,6 +2,7 @@ import { Router, Request, Response } from "express";
 import { establishementSchema, joinSchema } from "./establishments.schema";
 import {
   createEtablishments,
+  findPendingMember,
   getMyEstablishment,
   joinEstablishment,
   selectEstablishment,
@@ -112,6 +113,24 @@ establishementRouter.post(
       res.status(200).json({ message: "Establishment selected", data: result });
     } catch (err: any) {
       res.status(400).json({ message: err.message });
+    }
+  },
+);
+
+establishementRouter.get(
+  "/:id/pending-members",
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const establishementID = req.params.id;
+      const members = await findPendingMember(establishementID as string);
+      res.status(200).json(members);
+    } catch (err: any) {
+      if (err.errors) {
+        return res.status(400).json({
+          message: err.errors[0].message,
+        });
+      }
+      res.status(500).json({ error: "Error when fetching pending members " });
     }
   },
 );
