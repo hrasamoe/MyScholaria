@@ -112,10 +112,10 @@ export async function registerUserAsMember(data: RegisterMemberInput) {
     );
     const user = rows[0];
 
-    await client.query("UPDATE profiles SET full_name = $1 WHERE id = $2", [
-      data.full_name,
-      user.id,
-    ]);
+    await client.query(
+      "UPDATE profiles SET full_name = $1, last_name = $3, first_name = $4 WHERE id = $2",
+      [data.full_name, user.id, data.last_name, data.first_name],
+    );
     await client.query(
       "INSERT INTO user_roles (user_id, role) VALUES ($1, $2)",
       [user.id, data.role || "student"],
