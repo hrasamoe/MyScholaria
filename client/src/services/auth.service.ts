@@ -109,6 +109,8 @@ export async function registerMember(
   password: string,
   joinCode: string,
   full_name: string,
+  last_name: string, 
+  first_name: string,
   role: string = "student",
   schoolID: string,
 ): Promise<AuthResponse> {
@@ -123,6 +125,8 @@ export async function registerMember(
       password,
       joinCode,
       full_name,
+      last_name,
+      first_name,
       role,
       schoolID,
     }),

@@ -107,6 +107,8 @@ const SignUp = () => {
           form.password,
           form.joinCode,
           fullName,
+          form.lastName,
+          form.firstName,
           form.role,
           form.schoolID,
         );
