@@ -26,6 +26,7 @@ import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import { useSnackbar } from "notistack";
 import { register, registerMember } from "../services/auth.service";
 
+
 const passwordStrength = (pw: string) => {
   let s = 0;
   if (pw.length >= 8) s += 25;
