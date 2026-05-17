@@ -251,6 +251,7 @@ const Users = () => {
                   onChange={(e) => setForm({ ...form, role: e.target.value })}
                 >
                   <MenuItem value="Admin">Admin</MenuItem>
+                  <MenuItem value="Student">Student</MenuItem>
                   <MenuItem value="Teacher">Teacher</MenuItem>
                   <MenuItem value="Accountant">Accountant</MenuItem>
                   <MenuItem value="Supervisor">Supervisor</MenuItem>

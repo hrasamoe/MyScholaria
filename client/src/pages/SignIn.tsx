@@ -92,7 +92,7 @@ const SignIn = () => {
 
       saveAuth(fullUser);
       enqueueSnackbar("Signed in successfully", { variant: "success" });
-      navigate(result.data.is_aproved ? "/" : "/pending-approval"); 
+      navigate("/");
     } catch (err: any) {
       setError(err.message);
     } finally {
