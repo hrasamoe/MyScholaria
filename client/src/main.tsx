@@ -31,4 +31,30 @@ window.fetch = async function (
     throw error;
   }
 };
+
+const showSecurityMessage = () => {
+  console.log("%c⛔STOP!", "color: red; font-size: 48px; font-weight: bold;");
+  console.log(
+    "%cThis feature is intended for developers only. Do not paste anything here, as you risk compromising your account and data.",
+    "color: red; font-size: 16px;",
+  );
+  console.log(
+    "%cIf someone asked you to paste something here, it is probably a scam attempt.",
+    "font-size: 14px; color: orange;",
+  );
+};
+
+const originalClear = console.clear;
+console.clear = function () {
+  originalClear();
+  showSecurityMessage();
+};
+
+showSecurityMessage();
+
+setInterval(() => {
+  originalClear();
+  showSecurityMessage();
+}, 5000);
+
 createRoot(document.getElementById("root")!).render(<App />);
