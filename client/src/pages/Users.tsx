@@ -28,6 +28,7 @@ interface User {
   id: string | number;
   name: string;
   email: string;
+  is_aproved?: boolean;
   role: string;
   status: "Active" | "Inactive";
   lastLogin: string;
@@ -76,6 +77,7 @@ const Users = () => {
           name: m.name,
           email: m.email,
           role: m.role,
+          is_aproved: m.is_aproved,
           status: (m.is_active ? "Active" : "Inactive") as User["status"],
           lastLogin: m.joined_at
             ? new Date(m.joined_at).toLocaleDateString()
@@ -118,14 +120,42 @@ const Users = () => {
     setEditOpen(true);
   };
 
-  const handleSaveEdit = () => {
-    if (!selectedUser) return;
-    setUsers(
-      users.map((x) => (x.id === selectedUser.id ? { ...selectedUser } : x)),
-    );
-    setEditOpen(false);
-    setSelectedUser(null);
-    enqueueSnackbar("User updated successfully", { variant: "success" });
+  const handleSaveEdit = async () => {
+    if (!selectedUser || !establishment_id) return;
+
+    try {
+      if (selectedUser.is_aproved) {
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL}/api/establishment/approved-member`,
+          {
+            credentials: "include",
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              email: selectedUser.email,
+              establishmentId: establishment_id,
+            }),
+          },
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to approve member on the server");
+        }
+      }
+
+      setUsers(
+        users.map((x) => (x.id === selectedUser.id ? { ...selectedUser } : x)),
+      );
+      setEditOpen(false);
+      setSelectedUser(null);
+      enqueueSnackbar("User updated successfully", { variant: "success" });
+    } catch (error) {
+      enqueueSnackbar("Failed to update user registration status", {
+        variant: "error",
+      });
+    }
   };
 
   const columns = [
@@ -165,6 +195,18 @@ const Users = () => {
           size="small"
           label={r.role.toLowerCase()}
           color={roleColor(r.role)}
+        />
+      ),
+    },
+    {
+      key: "isAproved",
+      label: "Approved",
+      render: (r: User) => (
+        <Chip
+          size="small"
+          label={r.is_aproved ? "Yes" : "No"}
+          color={r.is_aproved ? "success" : "default"}
+          variant={r.is_aproved ? "filled" : "outlined"}
         />
       ),
     },
@@ -327,10 +369,11 @@ const Users = () => {
                 <FormControlLabel
                   control={
                     <Switch
-                      checked={selectedUser.status === "Active"}
+                      checked={selectedUser.is_aproved === true}
                       onChange={(e) =>
                         setSelectedUser({
                           ...selectedUser,
+                          is_aproved: e.target.checked,
                           status: e.target.checked ? "Active" : "Inactive",
                         })
                       }

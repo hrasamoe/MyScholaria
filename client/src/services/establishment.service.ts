@@ -46,7 +46,7 @@ export async function createEstablishment(
 export async function getMyEstablishments(userID: string): Promise<any[]> {
   const res = await fetch(`${API_URL}/api/establishment/my`, {
     method: "POST",
-    credentials: 'include',
+    credentials: "include",
     headers: {
       "Content-Type": "application/json",
     },
@@ -56,4 +56,19 @@ export async function getMyEstablishments(userID: string): Promise<any[]> {
   const result = await res.json();
   if (!res.ok) throw new Error(result.message);
   return result.data;
+}
+
+export async function approvedMember(email: string, establishmentID: string) {
+  const res = await fetch(`${API_URL}/api/establishment/approve-member`, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ email, establishmentID }),
+  });
+
+  const result = await res.json();
+  if (!res.ok) throw new Error(result.message);
+  return result;
 }

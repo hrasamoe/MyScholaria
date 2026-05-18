@@ -1,6 +1,7 @@
 import { Router, Request, Response } from "express";
 import { establishementSchema, joinSchema } from "./establishments.schema";
 import {
+  approveMember,
   createEtablishments,
   findPendingMember,
   getMyEstablishment,
@@ -119,6 +120,7 @@ establishementRouter.post(
 
 establishementRouter.get(
   "/:id/pending-members",
+  RequireAuthOnly,
   async (req: AuthRequest, res: Response) => {
     try {
       const establishementID = req.params.id;
@@ -131,6 +133,23 @@ establishementRouter.get(
         });
       }
       res.status(500).json({ error: "Error when fetching pending members " });
+    }
+  },
+);
+
+establishementRouter.post(
+  "/approved-member",
+  RequireAuthOnly,
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const { email, establishmentId } = req.body;
+      const response = await approveMember(email, establishmentId);
+      return res.status(200).json(response);
+    } catch (error: any) {
+      console.error(error);
+      return res
+        .status(400)
+        .json({ message: error.message || "An error occurred" });
     }
   },
 );

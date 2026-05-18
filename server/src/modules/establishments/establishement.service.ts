@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import { pool } from "../../db/pool";
 import { EstablishmentInput, JoinInput } from "./establishments.schema";
+import { sendApprovalEmail } from "../../services/email/aprovalTemplate";
 
 export async function createEtablishments(data: EstablishmentInput) {
   const client = await pool.connect();
@@ -286,6 +287,59 @@ export async function findPendingMember(establishmentID: string) {
     return pendingUsers;
   } catch (error) {
     await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+export async function approveMember(email: string, establishmentId: string) {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    const userRes = await client.query(
+      "SELECT id FROM users WHERE email = $1",
+      [email],
+    );
+
+    const establishmentName = await client.query(
+      `SELECT name FROM establishments WHERE id = $1`,
+      [establishmentId],
+    );
+    const userName = await client.query(
+      `SELECT full_name FROM profiles WHERE id = $1`,
+      [userRes.rows[0].id],
+    );
+
+    if (userRes.rows.length === 0) {
+      throw new Error("Utilisateur introuvable");
+    }
+
+    const userId = userRes.rows[0].id;
+
+    const updateRes = await client.query(
+      `UPDATE establishment_members
+       SET is_aproved = true
+       WHERE user_id = $1 AND establishment_id = $2
+       RETURNING *`,
+      [userId, establishmentId],
+    );
+
+    if (updateRes.rows.length === 0) {
+      throw new Error("Membre introuvable dans cet établissement");
+    }
+
+    await client.query("COMMIT");
+    sendApprovalEmail(
+      email,
+      userName.rows[0].full_name,
+      establishmentName.rows[0].name,
+    );
+    return updateRes.rows[0];
+  } catch (error) {
+    await client.query("ROLLBACK");
+    console.error("Erreur lors de l'approbation du membre :", error);
     throw error;
   } finally {
     client.release();
