@@ -46,7 +46,6 @@ export async function RequireAuthOnly(
   const token =
     req.cookies?.accessToken ||
     req.headers.authorization?.replace("Bearer ", "");
-  console.log("🍪 Cookies reçus:", );
 
   if (!token) {
     return res.status(401).json({ message: "Token missing" });

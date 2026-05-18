@@ -214,7 +214,7 @@ authRouter.get("/verify-reset-token", async (req: Request, res: Response) => {
 
 authRouter.get(
   "/me",
-  RequireAuthOnly,
+  RequireAuth,
   async (req: AuthRequest, res: Response) => {
     try {
       const { rows } = await pool.query(
