@@ -30,17 +30,17 @@ function approvalTemplate(
         </div>
         <div class="body">
           <p>Hello <strong>${fullName}</strong>,</p>
-          <p>We are pleased to inform you that your registration for <strong>${establishmentName}</strong> has been approved by our team.</p>
+          <p>We are pleased to inform you that your admission to <strong>${establishmentName}</strong> has been approved by the administration.</p>
           <div class="establishment-box">
-            <strong>Status:</strong> Approved & Active
+            <strong>Status:</strong> Admission Approved & Active
           </div>
-          <p>You can now log in to your dashboard and start managing your establishment.</p>
+          <p>You can now log in to your dashboard to access your space.</p>
           <a href="${link}"
              style="display:block;width:fit-content;margin:24px auto;background:#2e7d32;color:#ffffff !important;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:600;font-size:15px;">
             Go to Dashboard
           </a>
           <div class="info-box">
-             You now have full access to all features dedicated to your establishment.
+             You now have access to all the features and updates from your establishment.
           </div>
         </div>
         <div class="footer">
@@ -62,7 +62,7 @@ export async function sendApprovalEmail(
     const { data, error } = await resend.emails.send({
       from: "MyScholaria <no-reply@ibc-hub.me>",
       to: email,
-      subject: `Your establishment ${establishmentName} has been approved! - MyScholaria`,
+      subject: `Your admission to ${establishmentName} has been approved! - MyScholaria`,
       html: approvalTemplate(fullName, establishmentName, link),
     });
     if (error) throw error;
