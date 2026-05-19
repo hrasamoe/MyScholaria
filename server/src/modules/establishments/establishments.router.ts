@@ -3,6 +3,7 @@ import { establishementSchema, joinSchema } from "./establishments.schema";
 import {
   approveMember,
   createEtablishments,
+  findAllMemberAproved,
   findPendingMember,
   getMyEstablishment,
   joinEstablishment,
@@ -133,6 +134,25 @@ establishementRouter.get(
         });
       }
       res.status(500).json({ error: "Error when fetching pending members " });
+    }
+  },
+);
+
+establishementRouter.get(
+  "/:id/all-users",
+  RequireAuthOnly,
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const establishementID = req.params.id;
+      const allmembers = await findAllMemberAproved(establishementID as string);
+      res.status(200).json(allmembers);
+    } catch (error: any) {
+      if (error.errors) {
+        return res.status(400).json({
+          message: error.errors[0].message,
+        });
+      }
+      res.status(500).json({ error: "Error when fetching your users" });
     }
   },
 );

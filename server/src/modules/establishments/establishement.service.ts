@@ -264,6 +264,35 @@ export async function selectEstablishment(
   }
 }
 
+export async function findAllMemberAproved(establishmentID: string) {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const { rows: allUsers } = await client.query(
+      ` SELECT u.is AS user_id,
+    p.full_name AS name,
+    u.email,
+    m.role_name AS role,
+    m.is_active,
+    m.is_aproved,
+    m.joined_at
+    FROM establishment_members m
+    INNER JOIN users u ON m.user_id = u.id
+    INNER JOIN profiles p ON u.id = p.id
+    WHERE m.is_aproved = true AND m.establishment_id = $1
+  `,
+      [establishmentID],
+    );
+    await client.query("COMMIT");
+    return allUsers;
+  } catch (error: any) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
 export async function findPendingMember(establishmentID: string) {
   const client = await pool.connect();
   try {
