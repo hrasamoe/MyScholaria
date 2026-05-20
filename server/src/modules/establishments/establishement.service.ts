@@ -269,7 +269,7 @@ export async function findAllMemberAproved(establishmentID: string) {
   try {
     await client.query("BEGIN");
     const { rows: allUsers } = await client.query(
-      ` SELECT u.is AS user_id,
+      ` SELECT u.id AS user_id,
     p.full_name AS name,
     u.email,
     m.role_name AS role,

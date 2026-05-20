@@ -63,12 +63,6 @@ function DataTableSkeleton({
                       height={30}
                       sx={{ borderRadius: 1 }}
                     />
-                    <Skeleton
-                      variant="rectangular"
-                      width="100%"
-                      height={30}
-                      sx={{ borderRadius: 1 }}
-                    />
                   </Stack>
                 )}
               </CardContent>
@@ -115,12 +109,6 @@ function DataTableSkeleton({
                         spacing={1}
                         justifyContent="flex-end"
                       >
-                        <Skeleton
-                          variant="rectangular"
-                          width={60}
-                          height={24}
-                          sx={{ borderRadius: 1 }}
-                        />
                         <Skeleton
                           variant="rectangular"
                           width={60}

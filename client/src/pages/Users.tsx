@@ -23,6 +23,8 @@ import Grid from "@mui/material/Grid";
 import AddIcon from "@mui/icons-material/Add";
 import { useSnackbar } from "notistack";
 import { useAuth } from "@/hooks/Authcontext";
+import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+import DataTableSkeleton from "@/components/DataSkeleton";
 
 interface User {
   id: string | number;
@@ -33,6 +35,7 @@ interface User {
   status: "Active" | "Inactive";
   lastLogin: string;
 }
+interface allUser extends User {}
 
 const roleColor = (r: string): any =>
   ({
@@ -45,8 +48,11 @@ const roleColor = (r: string): any =>
 
 const Users = () => {
   const { user } = useAuth();
+  const online = useOnlineStatus();
   const [loading, setLoading] = useState(false);
+  const [loadingUserList, setLoadingUserList] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
+  const [allUser, setAllUser] = useState<allUser[]>([]);
   const establishment_id = user?.establishment_id;
   const [open, setOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -58,6 +64,38 @@ const Users = () => {
   const { enqueueSnackbar } = useSnackbar();
 
   useEffect(() => {
+    const fetchAprovedUser = async () => {
+      if (!establishment_id) return;
+      try {
+        setLoadingUserList(true);
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL}/api/establishment/${establishment_id}/all-users`,
+          {
+            method: "GET",
+            credentials: "include",
+          },
+        );
+        if (!response.ok)
+          throw new Error("Error when fetching the list of aproved user");
+        const data = await response.json();
+        const mapped: allUser[] = (data as any[]).map((m: any) => ({
+          id: m.user_id,
+          name: m.name,
+          email: m.email,
+          role: m.role,
+          is_aproved: m.is_aproved,
+          status: (m.is_active ? "Active" : "Inactive") as allUser["status"],
+          lastLogin: m.joined_at
+            ? new Date(m.joined_at).toLocaleDateString("fr-FR")
+            : "-",
+        }));
+        setAllUser(mapped);
+      } catch (error: any) {
+        enqueueSnackbar(`${error}`, { variant: "error" });
+      } finally {
+        setLoadingUserList(false);
+      }
+    };
     const fetchUsers = async () => {
       if (!establishment_id) return;
       try {
@@ -80,8 +118,8 @@ const Users = () => {
           is_aproved: m.is_aproved,
           status: (m.is_active ? "Active" : "Inactive") as User["status"],
           lastLogin: m.joined_at
-            ? new Date(m.joined_at).toLocaleDateString()
-            : "—",
+            ? new Date(m.joined_at).toLocaleDateString("fr-FR")
+            : "-",
         }));
         setUsers(mapped);
       } catch (error) {
@@ -92,7 +130,8 @@ const Users = () => {
     };
 
     fetchUsers();
-  }, [establishment_id, enqueueSnackbar]);
+    fetchAprovedUser();
+  }, [establishment_id, enqueueSnackbar, online]);
 
   const handleAdd = () => {
     if (!form.name || !form.email) {
@@ -107,7 +146,7 @@ const Users = () => {
         email: form.email!,
         role: form.role || "Teacher",
         status: form.active ? "Active" : "Inactive",
-        lastLogin: "—",
+        lastLogin: "-",
       },
     ]);
     setForm({ active: true, role: "Teacher" });
@@ -193,7 +232,7 @@ const Users = () => {
       render: (r: User) => (
         <Chip
           size="small"
-          label={r.role.toLowerCase()}
+          label={r.role.toUpperCase()}
           color={roleColor(r.role)}
         />
       ),
@@ -225,6 +264,77 @@ const Users = () => {
     { key: "lastLogin", label: "Last login", hideOnMobile: true },
   ];
 
+  const columnUsers = [
+    {
+      key: "name",
+      label: "User",
+      render: (r: allUser) => (
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Avatar
+            sx={{
+              width: 32,
+              height: 32,
+              bgcolor: "primary.main",
+              fontSize: "0.8rem",
+            }}
+          >
+            {r.name
+              .split(" ")
+              .map((n) => n[0])
+              .join("")
+              .slice(0, 2)}
+          </Avatar>
+          <Box>
+            <Box sx={{ fontSize: "0.875rem", fontWeight: 500 }}>{r.name}</Box>
+            <Box sx={{ fontSize: "0.75rem", color: "text.secondary" }}>
+              {r.email}
+            </Box>
+          </Box>
+        </Box>
+      ),
+    },
+    {
+      key: "role",
+      label: "Role",
+      render: (r: allUser) => (
+        <Chip
+          size="small"
+          label={r.role[0].toUpperCase() + r.role.slice(1)}
+          color={roleColor(r.role)}
+        />
+      ),
+    },
+    {
+      key: "isAproved",
+      label: "Approved",
+      render: (r: User) => (
+        <Chip
+          size="small"
+          label={r.is_aproved ? "Yes" : "No"}
+          color={r.is_aproved ? "success" : "default"}
+          variant={r.is_aproved ? "filled" : "outlined"}
+        />
+      ),
+    },
+    {
+      key: "status",
+      label: "Status",
+      render: (r: User) => (
+        <Chip
+          size="small"
+          label={r.status}
+          color={r.status === "Active" ? "success" : "default"}
+          variant={r.status === "Active" ? "filled" : "outlined"}
+        />
+      ),
+    },
+    {
+      key: "lastLogin",
+      label: "Last login",
+      hideOnMobile: true,
+    },
+  ];
+
   return (
     <>
       <PageHeader
@@ -240,7 +350,24 @@ const Users = () => {
           </Button>
         }
       />
-
+      <Box>
+        <Typography variant="h6" component="h2" sx={{ fontWeight: 600, mb: 1 }}>
+          List Of Your Establishment User
+          {/* <DataTable columns={<p>Test</p>} data={"Test"}/> */}
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          Review and manage all of user in your establishment.
+        </Typography>
+        {loadingUserList ? (
+          <DataTableSkeleton rowCount={1} columnCount={2} />
+        ) : (
+          <DataTable
+            columns={columnUsers}
+            data={allUser}
+            onEdit={handleOpenEdit}
+          />
+        )}
+      </Box>
       <Box sx={{ mt: 4, mb: 2 }}>
         <Typography variant="h6" component="h2" sx={{ fontWeight: 600, mb: 1 }}>
           Pending Member Approbations
@@ -250,9 +377,7 @@ const Users = () => {
         </Typography>
 
         {loading ? (
-          <Typography variant="body2" color="text.secondary">
-            Loading...
-          </Typography>
+          <DataTableSkeleton rowCount={1} columnCount={2} />
         ) : (
           <DataTable columns={columns} data={users} onEdit={handleOpenEdit} />
         )}
@@ -347,25 +472,6 @@ const Users = () => {
                 </Typography>
               </Grid>
               <Grid size={{ xs: 12 }}>
-                <FormControl fullWidth>
-                  <InputLabel>Role</InputLabel>
-                  <Select
-                    value={selectedUser.role}
-                    label="Role"
-                    onChange={(e) =>
-                      setSelectedUser({ ...selectedUser, role: e.target.value })
-                    }
-                  >
-                    <MenuItem value="Admin">Admin</MenuItem>
-                    <MenuItem value="Student">Student</MenuItem>
-                    <MenuItem value="Teacher">Teacher</MenuItem>
-                    <MenuItem value="Accountant">Accountant</MenuItem>
-                    <MenuItem value="Supervisor">Supervisor</MenuItem>
-                    <MenuItem value="Parent">Parent</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid size={{ xs: 12 }}>
                 <FormControlLabel
                   control={
                     <Switch
@@ -379,7 +485,7 @@ const Users = () => {
                       }
                     />
                   }
-                  label="Approved (Active)"
+                  label="Approved this user"
                 />
               </Grid>
             </Grid>
