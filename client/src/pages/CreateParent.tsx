@@ -1,24 +1,25 @@
-import { useState } from "react";
 import PageHeader from "@/components/PageHeader";
+import { useAuth } from "@/hooks/Authcontext";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import SaveIcon from "@mui/icons-material/Save";
 import {
-  Button,
-  TextField,
   Box,
-  Paper,
-  Typography,
-  FormControl,
-  FormLabel,
-  RadioGroup,
-  Radio,
-  Divider,
-  FormControlLabel,
+  Button,
   Checkbox,
+  Divider,
+  FormControl,
+  FormControlLabel,
+  FormLabel,
+  Paper,
+  Radio,
+  RadioGroup,
+  TextField,
+  Typography,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
-import SaveIcon from "@mui/icons-material/Save";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useSnackbar } from "notistack";
-import { useAuth } from "@/hooks/Authcontext";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 interface ParentForm {
   firstName: string;
@@ -41,6 +42,7 @@ const CreateParent = () => {
     profession: "",
   });
   const { user } = useAuth();
+  const navigate = useNavigate();
   const establishmentID = user?.establishment_id;
   const [loading, setLoading] = useState(false);
   const [rgpdAccepted, setRgpdAccepted] = useState(false);
@@ -57,6 +59,7 @@ const CreateParent = () => {
       profession: "",
     });
     setRgpdAccepted(false);
+    navigate("/parents");
   };
 
   const handleSave = async () => {

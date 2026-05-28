@@ -1,7 +1,7 @@
-import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { CssBaseline } from "@mui/material";
 import { SnackbarProvider } from "notistack";
-import { AppThemeProvider } from "./hooks/Themecontext";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
+import AppLayout from "./components/AppLayout";
 import { AuthProvider } from "./hooks/Authcontext";
 import {
   GuestGuard,
@@ -9,56 +9,57 @@ import {
   ProtectedRoute,
   RoleRoute,
 } from "./hooks/ProtectRoute";
-import AppLayout from "./components/AppLayout";
+import { AppThemeProvider } from "./hooks/Themecontext";
 
-import VerifyEmailMember from "./pages/VerifyEmailMember";
-import Dashboard from "./pages/Dashboard";
-import Students from "./pages/Students";
-import Teachers from "./pages/Teachers";
-import Staff from "./pages/Staff";
+import Announcements from "./pages/Announcements";
+import Attendance from "./pages/Attendance";
+import Budget from "./pages/Budget";
+import ChangePassword from "./pages/ChangePassword";
 import Classes from "./pages/Classes";
 import Classrooms from "./pages/Classrooms";
-import Attendance from "./pages/Attendance";
-import Duty from "./pages/Duty";
-import Payments from "./pages/Payments";
-import Facturation from "./pages/Facturation";
-import Timetable from "./pages/Timetable";
-import Events from "./pages/Events";
-import Notifications from "./pages/Notifications";
-import Users from "./pages/Users";
-import SchoolCalendar from "./pages/SchoolCalendar";
-import Subjects from "./pages/Subjects";
 import Coursebook from "./pages/Coursebook";
+import CreateEstablishment from "./pages/CreateEstablishment";
+import CreateParent from "./pages/CreateParent";
+import CreateStudent from "./pages/CreateStudent";
+import Dashboard from "./pages/Dashboard";
+import Diplomas from "./pages/Diplomas";
+import Duty from "./pages/Duty";
+import EditParent from "./pages/EditParent";
+import Events from "./pages/Events";
+import Exams from "./pages/Exams";
+import Facturation from "./pages/Facturation";
+import ForgotPassword from "./pages/ForgotPassword";
+import Grades from "./pages/Grades";
 import Internships from "./pages/Internships";
 import Library from "./pages/Library";
-import Grades from "./pages/Grades";
-import Exams from "./pages/Exams";
-import Scholarships from "./pages/Scholarships";
-import Budget from "./pages/Budget";
-import ParentPortal from "./pages/ParentPortal";
-import StudentPortal from "./pages/StudentPortal";
 import Messages from "./pages/Messages";
-import Announcements from "./pages/Announcements";
+import NotFound from "./pages/NotFound";
+import Notifications from "./pages/Notifications";
+import ParentPortal from "./pages/ParentPortal";
+import ParentsList from "./pages/Parents";
+import Payments from "./pages/Payments";
+import PendingApproval from "./pages/PendingEvaluation";
+import Privacy from "./pages/Privacy";
 import Programs from "./pages/Programs";
-import Theses from "./pages/Theses";
-import Diplomas from "./pages/Diplomas";
 import Reports from "./pages/Reports";
+import ResetPassword from "./pages/ResetPassword";
 import Roles from "./pages/Roles";
+import Scholarships from "./pages/Scholarships";
+import SchoolCalendar from "./pages/SchoolCalendar";
 import Settings from "./pages/Settings";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
-import ForgotPassword from "./pages/ForgotPassword";
-import ResetPassword from "./pages/ResetPassword";
-import NotFound from "./pages/NotFound";
-import VerifyEmail from "./pages/VerifyEmail";
-import ChangePassword from "./pages/ChangePassword";
+import Staff from "./pages/Staff";
+import StudentPortal from "./pages/StudentPortal";
+import Students from "./pages/Students";
+import Subjects from "./pages/Subjects";
+import Teachers from "./pages/Teachers";
 import Terms from "./pages/Terms";
-import Privacy from "./pages/Privacy";
-import CreateEstablishment from "./pages/CreateEstablishment";
-import PendingApproval from "./pages/PendingEvaluation";
-import CreateStudent from "./pages/CreateStudent";
-import ParentsList from "./pages/Parents";
-import CreateParent from "./pages/CreateParent";
+import Theses from "./pages/Theses";
+import Timetable from "./pages/Timetable";
+import Users from "./pages/Users";
+import VerifyEmail from "./pages/VerifyEmail";
+import VerifyEmailMember from "./pages/VerifyEmailMember";
 
 const App = () => (
   <AppThemeProvider>
@@ -146,6 +147,7 @@ const App = () => (
                 <Route path="/students/create" element={<CreateStudent />} />
                 <Route path="/students" element={<Students />} />
                 <Route path="/teachers" element={<Teachers />} />
+                <Route path="/parents/edit/:id" element={<EditParent />} />
                 <Route path="/classes" element={<Classes />} />
                 <Route path="/subjects" element={<Subjects />} />
                 <Route path="/grades" element={<Grades />} />
