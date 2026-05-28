@@ -3,13 +3,13 @@ import PageHeader from "@/components/PageHeader";
 import {
   Button,
   TextField,
-  MenuItem,
-  Select,
-  FormControl,
-  InputLabel,
   Box,
   Paper,
   Typography,
+  FormControl,
+  FormLabel,
+  RadioGroup,
+  Radio,
   Divider,
   FormControlLabel,
   Checkbox,
@@ -120,17 +120,50 @@ const CreateParent = () => {
               onChange={(e) => setForm({ ...form, lastName: e.target.value })}
             />
           </Grid>
+
           <Grid size={{ xs: 12, sm: 6 }}>
-            <FormControl fullWidth>
-              <InputLabel>Gender</InputLabel>
-              <Select
-                value={form.gender || ""}
-                label="Gender"
-                onChange={(e) => setForm({ ...form, gender: e.target.value })}
+            <FormControl
+              component="fieldset"
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+                alignItems: "center",
+                width: "100%",
+                height: "56px",
+                borderRadius: 1,
+                px: 2,
+              }}
+            >
+              <FormLabel
+                component="legend"
+                sx={{
+                  fontSize: "0.95rem",
+                  color: "text.secondary",
+                  textAlign: "center",
+                  mb: 0.5,
+                }}
               >
-                <MenuItem value="Male">Male</MenuItem>
-                <MenuItem value="Female">Female</MenuItem>
-              </Select>
+                Gender
+              </FormLabel>
+              <RadioGroup
+                row
+                value={form.gender || ""}
+                onChange={(e) => setForm({ ...form, gender: e.target.value })}
+                sx={{ justifyContent: "space-between", width: "100%" }}
+              >
+                <FormControlLabel
+                  value="Male"
+                  control={<Radio size="small" />}
+                  label="Male"
+                />
+                <FormControlLabel
+                  value="Female"
+                  sx={{ fontSize: "0.95rem" }}
+                  control={<Radio size="small" />}
+                  label="Female"
+                />
+              </RadioGroup>
             </FormControl>
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }}>

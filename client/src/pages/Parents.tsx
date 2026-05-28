@@ -3,22 +3,16 @@ import PageHeader from "@/components/PageHeader";
 import {
   Button,
   Box,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   TextField,
   IconButton,
   InputAdornment,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import SearchIcon from "@mui/icons-material/Search";
-import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import { useNavigate } from "react-router-dom";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import DataTable from "@/components/DataTable";
 
 interface Parent {
   id: string;
@@ -32,8 +26,38 @@ interface Parent {
 
 const ParentsList = () => {
   const navigate = useNavigate();
-
+  const [parent, setParent] = useState<Parent[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const handleView = (parent: Parent) => {};
+  const handleEdit = (parent: Parent) => {};
+  const filtered = parent.filter(
+    (p) =>
+      p.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.phone.includes(searchTerm),
+  );
+  const columns = [
+    { key: "firstName", label: "First Name" },
+    { key: "lastName", label: "Last Name" },
+    { key: "email", label: "Email" },
+    { key: "phone", label: "Phone" },
+    { key: "address", label: "Address" },
+    { key: "created_at", label: "Registered On" },
+    {
+      key: "actions",
+      label: "Actions",
+      render: (r: Parent) => (
+        <Box sx={{ display: "flex", gap: 1 }}>
+          <IconButton size="small" onClick={() => handleView(r)}>
+            <VisibilityIcon fontSize="small" />
+          </IconButton>
+          <IconButton size="small" onClick={() => handleEdit(r)}>
+            <EditIcon fontSize="small" />
+          </IconButton>
+        </Box>
+      ),
+    },
+  ];
   const [parents] = useState<Parent[]>([
     {
       id: "404dbc2c-865e-43c8-8796-8398a5942256",
@@ -81,7 +105,7 @@ const ParentsList = () => {
         }
       />
 
-      <Box sx={{ mt: 3, display: "flex", justifyContent: "flex-start" }}>
+      <Box sx={{ mt: 3, mb: 4, display: "flex", justifyContent: "flex-start" }}>
         <TextField
           size="small"
           placeholder="Search by name or phone..."
@@ -100,47 +124,7 @@ const ParentsList = () => {
         />
       </Box>
 
-      <TableContainer
-        component={Paper}
-        variant="outlined"
-        sx={{ mt: 3, borderRadius: 2 }}
-      >
-        <Table>
-          <TableHead sx={{ backgroundColor: "action.hover" }}>
-            <TableRow>
-              <TableCell sx={{ fontWeight: 600 }}>Full Name</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Email Address</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Phone Number</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Home Address</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Registration Date</TableCell>
-              <TableCell sx={{ fontWeight: 600 }} align="right">
-                Actions
-              </TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {filteredParents.map((parent) => (
-              <TableRow key={parent.id} hover>
-                <TableCell sx={{ fontWeight: 500 }}>
-                  {parent.firstName} {parent.lastName}
-                </TableCell>
-                <TableCell>{parent.email || "—"}</TableCell>
-                <TableCell>{parent.phone}</TableCell>
-                <TableCell>{parent.address || "—"}</TableCell>
-                <TableCell>{parent.created_at}</TableCell>
-                <TableCell align="right">
-                  <IconButton color="primary" size="small">
-                    <EditIcon fontSize="small" />
-                  </IconButton>
-                  <IconButton color="error" size="small">
-                    <DeleteIcon fontSize="small" />
-                  </IconButton>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+      <DataTable columns={columns} data={filtered} />
     </Box>
   );
 };
