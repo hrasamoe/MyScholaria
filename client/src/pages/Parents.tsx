@@ -11,6 +11,7 @@ import {
   CardContent,
   IconButton,
   InputAdornment,
+  Skeleton,
   TextField,
   Typography,
 } from "@mui/material";
@@ -133,57 +134,95 @@ const ParentsList = () => {
           gap: 2,
         }}
       >
-        {filteredParents.map((parent) => (
-          <Card key={parent.id} variant="outlined">
-            <CardContent
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                gap: 2,
-                "&:last-child": { pb: 2 },
-              }}
-            >
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 1.5,
-                  flexGrow: 1,
-                  minWidth: 0,
-                }}
-              >
-                {parent.gender === "male" ? (
-                  <img
-                    src="/male.png"
-                    alt="Male"
-                    style={{ width: 60, height: 60, flexShrink: 0 }}
-                  />
-                ) : (
-                  <img
-                    src="/female.png"
-                    alt="Female"
-                    style={{ width: 60, height: 60, flexShrink: 0 }}
-                  />
-                )}
-                <Typography
-                  variant="h6"
-                  fontWeight="500"
-                  noWrap
-                  sx={{ textOverflow: "ellipsis", overflow: "hidden" }}
+        {loading
+          ? Array.from(new Array(6)).map((_, index) => (
+              <Card key={index} variant="outlined">
+                <CardContent
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 2,
+                    "&:last-child": { pb: 2 },
+                  }}
                 >
-                  {formatFirstName(parent.first_name)} {parent.last_name}
-                </Typography>
-              </Box>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1.5,
+                      flexGrow: 1,
+                    }}
+                  >
+                    <Skeleton
+                      variant="circular"
+                      width={45}
+                      height={45}
+                      sx={{ flexShrink: 0 }}
+                    />
+                    <Skeleton variant="text" width="60%" height={24} />
+                  </Box>
+                  <Box sx={{ display: "flex", gap: 0.5 }}>
+                    <Skeleton variant="circular" width={30} height={30} />
+                  </Box>
+                </CardContent>
+              </Card>
+            ))
+          : filteredParents.map((parent) => (
+              <Card key={parent.id} variant="outlined">
+                <CardContent
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 2,
+                    "&:last-child": { pb: 2 },
+                  }}
+                >
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1.5,
+                      flexGrow: 1,
+                      minWidth: 0,
+                      padding: "4px 1px"
+                    }}
+                  >
+                    {parent.gender === "male" ? (
+                      <img
+                        src="/male.png"
+                        alt="Male"
+                        style={{ width: 60, height: 60, flexShrink: 0 }}
+                      />
+                    ) : (
+                      <img
+                        src="/female.png"
+                        alt="Female"
+                        style={{ width: 60, height: 60, flexShrink: 0 }}
+                      />
+                    )}
+                    <Typography
+                      variant="h6"
+                      fontWeight="500"
+                      noWrap
+                      sx={{ textOverflow: "ellipsis", overflow: "hidden" }}
+                    >
+                      {formatFirstName(parent.first_name)} {parent.last_name}
+                    </Typography>
+                  </Box>
 
-              <Box sx={{ display: "flex", gap: 0.5, flexShrink: 0 }}>
-                <IconButton size="small" onClick={() => handleEdit(parent.id)}>
-                  <Delete fontSize="medium" color="error" />
-                </IconButton>
-              </Box>
-            </CardContent>
-          </Card>
-        ))}
+                  <Box sx={{ display: "flex", gap: 0.5, flexShrink: 0 }}>
+                    <IconButton
+                      size="small"
+                      onClick={() => handleEdit(parent.id)}
+                    >
+                      <Delete fontSize="medium" color="error" />
+                    </IconButton>
+                  </Box>
+                </CardContent>
+              </Card>
+            ))}
       </Box>
     </Box>
   );
