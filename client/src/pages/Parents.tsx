@@ -73,7 +73,7 @@ const ParentsList = () => {
             onClick={() => {
               navigate("/parents/create");
             }}
-            color="primary"
+            color="success"
             startIcon={<AddIcon />}
           >
             Add New Parent

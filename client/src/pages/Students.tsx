@@ -5,6 +5,7 @@ import { Button, TextField, Box, IconButton } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import VisibilityIcon from "@mui/icons-material/Visibility";
+import { useNavigate } from "react-router-dom";
 
 interface Student {
   id: number | string;
@@ -23,7 +24,7 @@ interface Student {
 const Students = () => {
   const [students, setStudents] = useState<Student[]>([]);
   const [search, setSearch] = useState("");
-
+  const navigate = useNavigate();
   const filtered = students.filter(
     (s) =>
       s.firstName.toLowerCase().includes(search.toLowerCase()) ||
@@ -72,7 +73,11 @@ const Students = () => {
             variant="contained"
             color="success"
             startIcon={<AddIcon />}
-            href="/students/create"
+            // href="/students/create"
+            onClick={(e) => {
+              navigate("/students/create");
+              e.preventDefault();
+            }}
           >
             Add Student
           </Button>

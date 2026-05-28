@@ -244,12 +244,17 @@ const AppSidebar = ({ collapsed, onToggleCollapsed }: AppSidebarProps) => {
           >
             {group.items.map((item) => {
               const active = location.pathname === item.path;
+
+              const test =
+                item.path === "/"
+                  ? false
+                  : location.pathname.startsWith(item.path);
               const button = (
                 <ListItemButton
                   component={Link}
                   to={item.path}
                   onClick={() => setMobileOpen(false)}
-                  selected={active}
+                  selected={active || test}
                   sx={{
                     borderRadius: 1,
                     mb: 0.3,
