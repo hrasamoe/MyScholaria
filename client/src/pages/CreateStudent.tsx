@@ -1,7 +1,6 @@
 import { useState } from "react";
 import PageHeader from "@/components/PageHeader";
 import AddIcon from "@mui/icons-material/Add";
-
 import {
   Button,
   TextField,
@@ -17,6 +16,7 @@ import {
   Checkbox,
   Autocomplete,
   Chip,
+  FormHelperText,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import SaveIcon from "@mui/icons-material/Save";
@@ -48,14 +48,22 @@ interface ParentOption {
   phone: string;
 }
 
+interface ClassOption {
+  id: string;
+  className: string;
+}
+
 const CreateStudent = () => {
   const [form, setForm] = useState<Partial<StudentForm>>({
     status: "active",
     enrollment_date: new Date().toISOString().split("T")[0],
     parent_ids: [],
+    class_id: "",
+    medical_notes: "",
   });
   const navigate = useNavigate();
   const [rgpdAccepted, setRgpdAccepted] = useState(false);
+  const [medicalConsentAccepted, setMedicalConsentAccepted] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
 
   const [parentOptions] = useState<ParentOption[]>([
@@ -71,13 +79,22 @@ const CreateStudent = () => {
     },
   ]);
 
+  const [classOptions] = useState<ClassOption[]>([
+    { id: "c1", className: "Grade 10 - A" },
+    { id: "c2", className: "Grade 11 - B" },
+    { id: "c3", className: "Terminalos S" },
+  ]);
+
   const handleCancel = () => {
     setForm({
       status: "active",
       enrollment_date: new Date().toISOString().split("T")[0],
       parent_ids: [],
+      class_id: "",
+      medical_notes: "",
     });
     setRgpdAccepted(false);
+    setMedicalConsentAccepted(false);
   };
 
   const handleSave = async () => {
@@ -91,6 +108,16 @@ const CreateStudent = () => {
       enqueueSnackbar("Please fill all required fields (*)", {
         variant: "error",
       });
+      return;
+    }
+
+    if (form.medical_notes?.trim() && !medicalConsentAccepted) {
+      enqueueSnackbar(
+        "You must obtain explicit consent to save health-related data",
+        {
+          variant: "warning",
+        },
+      );
       return;
     }
 
@@ -114,6 +141,9 @@ const CreateStudent = () => {
   const selectedParents = parentOptions.filter((option) =>
     form.parent_ids?.includes(option.id),
   );
+
+  const selectedClass =
+    classOptions.find((option) => option.id === form.class_id) || null;
 
   return (
     <Box sx={{ maxWidth: 900, mx: "auto", p: 2 }}>
@@ -233,11 +263,25 @@ const CreateStudent = () => {
             />
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }}>
-            <TextField
-              fullWidth
-              label="Class "
-              value={form.class_id || ""}
-              onChange={(e) => setForm({ ...form, class_id: e.target.value })}
+            <Autocomplete
+              options={classOptions}
+              value={selectedClass}
+              getOptionLabel={(option) => option.className}
+              isOptionEqualToValue={(option, value) => option.id === value.id}
+              onChange={(_, newValue) => {
+                setForm({
+                  ...form,
+                  class_id: newValue ? newValue.id : "",
+                });
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Class"
+                  placeholder="Select a class..."
+                  fullWidth
+                />
+              )}
             />
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }}>
@@ -265,12 +309,51 @@ const CreateStudent = () => {
             <TextField
               fullWidth
               multiline
-              label="Medical Notes"
+              rows={3}
+              label="Medical Notes (Allergies, chronic conditions, etc.)"
               value={form.medical_notes || ""}
               onChange={(e) =>
                 setForm({ ...form, medical_notes: e.target.value })
               }
             />
+            {form.medical_notes?.trim() && (
+              <Box
+                sx={{
+                  mt: 1,
+                  p: 2,
+                  bgcolor: "error.shades",
+                  border: "1px solid",
+                  borderColor: "error.light",
+                  borderRadius: 1,
+                }}
+              >
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={medicalConsentAccepted}
+                      onChange={(e) =>
+                        setMedicalConsentAccepted(e.target.checked)
+                      }
+                      color="error"
+                    />
+                  }
+                  label={
+                    <Typography
+                      variant="body2"
+                      color="error.main"
+                      fontWeight="500"
+                    >
+                      I confirm that the parents have provided signed explicit
+                      consent to record these sensitive medical details. *
+                    </Typography>
+                  }
+                />
+                <FormHelperText error>
+                  GDPR compliance: Health data requires explicit authorization
+                  and must be restricted to authorized staff only.
+                </FormHelperText>
+              </Box>
+            )}
           </Grid>
         </Grid>
 
@@ -383,7 +466,10 @@ const CreateStudent = () => {
             color="success"
             startIcon={<SaveIcon />}
             onClick={handleSave}
-            disabled={!rgpdAccepted}
+            disabled={
+              !rgpdAccepted ||
+              (!!form.medical_notes?.trim() && !medicalConsentAccepted)
+            }
           >
             Save Student
           </Button>
