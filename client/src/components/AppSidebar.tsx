@@ -67,6 +67,8 @@ const navGroups = [
     label: "People",
     items: [
       { label: "Students", path: "/students", icon: <SchoolIcon /> },
+
+      { label: "Parents", path: "/parents", icon: <FamilyRestroomIcon /> },
       { label: "Teachers", path: "/teachers", icon: <PeopleIcon /> },
       { label: "Staff", path: "/staff", icon: <BadgeIcon /> },
     ],

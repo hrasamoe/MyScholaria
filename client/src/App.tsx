@@ -57,6 +57,8 @@ import Privacy from "./pages/Privacy";
 import CreateEstablishment from "./pages/CreateEstablishment";
 import PendingApproval from "./pages/PendingEvaluation";
 import CreateStudent from "./pages/CreateStudent";
+import ParentsList from "./pages/Parents";
+import CreateParent from "./pages/CreateParent";
 
 const App = () => (
   <AppThemeProvider>
@@ -127,6 +129,8 @@ const App = () => (
               <Route path="/settings" element={<Settings />} />
 
               <Route element={<RoleRoute roles={["admin", "staff"]} />}>
+                <Route path="/parents" element={<ParentsList />} />
+                <Route path="/parents/create" element={<CreateParent />} />
                 <Route path="/users" element={<Users />} />
                 <Route path="/roles" element={<Roles />} />
                 <Route path="/staff" element={<Staff />} />
