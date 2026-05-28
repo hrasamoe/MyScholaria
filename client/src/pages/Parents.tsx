@@ -9,16 +9,16 @@ import {
   Button,
   Card,
   CardContent,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
   IconButton,
   InputAdornment,
   Skeleton,
   TextField,
   Typography,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
 } from "@mui/material";
 import { useSnackbar } from "notistack";
 import { useEffect, useState } from "react";
@@ -195,7 +195,12 @@ const ParentsList = () => {
               </Card>
             ))
           : filteredParents.map((parent) => (
-              <Card key={parent.id} variant="outlined">
+              <Card
+                key={parent.id}
+                variant="outlined"
+                onClick={() => navigate(`/parents/edit/${parent.id}`)}
+                sx={{ cursor: "pointer" }}
+              >
                 <CardContent
                   sx={{
                     display: "flex",
@@ -232,7 +237,11 @@ const ParentsList = () => {
                       // variant="h6"
                       fontWeight="500"
                       noWrap
-                      sx={{ textOverflow: "ellipsis", overflow: "hidden", fontSize: "18px" }}
+                      sx={{
+                        textOverflow: "ellipsis",
+                        overflow: "hidden",
+                        fontSize: "18px",
+                      }}
                     >
                       {formatFirstName(parent.first_name)} {parent.last_name}
                     </Typography>
@@ -241,7 +250,8 @@ const ParentsList = () => {
                   <Box sx={{ display: "flex", gap: 0.5, flexShrink: 0 }}>
                     <IconButton
                       size="small"
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation();
                         setSelectedParent(parent);
                         setOpenDialog(true);
                       }}
@@ -272,7 +282,6 @@ const ParentsList = () => {
           <Button
             onClick={() => selectedParent && handleDelete(selectedParent.id)}
             color="error"
-
             autoFocus
           >
             Yes
