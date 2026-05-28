@@ -407,11 +407,11 @@ const Privacy = () => (
 
           <Section n="15" title="Contact our Data Protection Officer">
             <P>
-              📧 <b>privacy@myscholaria.app</b>
+              Privacy: <b>hrasamoevj@gmail.com</b>
               <br />
-              📧 DPO: dpo@myscholaria.app
+              Leader: <b>herysamuelpljv@gmail.com</b>
               <br />
-              📍 MyScholaria — Data Protection Office
+              MyScholaria — Data Protection Office
             </P>
             <P>
               See also our{" "}
@@ -424,7 +424,7 @@ const Privacy = () => (
 
           <Divider sx={{ my: 3 }} />
           <Typography variant="caption" color="text.secondary">
-            Last updated: May 15, 2026 — Your trust matters. We are committed to
+            Last updated: May 28, 2026 — Your trust matters. We are committed to
             transparency and to protecting the personal data of every member of
             the MyScholaria community.
           </Typography>

@@ -355,15 +355,15 @@ const Terms = () => (
             <P>
               For any question regarding these Terms, please contact us at:
               <br />
-              📧 legal@myscholaria.app
+              📧 herysamuelpljv@gmail.com
               <br />
-              📍 MyScholaria — Legal Department
+              MyScholaria — Legal Department
             </P>
           </Section>
 
           <Divider sx={{ my: 3 }} />
           <Typography variant="caption" color="text.secondary">
-            Last updated: May 15, 2026 — By using MyScholaria, you acknowledge
+            Last updated: May 28, 2026 — By using MyScholaria, you acknowledge
             that you have read, understood and agreed to these Terms of Service.
           </Typography>
         </CardContent>
