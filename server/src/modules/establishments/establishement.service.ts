@@ -278,7 +278,7 @@ export async function findAllMemberAproved(establishmentID: string) {
     m.joined_at
     FROM establishment_members m
     INNER JOIN users u ON m.user_id = u.id
-    INNER JOIN profiles p ON u.id = p.id
+    INNER JOIN profiles p ON u.id = p.user_id
     WHERE m.is_aproved = true AND m.establishment_id = $1
   `,
       [establishmentID],
@@ -308,7 +308,7 @@ export async function findPendingMember(establishmentID: string) {
         m.joined_at
       FROM establishment_members m
       INNER JOIN users u ON m.user_id = u.id
-      INNER JOIN profiles p ON u.id = p.id
+      INNER JOIN profiles p ON u.id = p.user_id
       WHERE m.is_aproved = false AND m.establishment_id = $1`,
       [establishmentID],
     );
@@ -362,7 +362,7 @@ export async function approveMember(
         [establishmentId],
       );
       const userName = await client.query(
-        `SELECT full_name FROM profiles WHERE id = $1`,
+        `SELECT full_name FROM profiles WHERE user_id = $1`,
         [userRes.rows[0].id],
       );
       sendApprovalEmail(

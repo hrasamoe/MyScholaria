@@ -39,7 +39,7 @@ export async function registerUserAsAdmin(data: RegisterInput) {
     );
     const user = rows[0];
 
-    await client.query("UPDATE profiles SET full_name = $1 WHERE id = $2", [
+    await client.query("UPDATE profiles SET full_name = $1 WHERE user_id = $2", [
       data.full_name,
       user.id,
     ]);
@@ -113,7 +113,7 @@ export async function registerUserAsMember(data: RegisterMemberInput) {
     const user = rows[0];
 
     await client.query(
-      "UPDATE profiles SET full_name = $1, last_name = $3, first_name = $4 WHERE id = $2",
+      "UPDATE profiles SET full_name = $1, last_name = $3, first_name = $4 WHERE user_id = $2",
       [data.full_name, user.id, data.last_name, data.first_name],
     );
     await client.query(
@@ -146,7 +146,7 @@ export async function loginUser(data: LoginInput) {
   const { rows } = await pool.query(
     `SELECT u.*, p.full_name
      FROM users u
-     LEFT JOIN profiles p ON p.id = u.id
+     LEFT JOIN profiles p ON p.user_id = u.id
      WHERE u.email = $1 AND u.is_active = true`,
     [data.email],
   );
@@ -235,7 +235,7 @@ export async function verifyEmail(token: any) {
 
   const { rows: userRows } = await pool.query(
     `SELECT u.id, u.email, p.full_name FROM users u
-     LEFT JOIN profiles p ON p.id = u.id WHERE u.id = $1`,
+     LEFT JOIN profiles p ON p.user_id = u.id WHERE u.id = $1`,
     [userId],
   );
   const user = userRows[0];
@@ -263,7 +263,7 @@ export async function verifyEmailWithEstablishment(token: any) {
   const { rows } = await pool.query(
     `SELECT u.id, u.email, u.pending_establishment_id, p.full_name
      FROM users u
-     LEFT JOIN profiles p ON p.id = u.id
+     LEFT JOIN profiles p ON p.user_id = u.id
      WHERE u.verify_token = $1 AND u.verify_expires > NOW() AND u.is_verified = false`,
     [token],
   );
@@ -328,7 +328,7 @@ export async function logoutUser(userId: string) {
 export async function forgotPassword(email: string) {
   const { rows } = await pool.query(
     `SELECT u.id, p.full_name FROM users u
-     LEFT JOIN profiles p ON p.id = u.id
+     LEFT JOIN profiles p ON p.user_id = u.id
      WHERE u.email = $1 AND u.is_active = true`,
     [email],
   );
@@ -370,7 +370,7 @@ export async function resetPassword(token: string, newPassword: string) {
 
   const { rows: userRows } = await pool.query(
     `SELECT u.id, u.email, p.full_name FROM users u
-     LEFT JOIN profiles p ON p.id = u.id WHERE u.id = $1`,
+     LEFT JOIN profiles p ON p.user_id = u.id WHERE u.id = $1`,
     [userId],
   );
   const user = userRows[0];
