@@ -18,6 +18,7 @@ import Grid from "@mui/material/Grid";
 import SaveIcon from "@mui/icons-material/Save";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useSnackbar } from "notistack";
+import { useAuth } from "@/hooks/Authcontext";
 
 interface ParentForm {
   firstName: string;
@@ -39,7 +40,9 @@ const CreateParent = () => {
     address: "",
     profession: "",
   });
-
+  const { user } = useAuth();
+  const establishmentID = user?.establishment_id;
+  const [loading, setLoading] = useState(false);
   const [rgpdAccepted, setRgpdAccepted] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
 
@@ -71,15 +74,43 @@ const CreateParent = () => {
       return;
     }
 
+    setLoading(true);
     try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/utils/create-parent/${establishmentID}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            firstName: form.firstName,
+            lastName: form.lastName,
+            email: form.email,
+            gender: form.gender,
+            profession: form.profession,
+            phone: form.phone,
+            address: form.address,
+            fullname: form.firstName + " " + form.lastName,
+          }),
+        },
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || "An error occurred");
+      }
+
       enqueueSnackbar("Parent profile created successfully", {
         variant: "success",
       });
       handleCancel();
-    } catch (error) {
-      enqueueSnackbar("An error occurred during registration", {
-        variant: "error",
-      });
+    } catch (error: any) {
+      enqueueSnackbar(`${error.message || error}`, { variant: "error" });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -110,6 +141,7 @@ const CreateParent = () => {
               label="First Name *"
               value={form.firstName || ""}
               onChange={(e) => setForm({ ...form, firstName: e.target.value })}
+              disabled={loading}
             />
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }}>
@@ -118,12 +150,14 @@ const CreateParent = () => {
               label="Last Name *"
               value={form.lastName || ""}
               onChange={(e) => setForm({ ...form, lastName: e.target.value })}
+              disabled={loading}
             />
           </Grid>
 
           <Grid size={{ xs: 12, sm: 6 }}>
             <FormControl
               component="fieldset"
+              disabled={loading}
               sx={{
                 display: "flex",
                 flexDirection: "column",
@@ -153,12 +187,12 @@ const CreateParent = () => {
                 sx={{ justifyContent: "space-between", width: "100%" }}
               >
                 <FormControlLabel
-                  value="Male"
+                  value="male"
                   control={<Radio size="small" />}
                   label="Male"
                 />
                 <FormControlLabel
-                  value="Female"
+                  value="female"
                   sx={{ fontSize: "0.95rem" }}
                   control={<Radio size="small" />}
                   label="Female"
@@ -172,6 +206,7 @@ const CreateParent = () => {
               label="Profession"
               value={form.profession || ""}
               onChange={(e) => setForm({ ...form, profession: e.target.value })}
+              disabled={loading}
             />
           </Grid>
         </Grid>
@@ -188,6 +223,7 @@ const CreateParent = () => {
               label="Phone Number *"
               value={form.phone || ""}
               onChange={(e) => setForm({ ...form, phone: e.target.value })}
+              disabled={loading}
             />
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }}>
@@ -197,6 +233,7 @@ const CreateParent = () => {
               type="email"
               value={form.email || ""}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
+              disabled={loading}
             />
           </Grid>
           <Grid size={{ xs: 12 }}>
@@ -205,6 +242,7 @@ const CreateParent = () => {
               label="Home Address"
               value={form.address || ""}
               onChange={(e) => setForm({ ...form, address: e.target.value })}
+              disabled={loading}
             />
           </Grid>
         </Grid>
@@ -228,6 +266,7 @@ const CreateParent = () => {
                 checked={rgpdAccepted}
                 onChange={(e) => setRgpdAccepted(e.target.checked)}
                 color="primary"
+                disabled={loading}
               />
             }
             label="I acknowledge that I have read and understood the data protection notice *"
@@ -237,7 +276,7 @@ const CreateParent = () => {
         <Box
           sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mt: 4 }}
         >
-          <Button variant="outlined" onClick={handleCancel}>
+          <Button variant="outlined" onClick={handleCancel} disabled={loading}>
             Reset Form
           </Button>
           <Button
@@ -245,9 +284,9 @@ const CreateParent = () => {
             color="success"
             startIcon={<SaveIcon />}
             onClick={handleSave}
-            disabled={!rgpdAccepted}
+            disabled={!rgpdAccepted || loading}
           >
-            Save Parent
+            {loading ? "Saving..." : "Save Parent"}
           </Button>
         </Box>
       </Paper>
