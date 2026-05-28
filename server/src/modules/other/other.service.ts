@@ -1,5 +1,5 @@
-import { ParentInfo } from "./other.schema";
 import { pool } from "../../db/pool";
+import { ParentInfo } from "./other.schema";
 
 export async function createParent(
   parentData: ParentInfo,
@@ -63,6 +63,21 @@ export async function getParentList(establishmentID: any) {
     const { rows } = await client.query(queryText, [establishmentID]);
     await client.query("COMMIT");
     return rows;
+  } catch (error: any) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+export async function deleteParent(parentId: any) {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const queryText = "DELETE FROM profiles WHERE id = $1";
+    await client.query(queryText, [parentId]);
+    await client.query("COMMIT");
   } catch (error: any) {
     await client.query("ROLLBACK");
     throw error;

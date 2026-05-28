@@ -14,6 +14,11 @@ import {
   Skeleton,
   TextField,
   Typography,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
 } from "@mui/material";
 import { useSnackbar } from "notistack";
 import { useEffect, useState } from "react";
@@ -37,20 +42,41 @@ const ParentsList = () => {
   const establishmentID = user?.establishment_id;
   const [parents, setParents] = useState<Parent[]>([]);
 
-  const handleView = (id: string) => {};
-  const handleEdit = (id: string) => {};
+  const [openDialog, setOpenDialog] = useState(false);
+  const [selectedParent, setSelectedParent] = useState<Parent | null>(null);
+
+  const handleDelete = async (id: string) => {
+    const response = await fetch(
+      `${import.meta.env.VITE_API_URL}/api/utils/delete-parent/${id}`,
+      {
+        method: "DELETE",
+        credentials: "include",
+      },
+    );
+    const result = await response.json();
+    if (response.ok) {
+      setParents((prev) => prev.filter((p) => p.id !== id));
+      enqueueSnackbar("Parent deleted successfully", { variant: "success" });
+    } else {
+      enqueueSnackbar(result.message || "Deletion error", {
+        variant: "error",
+      });
+    }
+    setOpenDialog(false);
+    setSelectedParent(null);
+  };
+
   const formatFirstName = (firstName: string) => {
     if (!firstName) return "";
     const parts = firstName.trim().split(/\s+/);
-
     if (parts.length <= 1) return parts[0];
-
     const initiales = parts
       .slice(1)
       .map((part) => `${part[0].toUpperCase()}.`)
       .join(" ");
     return `${parts[0]} ${initiales}`;
   };
+
   const filteredParents = parents.filter(
     (p) =>
       p.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -186,7 +212,7 @@ const ParentsList = () => {
                       gap: 1.5,
                       flexGrow: 1,
                       minWidth: 0,
-                      padding: "4px 1px"
+                      padding: "4px 1px",
                     }}
                   >
                     {parent.gender === "male" ? (
@@ -203,10 +229,10 @@ const ParentsList = () => {
                       />
                     )}
                     <Typography
-                      variant="h6"
+                      // variant="h6"
                       fontWeight="500"
                       noWrap
-                      sx={{ textOverflow: "ellipsis", overflow: "hidden" }}
+                      sx={{ textOverflow: "ellipsis", overflow: "hidden", fontSize: "18px" }}
                     >
                       {formatFirstName(parent.first_name)} {parent.last_name}
                     </Typography>
@@ -215,7 +241,10 @@ const ParentsList = () => {
                   <Box sx={{ display: "flex", gap: 0.5, flexShrink: 0 }}>
                     <IconButton
                       size="small"
-                      onClick={() => handleEdit(parent.id)}
+                      onClick={() => {
+                        setSelectedParent(parent);
+                        setOpenDialog(true);
+                      }}
                     >
                       <Delete fontSize="medium" color="error" />
                     </IconButton>
@@ -224,6 +253,32 @@ const ParentsList = () => {
               </Card>
             ))}
       </Box>
+
+      <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
+        <DialogTitle>Warning</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Do you really want to delete parent{" "}
+            <strong>
+              {selectedParent?.first_name} {selectedParent?.last_name}
+            </strong>{" "}
+            ?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenDialog(false)} color="inherit">
+            No
+          </Button>
+          <Button
+            onClick={() => selectedParent && handleDelete(selectedParent.id)}
+            color="error"
+
+            autoFocus
+          >
+            Yes
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

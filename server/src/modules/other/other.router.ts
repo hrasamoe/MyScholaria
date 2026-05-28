@@ -1,11 +1,7 @@
-import { Router, Request, Response } from "express";
+import { Request, Response, Router } from "express";
+import { AuthRequest, RequireAuthOnly } from "../../middleware/auth.middleware";
 import { parentSchema } from "./other.schema";
-import { getParentList, createParent } from "./other.service";
-import {
-  AuthRequest,
-  RequireAuth,
-  RequireAuthOnly,
-} from "../../middleware/auth.middleware";
+import { createParent, deleteParent, getParentList } from "./other.service";
 
 export const utilschemaRouter = Router();
 
@@ -50,6 +46,20 @@ utilschemaRouter.get(
       const establishmentId = req.params?.id || req.body.establishmentId;
       const parentList = await getParentList(establishmentId);
       res.status(200).json(parentList);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  },
+);
+
+utilschemaRouter.delete(
+  "/delete-parent/:id",
+  RequireAuthOnly,
+  async (req: Request, res: Response) => {
+    try {
+      const parentId = req.params?.id || req.body.parentId;
+      await deleteParent(parentId);
+      res.status(200).json({ message: "Parent deleted successfully" });
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
