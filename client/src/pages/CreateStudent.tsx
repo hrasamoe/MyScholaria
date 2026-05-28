@@ -1,5 +1,7 @@
 import { useState } from "react";
 import PageHeader from "@/components/PageHeader";
+import AddIcon from "@mui/icons-material/Add";
+
 import {
   Button,
   TextField,
@@ -13,37 +15,79 @@ import {
   Divider,
   FormControlLabel,
   Checkbox,
+  Autocomplete,
+  Chip,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import SaveIcon from "@mui/icons-material/Save";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import SearchIcon from "@mui/icons-material/Search";
 import { useSnackbar } from "notistack";
+import { useNavigate } from "react-router-dom";
 
-interface Student {
+interface StudentForm {
   firstName: string;
   lastName: string;
-  email: string;
-  phone: string;
-  class: string;
   gender: string;
   dateOfBirth: string;
+  email: string;
+  phone: string;
   address: string;
-  parentName: string;
-  parentPhone: string;
+  student_number: string;
+  enrollment_date: string;
+  class_id: string;
+  status: "active" | "inactive" | "suspended" | "graduated";
+  medical_notes: string;
+  photo_url: string;
+  parent_ids: string[];
+}
+
+interface ParentOption {
+  id: string;
+  fullName: string;
+  phone: string;
 }
 
 const CreateStudent = () => {
-  const [form, setForm] = useState<Partial<Student>>({});
+  const [form, setForm] = useState<Partial<StudentForm>>({
+    status: "active",
+    enrollment_date: new Date().toISOString().split("T")[0],
+    parent_ids: [],
+  });
+  const navigate = useNavigate();
   const [rgpdAccepted, setRgpdAccepted] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
 
+  const [parentOptions] = useState<ParentOption[]>([
+    {
+      id: "404dbc2c-865e-43c8-8796-8398a5942256",
+      fullName: "Heritiana Hasina",
+      phone: "0340000001",
+    },
+    {
+      id: "a1e922e1-4202-4430-95a8-8cc6e902e566",
+      fullName: "Naël Hasinirina",
+      phone: "0340000002",
+    },
+  ]);
+
   const handleCancel = () => {
-    setForm({});
+    setForm({
+      status: "active",
+      enrollment_date: new Date().toISOString().split("T")[0],
+      parent_ids: [],
+    });
     setRgpdAccepted(false);
   };
 
   const handleSave = async () => {
-    if (!form.firstName || !form.lastName || !form.class) {
+    if (
+      !form.firstName ||
+      !form.lastName ||
+      !form.student_number ||
+      !form.enrollment_date ||
+      !form.status
+    ) {
       enqueueSnackbar("Please fill all required fields (*)", {
         variant: "error",
       });
@@ -67,6 +111,10 @@ const CreateStudent = () => {
     }
   };
 
+  const selectedParents = parentOptions.filter((option) =>
+    form.parent_ids?.includes(option.id),
+  );
+
   return (
     <Box sx={{ maxWidth: 900, mx: "auto", p: 2 }}>
       <PageHeader
@@ -85,7 +133,7 @@ const CreateStudent = () => {
 
       <Paper variant="outlined" sx={{ p: 4, mt: 3, borderRadius: 2 }}>
         <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-          Personal Information
+          Identity & Profile Information
         </Typography>
         <Grid container spacing={3}>
           <Grid size={{ xs: 12, sm: 6 }}>
@@ -146,15 +194,7 @@ const CreateStudent = () => {
               onChange={(e) => setForm({ ...form, phone: e.target.value })}
             />
           </Grid>
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <TextField
-              fullWidth
-              label="Class *"
-              value={form.class || ""}
-              onChange={(e) => setForm({ ...form, class: e.target.value })}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6 }}>
+          <Grid size={{ xs: 12 }}>
             <TextField
               fullWidth
               label="Address"
@@ -167,25 +207,142 @@ const CreateStudent = () => {
         <Divider sx={{ my: 4 }} />
 
         <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-          Parent / Guardian Contact
+          Academic Institutional Data
         </Typography>
         <Grid container spacing={3}>
           <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               fullWidth
-              label="Parent Full Name"
-              value={form.parentName || ""}
-              onChange={(e) => setForm({ ...form, parentName: e.target.value })}
+              label="Student ID *"
+              value={form.student_number || ""}
+              onChange={(e) =>
+                setForm({ ...form, student_number: e.target.value })
+              }
             />
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               fullWidth
-              label="Parent Phone Number"
-              value={form.parentPhone || ""}
+              label="Enrollment Date *"
+              type="date"
+              InputLabelProps={{ shrink: true }}
+              value={form.enrollment_date || ""}
               onChange={(e) =>
-                setForm({ ...form, parentPhone: e.target.value })
+                setForm({ ...form, enrollment_date: e.target.value })
               }
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <TextField
+              fullWidth
+              label="Class "
+              value={form.class_id || ""}
+              onChange={(e) => setForm({ ...form, class_id: e.target.value })}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <FormControl fullWidth>
+              <InputLabel>Status *</InputLabel>
+              <Select
+                value={form.status || "active"}
+                label="Status *"
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    status: e.target.value as StudentForm["status"],
+                  })
+                }
+              >
+                <MenuItem value="active">Active</MenuItem>
+                <MenuItem value="inactive">Inactive</MenuItem>
+                <MenuItem value="suspended">Suspended</MenuItem>
+                <MenuItem value="graduated">Graduated</MenuItem>
+              </Select>
+            </FormControl>
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 12 }}>
+            <TextField
+              fullWidth
+              multiline
+              label="Medical Notes"
+              value={form.medical_notes || ""}
+              onChange={(e) =>
+                setForm({ ...form, medical_notes: e.target.value })
+              }
+            />
+          </Grid>
+        </Grid>
+
+        <Divider sx={{ my: 4 }} />
+
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 2,
+          }}
+        >
+          <Typography variant="h6" sx={{ fontWeight: 600 }}>
+            Parents / Guardians Link
+          </Typography>
+
+          <Button
+            startIcon={<AddIcon />}
+            variant="contained"
+            onClick={() => navigate("/parents/create")}
+            color="success"
+            sx={{ height: "30px", width: "auto" }}
+          >
+            Create new parent
+          </Button>
+        </Box>
+        <Grid container spacing={3}>
+          <Grid size={{ xs: 12 }}>
+            <Autocomplete
+              multiple
+              options={parentOptions}
+              value={selectedParents}
+              getOptionLabel={(option) =>
+                `${option.fullName} (${option.phone})`
+              }
+              isOptionEqualToValue={(option, value) => option.id === value.id}
+              onChange={(_, newValue) => {
+                setForm({
+                  ...form,
+                  parent_ids: newValue.map((parent) => parent.id),
+                });
+              }}
+              renderTags={(tagValue, getTagProps) =>
+                tagValue.map((option, index) => {
+                  const { key, ...tagProps } = getTagProps({ index });
+                  return (
+                    <Chip
+                      key={option.id}
+                      label={`${option.fullName} (${option.phone})`}
+                      {...tagProps}
+                    />
+                  );
+                })
+              }
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Select Parents / Guardians"
+                  placeholder="Search and add parents..."
+                  fullWidth
+                  InputProps={{
+                    ...params.InputProps,
+                    startAdornment: (
+                      <>
+                        <SearchIcon color="action" sx={{ mr: 1 }} />
+                        {params.InputProps.startAdornment}
+                      </>
+                    ),
+                  }}
+                />
+              )}
             />
           </Grid>
         </Grid>
