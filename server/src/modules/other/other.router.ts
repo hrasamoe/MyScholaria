@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
 import { parentSchema } from "./other.schema";
-import { createParent } from "./other.service";
+import { getParentList, createParent } from "./other.service";
 import {
   AuthRequest,
   RequireAuth,
@@ -37,6 +37,20 @@ utilschemaRouter.post(
       if (error.errors) {
         return res.status(400).json({ message: error.errors[0].message });
       }
+      res.status(500).json({ message: error.message });
+    }
+  },
+);
+
+utilschemaRouter.get(
+  "/get-parent-list/:id",
+  RequireAuthOnly,
+  async (req: Request, res: Response) => {
+    try {
+      const establishmentId = req.params?.id || req.body.establishmentId;
+      const parentList = await getParentList(establishmentId);
+      res.status(200).json(parentList);
+    } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
   },

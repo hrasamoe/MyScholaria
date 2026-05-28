@@ -51,3 +51,22 @@ export async function createParent(
     client.release();
   }
 }
+
+export async function getParentList(establishmentID: any) {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const queryText = `
+    SELECT id, first_name, last_name, gender FROM profiles
+    WHERE profile_statut = 'parent'
+    AND establishment_id = $1`;
+    const { rows } = await client.query(queryText, [establishmentID]);
+    await client.query("COMMIT");
+    return rows;
+  } catch (error: any) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+}
