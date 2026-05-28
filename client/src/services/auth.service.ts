@@ -9,11 +9,6 @@ export interface AuthResponse {
   };
 }
 
-function authHeader() {
-  const token = localStorage.getItem("accessToken");
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
-
 export async function register(
   email: string,
   password: string,
@@ -22,8 +17,7 @@ export async function register(
   schoolName: string,
 ): Promise<AuthResponse> {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 30000); // 30s
-
+  const timeout = setTimeout(() => controller.abort(), 30000);
   try {
     const res = await fetch(`${API_URL}/api/auth/register`, {
       method: "POST",
@@ -51,45 +45,43 @@ export async function login(
     body: JSON.stringify({ email, password }),
   });
   const data = await res.json();
-  console.log("Login response", data);
   if (!res.ok) throw new Error(data.message);
   return data;
 }
 
 export async function logout(): Promise<void> {
-  const refreshToken = localStorage.getItem("refreshToken");
   await fetch(`${API_URL}/api/auth/logout`, {
     method: "POST",
     credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-    },
-
-    body: JSON.stringify({ refreshToken }),
+    headers: { "Content-Type": "application/json" },
   });
   localStorage.removeItem("user");
 }
 
-
 export async function getMe(): Promise<AuthResponse> {
-  try {
-    const res = await fetch(`${API_URL}/api/auth/me`, {
+  let res = await fetch(`${API_URL}/api/auth/me`, {
+    credentials: "include",
+  });
+
+  if (res.status === 401) {
+    const refreshRes = await fetch(`${API_URL}/api/auth/refresh`, {
+      method: "POST",
       credentials: "include",
-      headers: { ...authHeader },
     });
-    const data = await res.json();
-    if (!res.ok) {
-      const error: any = new Error(data.message);
-      error.status = res.status;
-      throw error;
+
+    if (!refreshRes.ok) {
+      window.location.href = "/login";
+      throw new Error("Session expirée");
     }
-    return data;
-  } catch (error: any) {
-    if (!error.status) {
-      error.status = "NETORK_ERROR";
-    }
-    throw error;
+
+    res = await fetch(`${API_URL}/api/auth/me`, {
+      credentials: "include",
+    });
   }
+
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message);
+  return data;
 }
 
 export async function forgotpassword(email: string): Promise<void> {
@@ -109,7 +101,7 @@ export async function registerMember(
   password: string,
   joinCode: string,
   full_name: string,
-  last_name: string, 
+  last_name: string,
   first_name: string,
   role: string = "student",
   schoolID: string,
@@ -117,9 +109,7 @@ export async function registerMember(
   const res = await fetch(`${API_URL}/api/auth/register-member`, {
     method: "POST",
     credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       email,
       password,
