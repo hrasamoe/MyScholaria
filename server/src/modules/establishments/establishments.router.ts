@@ -140,7 +140,7 @@ establishementRouter.get(
 
 establishementRouter.get(
   "/:id/all-users",
-  RequireAuthOnly,
+  RequireAuth,
   async (req: AuthRequest, res: Response) => {
     try {
       const establishementID = req.params.id;
