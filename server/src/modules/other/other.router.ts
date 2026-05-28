@@ -1,7 +1,13 @@
 import { Request, Response, Router } from "express";
 import { AuthRequest, RequireAuthOnly } from "../../middleware/auth.middleware";
 import { parentSchema } from "./other.schema";
-import { createParent, deleteParent, getParentList } from "./other.service";
+import {
+  createParent,
+  deleteParent,
+  getParentDetails,
+  getParentList,
+  updateParent,
+} from "./other.service";
 
 export const utilschemaRouter = Router();
 
@@ -62,6 +68,47 @@ utilschemaRouter.delete(
       res.status(200).json({ message: "Parent deleted successfully" });
     } catch (error: any) {
       res.status(500).json({ message: error.message });
+    }
+  },
+);
+
+utilschemaRouter.get(
+  "/get-parent-details/:id",
+  RequireAuthOnly,
+  async (req: Request, res: Response) => {
+    try {
+      const parentId = req.params?.id || req.body.parentId;
+      const parentDetails = await getParentDetails(parentId);
+      res.status(200).json(parentDetails);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  },
+);
+
+utilschemaRouter.put(
+  "/update-parent/:id",
+  RequireAuthOnly,
+  async (req: Request, res: Response) => {
+    try {
+      const parentId = req.params?.id || req.body.parentId;
+      const data = parentSchema.parse({
+        firstName: req.body.firstName,
+        lastName: req.body.lastName,
+        email: req.body.email,
+        gender: req.body.gender,
+        profession: req.body.profession,
+        phone: req.body.phone,
+        address: req.body.address,
+        fullname: req.body.fullname,
+      });
+      const updatedParent = await updateParent(data, parentId);
+      res.status(200).json({
+        message: "Parent updated successfully",
+        data: updatedParent,
+      });
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
     }
   },
 );
