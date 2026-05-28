@@ -300,7 +300,7 @@ export async function findPendingMember(establishmentID: string) {
     const { rows: pendingUsers } = await client.query(
       `SELECT 
         u.id AS user_id,
-        CONCAT(p.first_name, ' ', p.last_name) AS name,
+        COALESCE(p.full_name, CONCAT(p.first_name, ' ', p.last_name)) AS name,
         u.email,
         m.role_name AS role,
         m.is_active,
@@ -322,7 +322,12 @@ export async function findPendingMember(establishmentID: string) {
   }
 }
 
-export async function approveMember(email: string, establishmentId: string) {
+export async function approveMember(
+  email: string,
+  establishmentId: string,
+  isAproved: boolean,
+  role: string,
+) {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
@@ -332,27 +337,18 @@ export async function approveMember(email: string, establishmentId: string) {
       [email],
     );
 
-    const establishmentName = await client.query(
-      `SELECT name FROM establishments WHERE id = $1`,
-      [establishmentId],
-    );
-    const userName = await client.query(
-      `SELECT full_name FROM profiles WHERE id = $1`,
-      [userRes.rows[0].id],
-    );
-
     if (userRes.rows.length === 0) {
-      throw new Error("Utilisateur introuvable");
+      throw new Error("User not found");
     }
 
     const userId = userRes.rows[0].id;
 
     const updateRes = await client.query(
       `UPDATE establishment_members
-       SET is_aproved = true
-       WHERE user_id = $1 AND establishment_id = $2
+       SET is_aproved = $1, role_name = $2
+       WHERE user_id = $3 AND establishment_id = $4
        RETURNING *`,
-      [userId, establishmentId],
+      [isAproved, role, userId, establishmentId],
     );
 
     if (updateRes.rows.length === 0) {
@@ -360,11 +356,22 @@ export async function approveMember(email: string, establishmentId: string) {
     }
 
     await client.query("COMMIT");
-    sendApprovalEmail(
-      email,
-      userName.rows[0].full_name,
-      establishmentName.rows[0].name,
-    );
+    if (isAproved) {
+      const establishmentName = await client.query(
+        `SELECT name FROM establishments WHERE id = $1`,
+        [establishmentId],
+      );
+      const userName = await client.query(
+        `SELECT full_name FROM profiles WHERE id = $1`,
+        [userRes.rows[0].id],
+      );
+      sendApprovalEmail(
+        email,
+        userName.rows[0].full_name,
+        establishmentName.rows[0].name,
+      );
+    }
+
     return updateRes.rows[0];
   } catch (error) {
     await client.query("ROLLBACK");

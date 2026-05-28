@@ -162,8 +162,8 @@ establishementRouter.post(
   RequireAuthOnly,
   async (req: AuthRequest, res: Response) => {
     try {
-      const { email, establishmentId } = req.body;
-      const response = await approveMember(email, establishmentId);
+      const { email, establishmentId, isAproved, role } = req.body;
+      const response = await approveMember(email, establishmentId, isAproved, role);
       return res.status(200).json(response);
     } catch (error: any) {
       console.error(error);

@@ -76,7 +76,7 @@ const Users = () => {
           },
         );
         if (!response.ok)
-          throw new Error("Error when fetching the list of aproved user");
+          throw new Error("Error when fetching the list of approved user");
         const data = await response.json();
         const mapped: allUser[] = (data as any[]).map((m: any) => ({
           id: m.user_id,
@@ -163,30 +163,53 @@ const Users = () => {
     if (!selectedUser || !establishment_id) return;
 
     try {
-      if (selectedUser.is_aproved) {
-        const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/api/establishment/approved-member`,
-          {
-            credentials: "include",
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              email: selectedUser.email,
-              establishmentId: establishment_id,
-            }),
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/establishment/approved-member`,
+        {
+          credentials: "include",
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
           },
-        );
+          body: JSON.stringify({
+            email: selectedUser.email,
+            establishmentId: establishment_id,
+            isAproved: selectedUser.is_aproved,
+            role: selectedUser.role,
+          }),
+        },
+      );
 
-        if (!response.ok) {
-          throw new Error("Failed to approve member on the server");
+      if (!response.ok) {
+        throw new Error("Failed to update member status on the server");
+      }
+
+      const isPending = users.some((x) => x.id === selectedUser.id);
+
+      if (isPending) {
+        if (selectedUser.is_aproved) {
+          setUsers(users.filter((x) => x.id !== selectedUser.id));
+          setAllUser([...allUser, { ...selectedUser }]);
+        } else {
+          setUsers(
+            users.map((x) =>
+              x.id === selectedUser.id ? { ...selectedUser } : x,
+            ),
+          );
+        }
+      } else {
+        if (!selectedUser.is_aproved) {
+          setAllUser(allUser.filter((x) => x.id !== selectedUser.id));
+          setUsers([...users, { ...selectedUser }]);
+        } else {
+          setAllUser(
+            allUser.map((x) =>
+              x.id === selectedUser.id ? { ...selectedUser } : x,
+            ),
+          );
         }
       }
 
-      setUsers(
-        users.map((x) => (x.id === selectedUser.id ? { ...selectedUser } : x)),
-      );
       setEditOpen(false);
       setSelectedUser(null);
       enqueueSnackbar("User updated successfully", { variant: "success" });
@@ -353,7 +376,6 @@ const Users = () => {
       <Box>
         <Typography variant="h6" component="h2" sx={{ fontWeight: 600, mb: 1 }}>
           List Of Your Establishment User
-          {/* <DataTable columns={<p>Test</p>} data={"Test"}/> */}
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
           Review and manage all of user in your establishment.
@@ -470,6 +492,28 @@ const Users = () => {
                 >
                   {selectedUser.email}
                 </Typography>
+              </Grid>
+              <Grid size={{ xs: 12 }}>
+                <FormControl fullWidth sx={{ mb: 2 }}>
+                  <InputLabel>Role</InputLabel>
+                  <Select
+                    value={selectedUser.role}
+                    label="Role"
+                    onChange={(e) =>
+                      setSelectedUser({
+                        ...selectedUser,
+                        role: e.target.value,
+                      })
+                    }
+                  >
+                    <MenuItem value="admin">Admin</MenuItem>
+                    <MenuItem value="student">Student</MenuItem>
+                    <MenuItem value="teacher">Teacher</MenuItem>
+                    <MenuItem value="accountant">Accountant</MenuItem>
+                    <MenuItem value="supervisor">Supervisor</MenuItem>
+                    <MenuItem value="parent">Parent</MenuItem>
+                  </Select>
+                </FormControl>
               </Grid>
               <Grid size={{ xs: 12 }}>
                 <FormControlLabel
