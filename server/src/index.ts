@@ -1,7 +1,7 @@
 import dotenv from "dotenv";
 import path from "path";
 dotenv.config({ path: path.resolve(__dirname, "../.env") });
-
+import { utilschemaRouter } from "./modules/other/other.router";
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
@@ -39,6 +39,7 @@ app.use(
 );
 app.use(cookieParser());
 app.use(express.json());
+app.use("/api/utils", utilschemaRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/establishment", establishementRouter);
 app.get("/api/health", (_, res) => {

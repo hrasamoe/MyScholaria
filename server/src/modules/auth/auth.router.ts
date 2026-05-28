@@ -120,13 +120,11 @@ authRouter.post("/logout", RequireAuth, async (req: Request, res: Response) => {
     const refreshToken = req.cookies?.refreshToken;
     if (refreshToken) {
       try {
-        const playoad = jwt.verify(refreshToken, ENV.JWT_SECRET) as {
-          userID: string;
+        const payload = jwt.verify(refreshToken, ENV.JWT_SECRET) as {
+          userId: string;
         };
-        await logoutUser(playoad.userID);
-      } catch {
-        res.status(401).json({ message: "Invalid or expired token" });
-      }
+        await logoutUser(payload.userId);
+      } catch {}
     }
     clearAuthCookies(res);
     res.status(200).json({ message: "Logged out" });
@@ -212,13 +210,10 @@ authRouter.get("/verify-reset-token", async (req: Request, res: Response) => {
   res.status(200).json({ message: "Done" });
 });
 
-authRouter.get(
-  "/me",
-  RequireAuth,
-  async (req: AuthRequest, res: Response) => {
-    try {
-      const { rows } = await pool.query(
-        `SELECT u.id, u.email, p.full_name,
+authRouter.get("/me", RequireAuth, async (req: AuthRequest, res: Response) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT u.id, u.email, p.full_name,
               em.is_aproved, e.name AS establishment_name, e.id AS establishment_id,
               ur.role AS roles
        FROM users u
@@ -228,24 +223,23 @@ authRouter.get(
        LEFT JOIN user_roles ur ON ur.user_id = u.id
        WHERE u.id = $1
        GROUP BY u.id, u.email, p.full_name, em.is_aproved, e.name, e.id, ur.role`,
-        [req.userId],
-      );
-      if (rows.length === 0)
-        return res.status(401).json({ message: "User not found" });
-      const u = rows[0];
-      res.json({
-        user: {
-          id: u.id,
-          email: u.email,
-          full_name: u.full_name,
-          roles: u.roles ? [u.roles] : [],
-          establishment_id: u.establishment_id ?? null,
-          establishment_name: u.establishment_name ?? null,
-          is_aproved: u.is_aproved ?? false,
-        },
-      });
-    } catch (err: any) {
-      res.status(500).json({ message: err.message });
-    }
-  },
-);
+      [req.userId],
+    );
+    if (rows.length === 0)
+      return res.status(401).json({ message: "User not found" });
+    const u = rows[0];
+    res.json({
+      user: {
+        id: u.id,
+        email: u.email,
+        full_name: u.full_name,
+        roles: u.roles ? [u.roles] : [],
+        establishment_id: u.establishment_id ?? null,
+        establishment_name: u.establishment_name ?? null,
+        is_aproved: u.is_aproved ?? false,
+      },
+    });
+  } catch (err: any) {
+    res.status(500).json({ message: err.message });
+  }
+});
