@@ -70,7 +70,7 @@ export async function getMe(): Promise<AuthResponse> {
     });
 
     if (!refreshRes.ok) {
-      window.location.href = "/login";
+      // window.location.href = "/auth/signup";
       throw new Error("Session expirée");
     }
 
