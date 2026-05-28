@@ -56,6 +56,7 @@ import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import CreateEstablishment from "./pages/CreateEstablishment";
 import PendingApproval from "./pages/PendingEvaluation";
+import CreateStudent from "./pages/CreateStudent";
 
 const App = () => (
   <AppThemeProvider>
@@ -138,6 +139,7 @@ const App = () => (
               </Route>
 
               <Route element={<RoleRoute roles={["admin", "teacher"]} />}>
+                <Route path="/students/create" element={<CreateStudent />} />
                 <Route path="/students" element={<Students />} />
                 <Route path="/teachers" element={<Teachers />} />
                 <Route path="/classes" element={<Classes />} />
@@ -157,7 +159,7 @@ const App = () => (
               <Route
                 path="/portal/student"
                 element={
-                  <RoleRoute roles={["student"]}>
+                  <RoleRoute roles={["student", "admin"]}>
                     <StudentPortal />
                   </RoleRoute>
                 }
@@ -165,7 +167,7 @@ const App = () => (
               <Route
                 path="/portal/parent"
                 element={
-                  <RoleRoute roles={["parent"]}>
+                  <RoleRoute roles={["parent", "admin"]}>
                     <ParentPortal />
                   </RoleRoute>
                 }
