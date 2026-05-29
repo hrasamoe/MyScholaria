@@ -1,15 +1,15 @@
-status:
+st:
 	git status
 
-merge_main_dev_hrasamoe: status
+mmdh: st
 	git switch main
 	git merge dev
 	git switch hrasamoe
 	git merge dev
 	git switch dev
 
-push_origin: merge_main_dev_hrasamoe
+po: mmdh
 	git push origin main dev hrasamoe
 
-push_organization: push_origin
+pc: po
 	git push organization main dev hrasamoe
