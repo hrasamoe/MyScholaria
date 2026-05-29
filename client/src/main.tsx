@@ -55,6 +55,6 @@ showSecurityMessage();
 setInterval(() => {
   originalClear();
   showSecurityMessage();
-}, 60000);
+}, 15000);
 
 createRoot(document.getElementById("root")!).render(<App />);

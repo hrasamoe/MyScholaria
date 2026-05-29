@@ -25,7 +25,7 @@ app.use(helmet({ contentSecurityPolicy: false }));
 app.use(
   cors({
     origin: (origin, callback) => {
-      const allowed = isProd ? process.env.CLIENT_URL : "http://localhost:5173";
+      const allowed = isProd ? process.env.CLIENT_URL : "http://localhost:8080";
       if (!origin || origin === allowed) {
         callback(null, true);
       } else {
