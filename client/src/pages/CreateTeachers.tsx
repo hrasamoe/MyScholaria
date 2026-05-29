@@ -23,11 +23,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { TeacherSubject } from "./Teachers";
 
-export type ContractType =
-  | "Full-Time"
-  | "Part-Time"
-  | "Contractor"
-  | "Substitute";
+export type ContractType = "permanent" | "contract" | "vacation";
 
 interface TeacherForm {
   idNumber: string;
@@ -58,12 +54,7 @@ const TEACHER_SUBJECTS: TeacherSubject[] = [
   "Art & Music",
 ];
 
-const CONTRACT_TYPES: ContractType[] = [
-  "Full-Time",
-  "Part-Time",
-  "Contractor",
-  "Substitute",
-];
+const CONTRACT_TYPES: ContractType[] = ["permanent", "contract", "vacation"];
 
 const CreateTeacher = () => {
   const [form, setForm] = useState<Partial<TeacherForm>>({
@@ -282,7 +273,7 @@ const CreateTeacher = () => {
             <TextField
               select
               fullWidth
-              label="Main Subject / Specialty *"
+              label="Main Subject *"
               value={form.subject || ""}
               onChange={(e) =>
                 setForm({ ...form, subject: e.target.value as TeacherSubject })
@@ -312,7 +303,7 @@ const CreateTeacher = () => {
             >
               {CONTRACT_TYPES.map((type) => (
                 <MenuItem key={type} value={type}>
-                  {type}
+                  {type.toUpperCase().charAt(0) + type.slice(1)}
                 </MenuItem>
               ))}
             </TextField>
@@ -323,7 +314,7 @@ const CreateTeacher = () => {
               label="Hours Per Week"
               type="number"
               slotProps={{
-                htmlInput: { min: 0, max: 24, step: 1 },
+                htmlInput: { min: 0, max: 40, step: 1 },
               }}
               value={form.hoursPerDay || ""}
               onChange={(e) =>
