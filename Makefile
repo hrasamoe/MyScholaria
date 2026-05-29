@@ -1,6 +1,7 @@
 st:
 	git status
-
+lg: st
+	git log --oneline
 mmdh: st
 	git switch main
 	git merge dev
