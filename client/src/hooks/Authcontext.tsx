@@ -1,8 +1,8 @@
 import {
   createContext,
   useContext,
-  useState,
   useEffect,
+  useState,
   type ReactNode,
 } from "react";
 
@@ -31,23 +31,18 @@ export const AuthContext = createContext<AuthContextType>(
 );
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(() => {
-    const savedUser = localStorage.getItem("myscholaria_user");
-    return savedUser ? JSON.parse(savedUser) : null;
-  });
+  const [user, setUser] = useState<User | null>(null);
   const [isLoading, setLoading] = useState(true);
 
   useEffect(() => {
     getMe()
       .then((data) => {
         setUser(data.user);
-        localStorage.setItem("myscholaria_user", JSON.stringify(data.user));
       })
       .catch((error: any) => {
         console.error("Auth check failed: ", error);
         if (error.status === 401 || error.status === 403) {
           setUser(null);
-          localStorage.removeItem("myscholaria_user");
         }
       })
       .finally(() => setLoading(false));
@@ -55,7 +50,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const saveAuth = (user: User) => {
     setUser(user);
-    localStorage.setItem("myscholaria_user", JSON.stringify(user))
   };
 
   const clearAuth = async () => {
