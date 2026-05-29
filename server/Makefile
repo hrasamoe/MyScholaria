@@ -1,0 +1,2 @@
+pc:
+	cd ../; make pc

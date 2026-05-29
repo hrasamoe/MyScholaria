@@ -3,3 +3,6 @@ build:
 
 deploy: build
 	firebase deploy
+
+pc:
+	cd ../; make pc
