@@ -1,33 +1,34 @@
 import PageHeader from "@/components/PageHeader";
-import LightModeIcon from "@mui/icons-material/LightMode";
-import DarkModeIcon from "@mui/icons-material/DarkMode";
-const API_URL = import.meta.env.VITE_API_URL;
-import ContentCopyIcon from "@mui/icons-material/ContentCopy";
-import {
-  Card,
-  CardContent,
-  Typography,
-  Stack,
-  Switch,
-  FormControlLabel,
-  Divider,
-  Chip,
-  Box,
-  Button,
-  TextField,
-  InputAdornment,
-  IconButton,
-} from "@mui/material";
-import Grid from "@mui/material/Grid";
-import SecurityIcon from "@mui/icons-material/Security";
+import { useAuth } from "@/hooks/Authcontext";
+import { useThemeMode } from "@/hooks/Themecontext";
+import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+import { getMyEstablishments } from "@/services/establishment.service";
 import BackupIcon from "@mui/icons-material/Backup";
 import BusinessIcon from "@mui/icons-material/Business";
+import CheckIcon from "@mui/icons-material/Check";
 import ColorLensIcon from "@mui/icons-material/ColorLens";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import DarkModeIcon from "@mui/icons-material/DarkMode";
+import LightModeIcon from "@mui/icons-material/LightMode";
+import SecurityIcon from "@mui/icons-material/Security";
+import {
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Chip,
+  Divider,
+  FormControlLabel,
+  IconButton,
+  InputAdornment,
+  Stack,
+  Switch,
+  TextField,
+  Typography,
+} from "@mui/material";
+import Grid from "@mui/material/Grid";
 import { useEffect, useRef, useState } from "react";
-import { useThemeMode } from "@/hooks/Themecontext";
-import { getMyEstablishments } from "@/services/establishment.service";
-import { useAuth } from "@/hooks/Authcontext";
-import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+const API_URL = import.meta.env.VITE_API_URL;
 
 const Settings = () => {
   const { isDark, toggle } = useThemeMode();
@@ -35,12 +36,22 @@ const Settings = () => {
   const [checked, setChecked] = useState(isDark);
   const [loading, setLoading] = useState(false);
   const isOnline = useOnlineStatus();
+  const [copiedJoinCode, setCopiedJoinCode] = useState(false);
+  const [copiedAdminCode, setCopiedAdminCode] = useState(false);
   const handleSwitch = (event) => {
     setChecked(event.target.checked);
   };
-  const handleCopy = (text: string) => {
+  const handleCopy = (text: string, type: "join" | "admin") => {
     if (text) {
       navigator.clipboard.writeText(text);
+
+      if (type === "join") {
+        setCopiedJoinCode(true);
+        setTimeout(() => setCopiedJoinCode(false), 2000);
+      } else if (type === "admin") {
+        setCopiedAdminCode(true);
+        setTimeout(() => setCopiedAdminCode(false), 2000);
+      }
     }
   };
   const { user } = useAuth();
@@ -281,11 +292,17 @@ const Settings = () => {
                                       establishment?.join_code ||
                                         establishment?.joinCode ||
                                         "",
+                                      "join",
                                     )
                                   }
                                   edge="end"
+                                  color={copiedJoinCode ? "success" : "default"}
                                 >
-                                  <ContentCopyIcon fontSize="small" />
+                                  {copiedJoinCode ? (
+                                    <CheckIcon fontSize="small" />
+                                  ) : (
+                                    <ContentCopyIcon fontSize="small" />
+                                  )}
                                 </IconButton>
                               </InputAdornment>
                             ),
@@ -313,11 +330,19 @@ const Settings = () => {
                                       establishment?.admin_code ||
                                         establishment?.adminCode ||
                                         "",
+                                      "admin",
                                     )
                                   }
                                   edge="end"
+                                  color={
+                                    copiedAdminCode ? "success" : "default"
+                                  }
                                 >
-                                  <ContentCopyIcon fontSize="small" />
+                                  {copiedAdminCode ? (
+                                    <CheckIcon fontSize="small" />
+                                  ) : (
+                                    <ContentCopyIcon fontSize="small" />
+                                  )}
                                 </IconButton>
                               </InputAdornment>
                             ),
