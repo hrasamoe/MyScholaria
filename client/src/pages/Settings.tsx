@@ -47,10 +47,10 @@ const Settings = () => {
 
       if (type === "join") {
         setCopiedJoinCode(true);
-        setTimeout(() => setCopiedJoinCode(false), 2000);
+        setTimeout(() => setCopiedJoinCode(false), 1000);
       } else if (type === "admin") {
         setCopiedAdminCode(true);
-        setTimeout(() => setCopiedAdminCode(false), 2000);
+        setTimeout(() => setCopiedAdminCode(false), 1000);
       }
     }
   };
