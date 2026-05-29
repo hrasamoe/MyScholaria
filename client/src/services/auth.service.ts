@@ -50,12 +50,16 @@ export async function login(
 }
 
 export async function logout(): Promise<void> {
-  await fetch(`${API_URL}/api/auth/logout`, {
+  const res = await fetch(`${API_URL}/api/auth/logout`, {
     method: "POST",
     credentials: "include",
     headers: { "Content-Type": "application/json" },
   });
   localStorage.removeItem("user");
+  if (!res.ok && res.status !== 401) {
+    const data = await res.json();
+    throw new Error(data.message);
+  }
 }
 
 export async function getMe(): Promise<AuthResponse> {
