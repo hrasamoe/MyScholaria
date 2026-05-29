@@ -24,30 +24,32 @@ import jwt from "jsonwebtoken";
 import { ENV } from "../../config/env";
 import { pool } from "../../db/pool";
 
+const isProd = process.env.NODE_ENV === "production";
+
+const cookieOptions = {
+  httpOnly: true,
+  secure: isProd,
+  sameSite: isProd ? ("none" as const) : ("lax" as const),
+};
+
 function setAuthCookies(
   res: Response,
   accessToken: string,
   refreshToken: string,
 ) {
-  // const isProd = process.env.NODE_ENV === "producion";
   res.cookie("accessToken", accessToken, {
-    httpOnly: true,
-    secure: true,
-    sameSite: "none",
+    ...cookieOptions,
     maxAge: 15 * 60 * 1000,
   });
   res.cookie("refreshToken", refreshToken, {
-    httpOnly: true,
-    secure: true,
-    sameSite: "none",
+    ...cookieOptions,
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 }
 
 function clearAuthCookies(res: Response) {
-  const options = { httpOnly: true, secure: true, sameSite: "none" as const };
-  res.clearCookie("accessToken", options);
-  res.clearCookie("refreshToken", options);
+  res.clearCookie("accessToken", cookieOptions);
+  res.clearCookie("refreshToken", cookieOptions);
 }
 
 authRouter.post("/register", async (req: Request, res: Response) => {
@@ -56,10 +58,47 @@ authRouter.post("/register", async (req: Request, res: Response) => {
     const result = await registerUserAsAdmin(data);
     res.status(201).json(result);
   } catch (err: any) {
-    if (err.errors) {
+    if (err.errors)
       return res.status(400).json({ message: err.errors[0].message });
-    }
     res.status(400).json({ message: err.message });
+  }
+});
+
+authRouter.post("/register-member", async (req: Request, res: Response) => {
+  try {
+    const data = registerMemberSchema.parse(req.body);
+    const result = await registerUserAsMember(data);
+    res.status(201).json(result);
+  } catch (error: any) {
+    if (error.errors)
+      return res.status(400).json({ message: error.errors[0].message });
+    res.status(400).json({ message: error.message });
+  }
+});
+
+authRouter.post("/login", async (req: Request, res: Response) => {
+  try {
+    const data = loginSchema.parse(req.body);
+    const result = await loginUser(data);
+    setAuthCookies(res, result.accessToken, result.refreshToken);
+    res.status(200).json(result);
+  } catch (err: any) {
+    if (err.errors)
+      return res.status(400).json({ message: err.errors[0].message });
+    res.status(401).json({ message: err.message });
+  }
+});
+
+authRouter.get("/verify-email", async (req: Request, res: Response) => {
+  try {
+    const { token } = req.query;
+    const result = await verifyEmail(token);
+    setAuthCookies(res, result.accessToken, result.refreshToken);
+    res.status(200).json(result);
+  } catch (err: any) {
+    if (err.errors)
+      return res.status(400).json({ message: err.errors[0].message });
+    res.status(500).json({ message: err.message });
   }
 });
 
@@ -73,49 +112,8 @@ authRouter.get("/verify-email-member", async (req: Request, res: Response) => {
     res.status(400).json({ message: error.message });
   }
 });
-authRouter.post("/register-member", async (req: Request, res: Response) => {
-  try {
-    const data = registerMemberSchema.parse(req.body);
-    const result = await registerUserAsMember(data);
-    res.status(201).json(result);
-  } catch (error: any) {
-    if (error.errors) {
-      return res.status(400).json({ message: error.errors[0].message });
-    }
-    res.status(400).json({ message: error.message });
-  }
-});
 
-authRouter.post("/login", async (req: Request, res: Response) => {
-  try {
-    const data = loginSchema.parse(req.body);
-    const result = await loginUser(data);
-    setAuthCookies(res, result.accessToken, result.refreshToken);
-    res.status(201).json(result);
-  } catch (err: any) {
-    if (err.errors) {
-      return res.status(400).json({ message: err.errors[0].message });
-    }
-    res.status(401).json({ message: err.message });
-  }
-});
-
-authRouter.get("/verify-email", async (req: Request, res: Response) => {
-  try {
-    const { token } = req.query;
-    const result = await verifyEmail(token);
-    setAuthCookies(res, result.accessToken, result.refreshToken);
-    res.status(201).json(result);
-  } catch (err: any) {
-    if (err.errors) {
-      return res.status(400).json({ message: err.errors[0].message });
-    }
-    res.status(500).json({ message: err.message });
-  } finally {
-  }
-});
-
-authRouter.post("/logout", RequireAuthOnly, async (req: Request, res: Response) => {
+authRouter.post("/logout", async (req: Request, res: Response) => {
   try {
     const refreshToken = req.cookies?.refreshToken;
     if (refreshToken) {
@@ -136,50 +134,45 @@ authRouter.post("/logout", RequireAuthOnly, async (req: Request, res: Response) 
 authRouter.post("/refresh", async (req: Request, res: Response) => {
   try {
     const refreshToken = req.cookies?.refreshToken;
-    if (!refreshToken) {
+    if (!refreshToken)
       return res.status(401).json({ message: "Refresh token missing" });
-    }
-    const playload = jwt.verify(refreshToken, ENV.JWT_SECRET) as {
+
+    const payload = jwt.verify(refreshToken, ENV.JWT_SECRET) as {
       userId: string;
     };
+
     const { rows } = await pool.query(
-      `
-      SELECT id FROM refresh_tokens
-      WHERE user_id = $1
-      AND revoked_at IS NULL 
-      AND expires_at > NOW()`,
-      [playload.userId],
+      `SELECT id FROM refresh_tokens
+       WHERE user_id = $1 AND revoked_at IS NULL AND expires_at > NOW()`,
+      [payload.userId],
     );
     if (rows.length === 0)
       return res.status(401).json({ message: "Refresh token revoked" });
 
     const newAccessToken = jwt.sign(
-      { userId: playload.userId },
+      { userId: payload.userId },
       ENV.JWT_SECRET,
       { expiresIn: "15m" },
     );
-    const isProd = process.env.NODE_ENV === "production";
+
     res.cookie("accessToken", newAccessToken, {
-      httpOnly: true,
-      secure: isProd,
-      sameSite: isProd ? "strict" : "lax",
+      ...cookieOptions,
       maxAge: 15 * 60 * 1000,
     });
     res.status(200).json({ accessToken: newAccessToken });
   } catch {
-    res.status(401).json({ message: "Invalid reresh token" });
+    res.status(401).json({ message: "Invalid refresh token" });
   }
 });
 
-// SECURITY
 authRouter.post("/forgot-password", async (req: Request, res: Response) => {
   try {
     const { email } = req.body;
-    if (!email) return res.status(400).json({ message: "Email requires" });
+    if (!email) return res.status(400).json({ message: "Email required" });
     await forgotPassword(email);
     res
       .status(200)
-      .json({ message: "If this email exists, a reset link has been send" });
+      .json({ message: "If this email exists, a reset link has been sent" });
   } catch (error: any) {
     res.status(500).json({ message: error.message });
   }
@@ -206,7 +199,7 @@ authRouter.get("/verify-reset-token", async (req: Request, res: Response) => {
     [token],
   );
   if (rows.length === 0)
-    return res.status(400).json({ message: "Invalid or expored token" });
+    return res.status(400).json({ message: "Invalid or expired token" });
   res.status(200).json({ message: "Done" });
 });
 
@@ -217,7 +210,7 @@ authRouter.get("/me", RequireAuth, async (req: AuthRequest, res: Response) => {
               em.is_aproved, e.name AS establishment_name, e.id AS establishment_id,
               ur.role AS roles
        FROM users u
-       LEFT JOIN profiles p ON p.id = u.id
+       LEFT JOIN profiles p ON p.user_id = u.id
        LEFT JOIN establishment_members em ON em.user_id = u.id AND em.is_active = true
        LEFT JOIN establishments e ON e.id = em.establishment_id
        LEFT JOIN user_roles ur ON ur.user_id = u.id
@@ -226,7 +219,7 @@ authRouter.get("/me", RequireAuth, async (req: AuthRequest, res: Response) => {
       [req.userId],
     );
     if (rows.length === 0)
-      return res.status(401).json({ message: "User not found" });
+      return res.status(404).json({ message: "User not found" });
     const u = rows[0];
     res.json({
       user: {
