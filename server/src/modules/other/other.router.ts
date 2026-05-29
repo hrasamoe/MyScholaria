@@ -1,12 +1,16 @@
 import { Request, Response, Router } from "express";
 import { AuthRequest, RequireAuthOnly } from "../../middleware/auth.middleware";
-import { parentSchema } from "./other.schema";
+import { parentSchema, roomSchema } from "./other.schema";
 import {
   createParent,
+  createRoom,
   deleteParent,
+  deleteRoom,
   getParentDetails,
   getParentList,
+  getRooms,
   updateParent,
+  updateRoomsDetails,
 } from "./other.service";
 
 export const utilschemaRouter = Router();
@@ -109,6 +113,88 @@ utilschemaRouter.put(
       });
     } catch (error: any) {
       res.status(400).json({ message: error.message });
+    }
+  },
+);
+
+utilschemaRouter.post(
+  "/create-classroom/:id",
+  RequireAuthOnly,
+  async (req: Request, res: Response) => {
+    try {
+      const estalishmentID = req.params?.id || req.body.establishmentId;
+      const data = roomSchema.parse({
+        name: req.body.name,
+        building: req.body.building,
+        capacity: req.body.capacity,
+        type: req.body.type,
+        equipment: req.body.equipment,
+      });
+      const newRoom = await createRoom(estalishmentID, data);
+      res.status(201).json({
+        message: "New classroom created successfully",
+        data: newRoom,
+      });
+    } catch (error: any) {
+      if (error.errors) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      res.status(400).json({ message: error.message });
+    }
+  },
+);
+
+utilschemaRouter.get(
+  "/get-classrooms/:id",
+  RequireAuthOnly,
+  async (req: Request, res: Response) => {
+    try {
+      const establishmentID = req.params?.id;
+      const roomList = await getRooms(establishmentID);
+      res.status(200).json(roomList);
+    } catch (error: any) {
+      if (error.errors) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      res.status(500).json({ message: error.message });
+    }
+  },
+);
+
+utilschemaRouter.put(
+  "/update-classroom/:id",
+  RequireAuthOnly,
+  async (req: Request, res: Response) => {
+    try {
+      const roomID = req.params?.id;
+      const data = roomSchema.parse({
+        name: req.body.name,
+        building: req.body.building,
+        capacity: req.body.capacity,
+        type: req.body.type,
+        equipment: req.body.equipment,
+      });
+      const updatedRoom = await updateRoomsDetails(roomID, data);
+      res.status(200).json({
+        message: "Classroom updated successfully",
+        data: updatedRoom,
+      });
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  },
+);
+
+utilschemaRouter.delete(
+  "/delete-classroom/:id",
+  RequireAuthOnly,
+  async (req: Request, res: Response) => {
+    try {
+      const roomID = req.params?.id;
+      await deleteRoom(roomID);
+      res.status(200).json({ message: "Classroom deleted successfully" });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
     }
   },
 );

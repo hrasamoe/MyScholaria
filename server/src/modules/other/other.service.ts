@@ -1,5 +1,5 @@
 import { pool } from "../../db/pool";
-import { ParentInfo } from "./other.schema";
+import { ParentInfo, RoomInfo } from "./other.schema";
 
 export async function createParent(
   parentData: ParentInfo,
@@ -121,6 +121,91 @@ export async function updateParent(parentData: ParentInfo, parentId: any) {
       parentData.fullname,
     ];
     await client.query(queryText, values);
+    await client.query("COMMIT");
+  } catch (error: any) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+export async function createRoom(establishmentID: any, roomData: RoomInfo) {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const queryText = `
+    INSERT INTO rooms (name, type, capacity, equipment, building, establishment_id, created_at, updated_at)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`;
+    const values = [
+      roomData.name,
+      roomData.type,
+      roomData.capacity,
+      roomData.equipment,
+      roomData.building,
+      establishmentID,
+      new Date(),
+      new Date(),
+    ];
+    await client.query(queryText, values);
+    await client.query("COMMIT");
+  } catch (error: any) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+export async function getRooms(establishmentID: any) {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const queryText = `
+    SELECT id, name, type, capacity, equipment, building FROM rooms
+    WHERE establishment_id = $1`;
+    const { rows } = await client.query(queryText, [establishmentID]);
+    await client.query("COMMIT");
+    return rows;
+  } catch (error: any) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+export async function updateRoomsDetails(roomId: any, roomInfo: RoomInfo) {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const queryText = `UPDATE rooms SET name = $1, type = $2, capacity = $3, equipment = $4, building = $5, updated_at = $7 WHERE id = $6`;
+    const values = [
+      roomInfo.name,
+      roomInfo.type,
+      roomInfo.capacity,
+      roomInfo.equipment,
+      roomInfo.building,
+      roomId,
+      new Date(),
+    ];
+    const { rows } = await client.query(queryText, values);
+    await client.query("COMMIT");
+    return rows;
+  } catch (error: any) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+export async function deleteRoom(roomID: any) {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const queryText = "DELETE FROM rooms WHERE id = $1";
+    await client.query(queryText, [roomID]);
     await client.query("COMMIT");
   } catch (error: any) {
     await client.query("ROLLBACK");
