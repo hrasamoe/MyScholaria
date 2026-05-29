@@ -108,7 +108,9 @@ const Teachers = () => {
       t.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       t.subject.toLowerCase().includes(searchTerm.toLowerCase()),
   );
-
+  const sortedTeachers = [...filteredTeachers].sort((a, b) =>
+    a.first_name.localeCompare(b.first_name),
+  );
   useEffect(() => {
     const fetchTeachers = async () => {
       if (!establishmentID) return;
@@ -225,7 +227,7 @@ const Teachers = () => {
                 </CardContent>
               </Card>
             ))
-          : filteredTeachers.map((teacher) => (
+          : sortedTeachers.map((teacher) => (
               <Card
                 key={teacher.id}
                 variant="outlined"

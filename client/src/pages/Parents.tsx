@@ -82,7 +82,9 @@ const ParentsList = () => {
       p.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       p.last_name.toLowerCase().includes(searchTerm.toLowerCase()),
   );
-
+  const sortedParents = [...filteredParents].sort((a, b) =>
+    a.first_name.localeCompare(b.first_name),
+  );
   useEffect(() => {
     const fetchParents = async () => {
       if (!establishmentID) return;
@@ -194,7 +196,7 @@ const ParentsList = () => {
                 </CardContent>
               </Card>
             ))
-          : filteredParents.map((parent) => (
+          : sortedParents.map((parent) => (
               <Card
                 key={parent.id}
                 variant="outlined"
