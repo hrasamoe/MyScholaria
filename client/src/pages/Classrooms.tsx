@@ -1,6 +1,7 @@
 import DataTable from "@/components/DataTable";
 import PageHeader from "@/components/PageHeader";
 import { useAuth } from "@/hooks/Authcontext";
+import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import AddIcon from "@mui/icons-material/Add";
 import {
   Button,
@@ -9,6 +10,7 @@ import {
   DialogContent,
   DialogTitle,
   MenuItem,
+  Skeleton,
   TextField,
   Typography,
 } from "@mui/material";
@@ -39,9 +41,10 @@ const Classrooms = () => {
   const { user } = useAuth();
   const establishmentID = user?.establishment_id;
   const { enqueueSnackbar } = useSnackbar();
-
+  const online = useOnlineStatus();
   const [rooms, setRooms] = useState<Classroom[]>([]);
   const [loading, setLoading] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
   const [openFormDialog, setOpenFormDialog] = useState(false);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState<Classroom | null>(null);
@@ -73,7 +76,7 @@ const Classrooms = () => {
 
   useEffect(() => {
     fetchClassrooms();
-  }, [establishmentID]);
+  }, [online, establishmentID]);
 
   const handleOpenCreate = () => {
     setSelectedRoom(null);
@@ -113,6 +116,7 @@ const Classrooms = () => {
     };
 
     try {
+      setActionLoading(true);
       const url = selectedRoom
         ? `${import.meta.env.VITE_API_URL}/api/utils/update-classroom/${selectedRoom.id}`
         : `${import.meta.env.VITE_API_URL}/api/utils/create-classroom/${establishmentID}`;
@@ -141,6 +145,8 @@ const Classrooms = () => {
       enqueueSnackbar(error.message || "Error saving classroom", {
         variant: "error",
       });
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -148,6 +154,7 @@ const Classrooms = () => {
     if (!selectedRoom) return;
 
     try {
+      setActionLoading(true);
       const response = await fetch(
         `${import.meta.env.VITE_API_URL}/api/utils/delete-classroom/${selectedRoom.id}`,
         {
@@ -167,6 +174,8 @@ const Classrooms = () => {
       enqueueSnackbar(error.message || "Error deleting classroom", {
         variant: "error",
       });
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -177,6 +186,15 @@ const Classrooms = () => {
     { key: "type", label: "Type", hideOnMobile: true },
     { key: "equipment", label: "Equipment", hideOnMobile: true },
   ];
+
+  const skeletonData = [1, 2, 3].map((id) => ({
+    id: `skeleton-${id}`,
+    name: <Skeleton variant="text" width="60%" />,
+    building: <Skeleton variant="text" width="40%" />,
+    capacity: <Skeleton variant="text" width="20%" />,
+    type: <Skeleton variant="text" width="50%" />,
+    equipment: <Skeleton variant="text" width="70%" />,
+  })) as unknown as Classroom[];
 
   return (
     <>
@@ -189,6 +207,7 @@ const Classrooms = () => {
             color="success"
             startIcon={<AddIcon />}
             onClick={handleOpenCreate}
+            disabled={loading || actionLoading}
           >
             Add Classroom
           </Button>
@@ -197,14 +216,16 @@ const Classrooms = () => {
 
       <DataTable
         columns={columns}
-        data={rooms}
-        onEdit={(room: Classroom) => handleOpenEdit(room)}
-        onDelete={(room: Classroom) => handleOpenDelete(room)}
+        data={loading ? skeletonData : rooms}
+        onEdit={loading ? undefined : (room: Classroom) => handleOpenEdit(room)}
+        onDelete={
+          loading ? undefined : (room: Classroom) => handleOpenDelete(room)
+        }
       />
 
       <Dialog
         open={openFormDialog}
-        onClose={() => setOpenFormDialog(false)}
+        onClose={() => !actionLoading && setOpenFormDialog(false)}
         maxWidth="sm"
         fullWidth
       >
@@ -218,6 +239,7 @@ const Classrooms = () => {
                 fullWidth
                 label="Room Name *"
                 value={form.name || ""}
+                disabled={actionLoading}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
               />
             </Grid>
@@ -226,6 +248,7 @@ const Classrooms = () => {
                 fullWidth
                 label="Building"
                 value={form.building || ""}
+                disabled={actionLoading}
                 onChange={(e) => setForm({ ...form, building: e.target.value })}
               />
             </Grid>
@@ -238,6 +261,7 @@ const Classrooms = () => {
                   htmlInput: { min: 0, step: 1 },
                 }}
                 value={form.capacity || ""}
+                disabled={actionLoading}
                 onChange={(e) => setForm({ ...form, capacity: e.target.value })}
               />
             </Grid>
@@ -247,6 +271,7 @@ const Classrooms = () => {
                 fullWidth
                 label="Type"
                 value={form.type || ""}
+                disabled={actionLoading}
                 onChange={(e) => setForm({ ...form, type: e.target.value })}
               >
                 {CLASSROOM_TYPES.map((type) => (
@@ -262,6 +287,7 @@ const Classrooms = () => {
                 multiline
                 label="Equipment"
                 value={form.equipment || ""}
+                disabled={actionLoading}
                 onChange={(e) =>
                   setForm({ ...form, equipment: e.target.value })
                 }
@@ -270,18 +296,27 @@ const Classrooms = () => {
           </Grid>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setOpenFormDialog(false)} color="inherit">
+          <Button
+            onClick={() => setOpenFormDialog(false)}
+            color="inherit"
+            disabled={actionLoading}
+          >
             Cancel
           </Button>
-          <Button variant="contained" onClick={handleSave} color="success">
-            Save
+          <Button
+            variant="contained"
+            onClick={handleSave}
+            color="success"
+            disabled={actionLoading}
+          >
+            {actionLoading ? "Saving..." : "Save"}
           </Button>
         </DialogActions>
       </Dialog>
 
       <Dialog
         open={openDeleteDialog}
-        onClose={() => setOpenDeleteDialog(false)}
+        onClose={() => !actionLoading && setOpenDeleteDialog(false)}
       >
         <DialogTitle>Confirm Deletion</DialogTitle>
         <DialogContent>
@@ -291,11 +326,20 @@ const Classrooms = () => {
           </Typography>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setOpenDeleteDialog(false)} color="inherit">
+          <Button
+            onClick={() => setOpenDeleteDialog(false)}
+            color="inherit"
+            disabled={actionLoading}
+          >
             No
           </Button>
-          <Button onClick={handleDelete} color="error" variant="contained">
-            Yes, Delete
+          <Button
+            onClick={handleDelete}
+            color="error"
+            variant="contained"
+            disabled={actionLoading}
+          >
+            {actionLoading ? "Deleting..." : "Yes, Delete"}
           </Button>
         </DialogActions>
       </Dialog>
