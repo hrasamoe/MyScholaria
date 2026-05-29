@@ -345,12 +345,14 @@ export async function forgotPassword(email: string) {
   const resetToken = crypto.randomBytes(32).toString("hex");
   const resetExpires = new Date(Date.now() + 60 * 60 * 1000);
 
-  await pool.query(
-    "UPDATE users SET reset_token = $1, reset_expires = $2 WHERE id = $3",
+  const result = await pool.query(
+    "UPDATE users SET reset_token = $1, reset_expires = $2 WHERE id = $3 RETURNING id",
     [resetToken, resetExpires, user.id],
   );
 
-  await sendForgotPasswordEmail(email, user.full_name, resetToken);
+  if (result.rowCount === 0) throw new Error("Failed to save reset token");
+
+  await sendForgotPasswordEmail(email, user.full_name ?? "User", resetToken);
 }
 
 export async function resetPassword(token: string, newPassword: string) {

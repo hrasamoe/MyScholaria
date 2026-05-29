@@ -1,33 +1,33 @@
-import { useState, useEffect } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/Authcontext";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import ErrorIcon from "@mui/icons-material/Error";
+import LockResetIcon from "@mui/icons-material/LockReset";
+import RadioButtonUncheckedIcon from "@mui/icons-material/RadioButtonUnchecked";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import {
+  Alert,
   Box,
+  Button,
   Card,
   CardContent,
-  TextField,
-  Button,
-  Typography,
-  Stack,
+  CircularProgress,
+  Divider,
   IconButton,
   InputAdornment,
-  Alert,
   LinearProgress,
-  Divider,
   List,
   ListItem,
   ListItemIcon,
   ListItemText,
-  CircularProgress,
+  Stack,
+  TextField,
+  Typography,
   useTheme,
 } from "@mui/material";
-import LockResetIcon from "@mui/icons-material/LockReset";
-import VisibilityIcon from "@mui/icons-material/Visibility";
-import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import RadioButtonUncheckedIcon from "@mui/icons-material/RadioButtonUnchecked";
-import ErrorIcon from "@mui/icons-material/Error";
 import { useSnackbar } from "notistack";
-import { useAuth } from "@/hooks/Authcontext";
+import { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -82,13 +82,17 @@ const ResetPassword = () => {
   const valid = Object.values(c).every(Boolean);
   const color: any = score < 50 ? "error" : score < 75 ? "warning" : "success";
 
-  // Vérifie que le token est valide au chargement
   useEffect(() => {
     if (!isReset) {
       setTokenValid(true);
       return;
     }
-    fetch(`${API_URL}/api/auth/verify-reset-token?token=${token}`)
+    fetch(
+      `${API_URL}/api/auth/verify-reset-token?token=${encodeURIComponent(token!)}`,
+      {
+        credentials: "include",
+      },
+    )
       .then((res) => setTokenValid(res.ok))
       .catch(() => setTokenValid(false));
   }, []);
@@ -108,14 +112,14 @@ const ResetPassword = () => {
     try {
       const res = await fetch(`${API_URL}/api/auth/reset-password`, {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token, password: next }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message);
 
-      // Login automatique
-      saveAuth(data.user, data.accessToken, data.refreshToken);
+      saveAuth(data.user);
       enqueueSnackbar("Password reset successfully", { variant: "success" });
       navigate("/");
     } catch (err: any) {

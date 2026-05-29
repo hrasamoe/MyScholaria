@@ -1,26 +1,26 @@
-import { useState } from "react";
-import { Link as RouterLink } from "react-router-dom";
+import { forgotpassword } from "@/services/auth.service";
+import MailLockIcon from "@mui/icons-material/MailLock";
 import {
+  Alert,
   Box,
+  Button,
   Card,
   CardContent,
-  TextField,
-  Button,
-  Typography,
-  Stack,
+  CircularProgress,
   Link,
-  Alert,
+  Stack,
+  TextField,
+  Typography,
   useTheme,
 } from "@mui/material";
-import MailLockIcon from "@mui/icons-material/MailLock";
-import { forgotpassword } from "@/services/auth.service";
 import { enqueueSnackbar } from "notistack";
+import { useState } from "react";
+import { Link as RouterLink } from "react-router-dom";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
   const theme = useTheme();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -28,12 +28,10 @@ const ForgotPassword = () => {
     setLoading(true);
     try {
       await forgotpassword(email);
-      enqueueSnackbar("Reset link sent successfully", {variant: 'success'})
+      enqueueSnackbar("Reset link sent successfully", { variant: "success" });
       setSent(true);
     } catch (error: any) {
-      setError(error.message);
       enqueueSnackbar(error.message, { variant: "error" });
-
     } finally {
       setLoading(false);
     }
@@ -46,7 +44,6 @@ const ForgotPassword = () => {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        bgcolor: "background.default",
         p: 2,
         background: `linear-gradient(135deg, ${theme.palette.background.default} 0%, ${theme.palette.divider} 50%, ${theme.palette.background.paper} 100%)`,
       }}
@@ -78,7 +75,7 @@ const ForgotPassword = () => {
 
           {sent ? (
             <Alert severity="success">
-              A reset link has been sent to <b>{email}</b>.
+              A reset link has been sent to <b>{email}</b>. Check your inbox.
             </Alert>
           ) : (
             <Box component="form" onSubmit={handleSubmit}>
@@ -90,14 +87,21 @@ const ForgotPassword = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   autoComplete="email"
+                  required
                 />
                 <Button
                   type="submit"
                   variant="contained"
                   size="large"
                   fullWidth
+                  disabled={loading}
+                  startIcon={
+                    loading ? (
+                      <CircularProgress size={18} color="inherit" />
+                    ) : null
+                  }
                 >
-                  Send Reset Link
+                  {loading ? "Sending..." : "Send Reset Link"}
                 </Button>
               </Stack>
             </Box>

@@ -53,7 +53,7 @@ export async function sendForgotPasswordEmail(
   fullName: string,
   token: string,
 ) {
-  const link = `${ENV.CLIENT_URL}/auth/change-password?token=${token}`;
+  const link = `${ENV.CLIENT_URL?.replace(/\/$/, "")}/auth/reset-password?token=${token}`;
   try {
     const { data, error } = await resend.emails.send({
       from: "MyScholaria <no-reply@ibc-hub.me>",

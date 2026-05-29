@@ -1,8 +1,12 @@
-import { Router, Request, Response } from "express";
+import { Request, Response, Router } from "express";
+import jwt from "jsonwebtoken";
+import { ENV } from "../../config/env";
+import { pool } from "../../db/pool";
+import { AuthRequest, RequireAuth } from "../../middleware/auth.middleware";
 import {
-  registerSchema,
   loginSchema,
   registerMemberSchema,
+  registerSchema,
 } from "./auth.schema";
 import {
   forgotPassword,
@@ -14,15 +18,7 @@ import {
   verifyEmail,
   verifyEmailWithEstablishment,
 } from "./auth.service";
-import {
-  RequireAuth,
-  AuthRequest,
-  RequireAuthOnly,
-} from "../../middleware/auth.middleware";
 export const authRouter = Router();
-import jwt from "jsonwebtoken";
-import { ENV } from "../../config/env";
-import { pool } from "../../db/pool";
 
 const isProd = process.env.NODE_ENV === "production";
 
@@ -184,6 +180,7 @@ authRouter.post("/reset-password", async (req: Request, res: Response) => {
     if (!token || !password)
       return res.status(400).json({ message: "Token and password required" });
     const result = await resetPassword(token, password);
+    setAuthCookies(res, result.accessToken, result.refreshToken);
     res.status(200).json(result);
   } catch (err: any) {
     res.status(400).json({ message: err.message });
