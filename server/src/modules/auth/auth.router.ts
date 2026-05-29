@@ -115,7 +115,7 @@ authRouter.get("/verify-email", async (req: Request, res: Response) => {
   }
 });
 
-authRouter.post("/logout", RequireAuth, async (req: Request, res: Response) => {
+authRouter.post("/logout", RequireAuthOnly, async (req: Request, res: Response) => {
   try {
     const refreshToken = req.cookies?.refreshToken;
     if (refreshToken) {

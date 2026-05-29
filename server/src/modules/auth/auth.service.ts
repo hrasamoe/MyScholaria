@@ -1,12 +1,12 @@
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
-import { pool } from "../../db/pool";
-import { RegisterInput, LoginInput, RegisterMemberInput } from "./auth.schema";
-import { ENV } from "../../config/env";
 import crypto from "crypto";
+import jwt from "jsonwebtoken";
+import { ENV } from "../../config/env";
+import { pool } from "../../db/pool";
 import { sendConfirmationEmail } from "../../services/email/confirmation-email";
 import { sendForgotPasswordEmail } from "../../services/email/forgot-password";
 import { sendPendingValidationEmail } from "../../services/email/pendingValidation";
+import { LoginInput, RegisterInput, RegisterMemberInput } from "./auth.schema";
 
 function generateAccessToken(userId: string) {
   return jwt.sign({ userId }, ENV.JWT_SECRET!, { expiresIn: "15m" });
@@ -39,10 +39,10 @@ export async function registerUserAsAdmin(data: RegisterInput) {
     );
     const user = rows[0];
 
-    await client.query("UPDATE profiles SET full_name = $1 WHERE user_id = $2", [
-      data.full_name,
-      user.id,
-    ]);
+    await client.query(
+      "UPDATE profiles SET full_name = $1 WHERE user_id = $2",
+      [data.full_name, user.id],
+    );
     await client.query(
       "INSERT INTO user_roles (user_id, role) VALUES ($1, $2)",
       [user.id, data.role || "admin"],
@@ -318,11 +318,18 @@ export async function verifyEmailWithEstablishment(token: any) {
   };
 }
 
-export async function logoutUser(userId: string) {
-  await pool.query(
-    "UPDATE refresh_tokens SET revoked_at = NOW() WHERE user_id = $1 AND revoked_at IS NULL",
-    [userId],
-  );
+export async function logoutUser(userId: string, tokenHash?: string) {
+  if (tokenHash) {
+    await pool.query(
+      "UPDATE refresh_tokens SET revoked_at = NOW() WHERE user_id = $1 AND token_hash = $2",
+      [userId, tokenHash],
+    );
+  } else {
+    await pool.query(
+      "UPDATE refresh_tokens SET revoked_at = NOW() WHERE user_id = $1 AND revoked_at IS NULL",
+      [userId],
+    );
+  }
 }
 
 export async function forgotPassword(email: string) {
