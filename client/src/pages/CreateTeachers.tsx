@@ -31,6 +31,7 @@ interface TeacherForm {
   lastName: string;
   gender: string;
   email: string;
+  hire_date: string;
   phone: string;
   address: string;
   subject: TeacherSubject | "";
@@ -63,6 +64,7 @@ const CreateTeacher = () => {
     firstName: "",
     lastName: "",
     email: "",
+    hire_date: "",
     phone: "",
     address: "",
     subject: "",
@@ -88,6 +90,7 @@ const CreateTeacher = () => {
       address: "",
       subject: "",
       qualification: "",
+      hire_date: "",
       contractType: "",
       hoursPerDay: "",
     });
@@ -96,7 +99,13 @@ const CreateTeacher = () => {
   };
 
   const handleSave = async () => {
-    if (!form.idNumber || !form.firstName || !form.lastName || !form.subject) {
+    if (
+      !form.idNumber ||
+      !form.firstName ||
+      !form.lastName ||
+      !form.subject ||
+      !form.hire_date
+    ) {
       enqueueSnackbar("Please fill all required fields (*)", {
         variant: "error",
       });
@@ -113,7 +122,7 @@ const CreateTeacher = () => {
     setLoading(true);
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/utils/create-teacher/${establishmentID}`,
+        `${import.meta.env.VITE_API_URL}/api/teachers/create-teacher/${establishmentID}`,
         {
           method: "POST",
           headers: {
@@ -121,17 +130,18 @@ const CreateTeacher = () => {
           },
           credentials: "include",
           body: JSON.stringify({
-            idNumber: form.idNumber,
+            IDNumber: form.idNumber,
             firstName: form.firstName,
             lastName: form.lastName,
             email: form.email,
             gender: form.gender,
+            hire_date: form.hire_date,
             subject: form.subject,
             phone: form.phone,
             address: form.address,
             qualification: form.qualification,
             contractType: form.contractType,
-            hoursPerDay: form.hoursPerDay ? parseInt(form.hoursPerDay) : 0,
+            hpw: form.hoursPerDay ? parseInt(form.hoursPerDay) : 0,
             fullname: form.firstName + " " + form.lastName,
           }),
         },
@@ -269,7 +279,18 @@ const CreateTeacher = () => {
           Academic Assignment & Contract
         </Typography>
         <Grid container spacing={3}>
-          <Grid size={{ xs: 12, sm: 4 }}>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <TextField
+              fullWidth
+              label="Hire Date *"
+              type="date"
+              value={form.hire_date || ""}
+              onChange={(e) => setForm({ ...form, hire_date: e.target.value })}
+              disabled={loading}
+              slotProps={{ inputLabel: { shrink: true } }}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               select
               fullWidth
@@ -287,7 +308,7 @@ const CreateTeacher = () => {
               ))}
             </TextField>
           </Grid>
-          <Grid size={{ xs: 12, sm: 4 }}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               select
               fullWidth
@@ -308,7 +329,7 @@ const CreateTeacher = () => {
               ))}
             </TextField>
           </Grid>
-          <Grid size={{ xs: 12, sm: 4 }}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               fullWidth
               label="Hours Per Week"
