@@ -1,17 +1,18 @@
+import dotenv from "dotenv";
+import path from "path";
+dotenv.config({ path: path.resolve(__dirname, "../.env") });
+
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import { setDefaultResultOrder } from "dns";
-import dotenv from "dotenv";
 import express from "express";
 import helmet from "helmet";
 import cron from "node-cron";
-import path from "path";
 import { initPool } from "./db/pool";
 import { authRouter } from "./modules/auth/auth.router";
 import { cleanUnverifiedAccounts } from "./modules/auth/auth.service";
 import { establishementRouter } from "./modules/establishments/establishments.router";
 import { utilschemaRouter } from "./modules/other/other.router";
-dotenv.config({ path: path.resolve(__dirname, "../.env") });
 
 setDefaultResultOrder("ipv4first");
 
@@ -25,7 +26,6 @@ app.use(
   cors({
     origin: (origin, callback) => {
       const allowed = isProd ? process.env.CLIENT_URL : "http://localhost:5173";
-
       if (!origin || origin === allowed) {
         callback(null, true);
       } else {
