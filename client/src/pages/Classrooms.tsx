@@ -8,6 +8,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  MenuItem,
   TextField,
   Typography,
 } from "@mui/material";
@@ -23,6 +24,16 @@ interface Classroom {
   type: string;
   equipment: string;
 }
+
+const CLASSROOM_TYPES = [
+  "Lecture Hall",
+  "Standard Classroom",
+  "Computer Lab",
+  "Science Lab",
+  "Workshop",
+  "Meeting Room",
+  "Exam Hall",
+];
 
 const Classrooms = () => {
   const { user } = useAuth();
@@ -223,17 +234,27 @@ const Classrooms = () => {
                 fullWidth
                 label="Capacity"
                 type="number"
+                slotProps={{
+                  htmlInput: { min: 0, step: 1 },
+                }}
                 value={form.capacity || ""}
                 onChange={(e) => setForm({ ...form, capacity: e.target.value })}
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
+                select
                 fullWidth
                 label="Type"
                 value={form.type || ""}
                 onChange={(e) => setForm({ ...form, type: e.target.value })}
-              />
+              >
+                {CLASSROOM_TYPES.map((type) => (
+                  <MenuItem key={type} value={type}>
+                    {type}
+                  </MenuItem>
+                ))}
+              </TextField>
             </Grid>
             <Grid size={12}>
               <TextField
