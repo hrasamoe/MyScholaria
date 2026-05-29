@@ -21,10 +21,12 @@ import Coursebook from "./pages/Coursebook";
 import CreateEstablishment from "./pages/CreateEstablishment";
 import CreateParent from "./pages/CreateParent";
 import CreateStudent from "./pages/CreateStudent";
+import CreateTeacher from "./pages/CreateTeachers";
 import Dashboard from "./pages/Dashboard";
 import Diplomas from "./pages/Diplomas";
 import Duty from "./pages/Duty";
 import EditParent from "./pages/EditParent";
+import EditTeacher from "./pages/EditTeacher";
 import Events from "./pages/Events";
 import Exams from "./pages/Exams";
 import Facturation from "./pages/Facturation";
@@ -132,6 +134,7 @@ const App = () => (
               <Route element={<RoleRoute roles={["admin", "staff"]} />}>
                 <Route path="/parents" element={<ParentsList />} />
                 <Route path="/parents/create" element={<CreateParent />} />
+                <Route path="/parents/edit/:id" element={<EditParent />} />
                 <Route path="/users" element={<Users />} />
                 <Route path="/roles" element={<Roles />} />
                 <Route path="/staff" element={<Staff />} />
@@ -147,7 +150,8 @@ const App = () => (
                 <Route path="/students/create" element={<CreateStudent />} />
                 <Route path="/students" element={<Students />} />
                 <Route path="/teachers" element={<Teachers />} />
-                <Route path="/parents/edit/:id" element={<EditParent />} />
+                <Route path="/teachers/create" element={<CreateTeacher />} />
+                <Route path="/teachers/edit/:id" element={<EditTeacher />} />
                 <Route path="/classes" element={<Classes />} />
                 <Route path="/subjects" element={<Subjects />} />
                 <Route path="/grades" element={<Grades />} />
