@@ -19,6 +19,7 @@ import {
   Skeleton,
   TextField,
   Typography,
+  useTheme,
 } from "@mui/material";
 import { useSnackbar } from "notistack";
 import { useEffect, useState } from "react";
@@ -54,6 +55,7 @@ const Teachers = () => {
   const [actionLoading, setActionLoading] = useState(false);
   const { user } = useAuth();
   const online = useOnlineStatus();
+  const theme = useTheme();
   const { enqueueSnackbar } = useSnackbar();
 
   const establishmentID = user?.establishment_id;
@@ -140,7 +142,7 @@ const Teachers = () => {
     };
 
     fetchTeachers();
-  }, [online, establishmentID]);
+  }, [establishmentID]);
 
   return (
     <Box sx={{ p: 2 }}>
@@ -235,7 +237,12 @@ const Teachers = () => {
                 onClick={() =>
                   !actionLoading && navigate(`/teachers/edit/${teacher.id}`)
                 }
-                sx={{ cursor: "pointer" }}
+                sx={{
+                  cursor: "pointer",
+                  border: "1px solid #2a2f3d",
+
+                  bgColor: theme.palette.background.paper,
+                }}
               >
                 <CardContent
                   sx={{
@@ -305,12 +312,12 @@ const Teachers = () => {
                               teacher.contractType === "permanent"
                                 ? "#03420a"
                                 : teacher.contractType === "contract"
-                                  ? "warning.main"
-                                  : "info.main",
+                                  ? "rgb(130, 0, 130)"
+                                  : "rgb(141, 118, 0)",
                             color: "#fff",
                             px: 1,
                             borderRadius: 0.5,
-                            padding: "0.2rem 0.5rem",
+                            padding: "0.1rem 0.5rem",
                           }}
                           variant="body2"
                           color="text.secondary"

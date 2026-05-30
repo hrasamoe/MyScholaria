@@ -113,7 +113,7 @@ const ParentsList = () => {
     };
 
     fetchParents();
-  }, [online, establishmentID]);
+  }, [establishmentID]);
 
   return (
     <Box sx={{ p: 2 }}>
@@ -126,6 +126,7 @@ const ParentsList = () => {
             onClick={() => navigate("/parents/create")}
             color="success"
             startIcon={<AddIcon />}
+            disabled={loading}
           >
             Add New Parent
           </Button>
@@ -137,6 +138,7 @@ const ParentsList = () => {
           size="small"
           placeholder="Search by name..."
           value={searchTerm}
+          disabled={loading}
           onChange={(e) => setSearchTerm(e.target.value)}
           slotProps={{
             input: {
@@ -201,7 +203,10 @@ const ParentsList = () => {
                 key={parent.id}
                 variant="outlined"
                 onClick={() => navigate(`/parents/edit/${parent.id}`)}
-                sx={{ cursor: "pointer" }}
+                sx={{
+                  cursor: "pointer",
+                  border: "1px solid #2a2f3d",
+                }}
               >
                 <CardContent
                   sx={{
