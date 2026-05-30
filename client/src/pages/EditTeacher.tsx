@@ -5,9 +5,11 @@ import {
   Box,
   Button,
   Checkbox,
+  Container,
   Divider,
   FormControl,
   FormControlLabel,
+  FormHelperText,
   FormLabel,
   MenuItem,
   Paper,
@@ -23,11 +25,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { TeacherSubject } from "./Teachers";
 
-export type ContractType =
-  | "Full-Time"
-  | "Part-Time"
-  | "Contractor"
-  | "Substitute";
+export type ContractType = "permanent" | "contract" | "vacation";
 
 interface TeacherForm {
   idNumber: string;
@@ -35,6 +33,7 @@ interface TeacherForm {
   lastName: string;
   gender: string;
   email: string;
+  hire_date: string;
   phone: string;
   address: string;
   subject: TeacherSubject | "";
@@ -58,12 +57,7 @@ const TEACHER_SUBJECTS: TeacherSubject[] = [
   "Art & Music",
 ];
 
-const CONTRACT_TYPES: ContractType[] = [
-  "Full-Time",
-  "Part-Time",
-  "Contractor",
-  "Substitute",
-];
+const CONTRACT_TYPES: ContractType[] = ["permanent", "contract", "vacation"];
 
 const EditTeacher = () => {
   const navigate = useNavigate();
@@ -76,6 +70,7 @@ const EditTeacher = () => {
     firstName: "",
     lastName: "",
     email: "",
+    hire_date: "",
     phone: "",
     address: "",
     subject: "",
@@ -84,6 +79,7 @@ const EditTeacher = () => {
     hoursPerDay: "",
   });
 
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
   const [rgpdAccepted, setRgpdAccepted] = useState(false);
@@ -93,7 +89,7 @@ const EditTeacher = () => {
       try {
         setFetching(true);
         const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/api/utils/get-teacher-details/${id}`,
+          `${import.meta.env.VITE_API_URL}/api/teachers/details/${id}`,
           {
             method: "GET",
             credentials: "include",
@@ -106,17 +102,33 @@ const EditTeacher = () => {
         }
 
         setForm({
-          idNumber: result.id_number || "",
+          idNumber: result.IDNumber || "",
           firstName: result.first_name || "",
           lastName: result.last_name || "",
           email: result.email || "",
           gender: result.gender || "",
+          hire_date: result.hire_date
+            ? (() => {
+                const cleanDate = result.hire_date.substring(0, 10);
+                const parts = cleanDate.split("-");
+
+                if (parts[0].length === 4) {
+                  return cleanDate;
+                }
+
+                const [month, day, year] = parts;
+                return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+              })()
+            : "",
           subject: result.subject || "",
           qualification: result.qualification || "",
           phone: result.phone || "",
           address: result.address || "",
-          contractType: result.contract_type || "",
-          hoursPerDay: result.hours_per_day?.toString() || "",
+          contractType: result.contractType || "",
+          hoursPerDay:
+            result.hpw !== undefined && result.hpw !== null
+              ? Math.round(Number(result.hpw)).toString()
+              : "0",
         });
       } catch (error: any) {
         console.error(error);
@@ -136,7 +148,15 @@ const EditTeacher = () => {
   };
 
   const handleSave = async () => {
-    if (!form.idNumber || !form.firstName || !form.lastName || !form.subject) {
+    setErrors({});
+
+    if (
+      !form.idNumber ||
+      !form.firstName ||
+      !form.lastName ||
+      !form.subject ||
+      !form.hire_date
+    ) {
       enqueueSnackbar("Please fill all required fields (*)", {
         variant: "error",
       });
@@ -153,7 +173,7 @@ const EditTeacher = () => {
     setLoading(true);
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/utils/update-teacher/${id}`,
+        `${import.meta.env.VITE_API_URL}/api/teachers/update/${id}`,
         {
           method: "PUT",
           headers: {
@@ -161,7 +181,7 @@ const EditTeacher = () => {
           },
           credentials: "include",
           body: JSON.stringify({
-            idNumber: form.idNumber,
+            IDNumber: form.idNumber,
             firstName: form.firstName,
             lastName: form.lastName,
             email: form.email,
@@ -169,10 +189,10 @@ const EditTeacher = () => {
             subject: form.subject,
             phone: form.phone,
             address: form.address,
+            hire_date: form.hire_date,
             qualification: form.qualification,
             contractType: form.contractType,
-            hoursPerDay: form.hoursPerDay ? parseInt(form.hoursPerDay) : 0,
-            fullname: form.firstName + " " + form.lastName,
+            hpw: form.hoursPerDay ? parseInt(form.hoursPerDay) : 0,
           }),
         },
       );
@@ -180,21 +200,32 @@ const EditTeacher = () => {
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.message || "An error occurred");
+        throw result;
       }
 
       enqueueSnackbar("Teacher profile updated successfully", {
         variant: "success",
       });
     } catch (error: any) {
-      enqueueSnackbar(`${error.message || error}`, { variant: "error" });
+      const errorMessage = error.message || error.error || "An error occurred";
+      enqueueSnackbar(errorMessage, { variant: "error" });
+
+      if (error.errors && Array.isArray(error.errors)) {
+        const fieldErrors: Record<string, string> = {};
+        error.errors.forEach((err: any) => {
+          if (err.path && err.path[0]) {
+            fieldErrors[err.path[0]] = err.message;
+          }
+        });
+        setErrors(fieldErrors);
+      }
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Box sx={{ maxWidth: 900, mx: "auto", p: 2 }}>
+    <Container sx={{ maxWidth: 900, mx: "auto", p: 2 }}>
       <PageHeader
         title="Modify Teacher Profile"
         subtitle="View and update information for this educator"
@@ -224,7 +255,9 @@ const EditTeacher = () => {
                 label="ID Number *"
                 value={form.idNumber || ""}
                 onChange={(e) => setForm({ ...form, idNumber: e.target.value })}
-                disabled={loading}
+                disabled
+                error={!!errors.IDNumber}
+                helperText={errors.IDNumber}
               />
             )}
           </Grid>
@@ -240,6 +273,8 @@ const EditTeacher = () => {
                   setForm({ ...form, firstName: e.target.value })
                 }
                 disabled={loading}
+                error={!!errors.firstName}
+                helperText={errors.firstName}
               />
             )}
           </Grid>
@@ -253,6 +288,8 @@ const EditTeacher = () => {
                 value={form.lastName || ""}
                 onChange={(e) => setForm({ ...form, lastName: e.target.value })}
                 disabled={loading}
+                error={!!errors.lastName}
+                helperText={errors.lastName}
               />
             )}
           </Grid>
@@ -264,6 +301,7 @@ const EditTeacher = () => {
               <FormControl
                 component="fieldset"
                 disabled={loading}
+                error={!!errors.gender}
                 sx={{
                   display: "flex",
                   flexDirection: "column",
@@ -272,6 +310,7 @@ const EditTeacher = () => {
                   width: "100%",
                   height: "56px",
                   borderRadius: 1,
+                  border: errors.gender ? "1px solid #d32f2f" : "none",
                   px: 2,
                 }}
               >
@@ -279,7 +318,7 @@ const EditTeacher = () => {
                   component="legend"
                   sx={{
                     fontSize: "0.95rem",
-                    color: "text.secondary",
+                    color: errors.gender ? "#d32f2f" : "text.secondary",
                     textAlign: "center",
                     mb: 0.5,
                   }}
@@ -304,6 +343,9 @@ const EditTeacher = () => {
                     label="Female"
                   />
                 </RadioGroup>
+                {errors.gender && (
+                  <FormHelperText color="error">{errors.gender}</FormHelperText>
+                )}
               </FormControl>
             )}
           </Grid>
@@ -330,14 +372,33 @@ const EditTeacher = () => {
           Academic Assignment & Contract
         </Typography>
         <Grid container spacing={3}>
-          <Grid size={{ xs: 12, sm: 4 }}>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            {fetching ? (
+              <Skeleton variant="rounded" height={56} />
+            ) : (
+              <TextField
+                fullWidth
+                label="Hire Date *"
+                type="date"
+                value={form.hire_date || ""}
+                onChange={(e) =>
+                  setForm({ ...form, hire_date: e.target.value })
+                }
+                disabled={loading}
+                slotProps={{ inputLabel: { shrink: true } }}
+                error={!!errors.hire_date}
+                helperText={errors.hire_date}
+              />
+            )}
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6 }}>
             {fetching ? (
               <Skeleton variant="rounded" height={56} />
             ) : (
               <TextField
                 select
                 fullWidth
-                label="Main Subject / Specialty *"
+                label="Main Subject *"
                 value={form.subject || ""}
                 onChange={(e) =>
                   setForm({
@@ -346,6 +407,8 @@ const EditTeacher = () => {
                   })
                 }
                 disabled={loading}
+                error={!!errors.subject}
+                helperText={errors.subject}
               >
                 {TEACHER_SUBJECTS.map((subject) => (
                   <MenuItem key={subject} value={subject}>
@@ -355,7 +418,7 @@ const EditTeacher = () => {
               </TextField>
             )}
           </Grid>
-          <Grid size={{ xs: 12, sm: 4 }}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             {fetching ? (
               <Skeleton variant="rounded" height={56} />
             ) : (
@@ -371,31 +434,35 @@ const EditTeacher = () => {
                   })
                 }
                 disabled={loading}
+                error={!!errors.contractType}
+                helperText={errors.contractType}
               >
                 {CONTRACT_TYPES.map((type) => (
                   <MenuItem key={type} value={type}>
-                    {type}
+                    {type.toUpperCase().charAt(0) + type.slice(1)}
                   </MenuItem>
                 ))}
               </TextField>
             )}
           </Grid>
-          <Grid size={{ xs: 12, sm: 4 }}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             {fetching ? (
               <Skeleton variant="rounded" height={56} />
             ) : (
               <TextField
                 fullWidth
-                label="Hours Per Day"
+                label="Hours Per Week"
                 type="number"
                 slotProps={{
-                  htmlInput: { min: 0, max: 24, step: 1 },
+                  htmlInput: { min: 0, max: 40, step: 1 },
                 }}
                 value={form.hoursPerDay || ""}
                 onChange={(e) =>
                   setForm({ ...form, hoursPerDay: e.target.value })
                 }
                 disabled={loading}
+                error={!!errors.hpw}
+                helperText={errors.hpw}
               />
             )}
           </Grid>
@@ -417,6 +484,10 @@ const EditTeacher = () => {
                 value={form.phone || ""}
                 onChange={(e) => setForm({ ...form, phone: e.target.value })}
                 disabled={loading}
+                error={!!errors.phone}
+                helperText={
+                  errors.phone || "Format: +26134XXXXXXX or 034XXXXXXX"
+                }
               />
             )}
           </Grid>
@@ -431,6 +502,8 @@ const EditTeacher = () => {
                 value={form.email || ""}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
                 disabled={loading}
+                error={!!errors.email}
+                helperText={errors.email}
               />
             )}
           </Grid>
@@ -444,6 +517,8 @@ const EditTeacher = () => {
                 value={form.address || ""}
                 onChange={(e) => setForm({ ...form, address: e.target.value })}
                 disabled={loading}
+                error={!!errors.address}
+                helperText={errors.address}
               />
             )}
           </Grid>
@@ -509,7 +584,7 @@ const EditTeacher = () => {
           )}
         </Box>
       </Paper>
-    </Box>
+    </Container>
   );
 };
 

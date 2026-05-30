@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from "express";
+import { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { ENV } from "../config/env";
 import { pool } from "../db/pool";
@@ -17,7 +17,7 @@ export async function RequireAuth(
     req.headers.authorization?.replace("Bearer ", "");
 
   if (!token) {
-    return res.status(401).json({ message: "Token missing" });
+    return res.status(401).json({ message: "Token missing. Refresh the page" });
   }
   try {
     const payload = jwt.verify(token, ENV.JWT_SECRET) as { userId: string };
@@ -48,7 +48,7 @@ export async function RequireAuthOnly(
     req.headers.authorization?.replace("Bearer ", "");
 
   if (!token) {
-    return res.status(401).json({ message: "Token missing" });
+    return res.status(401).json({ message: "Token missing. Refresh the page" });
   }
   try {
     const playload = jwt.verify(token, ENV.JWT_SECRET) as { userId: string };

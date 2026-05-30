@@ -6,7 +6,7 @@ import {
   Box,
   Button,
   Checkbox,
-  Divider,
+  Divider,Container,
   FormControl,
   FormControlLabel,
   FormLabel,
@@ -118,7 +118,7 @@ const CreateParent = () => {
   };
 
   return (
-    <Box sx={{ maxWidth: 900, mx: "auto", p: 2 }}>
+    <Container sx={{ maxWidth: 900, mx: "auto", p: 2 }}>
       <PageHeader
         title="Create New Parent Profile"
         subtitle="Register a new legal guardian account in the system"
@@ -293,7 +293,7 @@ const CreateParent = () => {
           </Button>
         </Box>
       </Paper>
-    </Box>
+    </Container>
   );
 };
 
