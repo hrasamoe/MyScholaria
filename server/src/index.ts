@@ -21,6 +21,13 @@ const app = express();
 const PORT = process.env.PORT || 3434;
 const isProd = process.env.NODE_ENV === "production";
 
+app.use((req, res, next) => {
+  res.setHeader(
+    "Content-Security-Policy",
+    "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://*.supabase.co; connect-src 'self' https://www.google.com https://myscholaria.onrender.com http://localhost:3434 https://*.supabase.co;;",
+  );
+  next();
+});
 app.use(helmet({ contentSecurityPolicy: false }));
 
 app.use(
