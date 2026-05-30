@@ -1,36 +1,39 @@
+import { useState, useEffect } from "react";
 import PageHeader from "@/components/PageHeader";
-import { useAuth } from "@/hooks/Authcontext";
-import AddIcon from "@mui/icons-material/Add";
-import ApartmentIcon from "@mui/icons-material/Apartment";
-import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
-import DeleteIcon from "@mui/icons-material/Delete";
-import EditIcon from "@mui/icons-material/Edit";
-import MeetingRoomIcon from "@mui/icons-material/MeetingRoom";
-import PersonIcon from "@mui/icons-material/Person";
 import {
-  Box,
   Button,
-  Card,
-  CardContent,
+  TextField,
   Dialog,
-  DialogActions,
-  DialogContent,
   DialogTitle,
-  IconButton,
+  DialogContent,
+  DialogActions,
   MenuItem,
   Skeleton,
-  TextField,
+  Card,
+  CardContent,
   Typography,
+  Box,
+  IconButton,
+  Autocomplete,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
+import AddIcon from "@mui/icons-material/Add";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
+import SchoolIcon from "@mui/icons-material/School";
+import MeetingRoomIcon from "@mui/icons-material/MeetingRoom";
+import PersonIcon from "@mui/icons-material/Person";
+import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import { useSnackbar } from "notistack";
-import { useEffect, useState } from "react";
+import { useAuth } from "@/hooks/Authcontext";
 
 interface ClassItem {
   id: string;
   name: string;
   level: string;
-  teacher: string;
+  teacher_id: string;
+  teacher_name?: string;
+  teacher_gender?: "male" | "female";
   schedule: string;
   classroom_id: string;
   classroom_name?: string;
@@ -43,6 +46,13 @@ interface ClassroomOption {
   building: string;
 }
 
+interface TeacherOption {
+  id: string;
+  first_name: string;
+  last_name: string;
+  gender: "male" | "female";
+}
+
 const API_URL = import.meta.env.VITE_API_URL;
 
 const initialFakeClasses: ClassItem[] = [
@@ -50,7 +60,9 @@ const initialFakeClasses: ClassItem[] = [
     id: "fake-1",
     name: "Terminale S1",
     level: "Lycée",
-    teacher: "Mme Rasoa",
+    teacher_id: "",
+    teacher_name: "Mme Rasoa R.",
+    teacher_gender: "female",
     schedule: "Lun-Ven 08:00-16:00",
     classroom_id: "",
     classroom_name: "Salle 102 (Bâtiment A)",
@@ -60,7 +72,9 @@ const initialFakeClasses: ClassItem[] = [
     id: "fake-2",
     name: "Seconde G2",
     level: "Lycée",
-    teacher: "Mr Rakoto",
+    teacher_id: "",
+    teacher_name: "Mr Rakoto J.",
+    teacher_gender: "male",
     schedule: "Lun-Ven 08:00-15:00",
     classroom_id: "",
     classroom_name: "Labo Physique",
@@ -75,6 +89,7 @@ const Classes = () => {
 
   const [classes, setClasses] = useState<ClassItem[]>(initialFakeClasses);
   const [classrooms, setClassrooms] = useState<ClassroomOption[]>([]);
+  const [teachers, setTeachers] = useState<TeacherOption[]>([]);
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [open, setOpen] = useState(false);
@@ -82,13 +97,33 @@ const Classes = () => {
   const [selectedClass, setSelectedClass] = useState<ClassItem | null>(null);
   const [form, setForm] = useState<Record<string, string>>({});
 
-  const fetchClassesAndClassrooms = async () => {
+  const formatFirstName = (firstName: string) => {
+    if (!firstName) return "";
+    const parts = firstName.trim().split(/\s+/);
+    if (parts.length <= 1) return parts[0];
+    const initiales = parts
+      .slice(1)
+      .map((part) => `${part[0].toUpperCase()}.`)
+      .join(" ");
+    return `${parts[0]} ${initiales}`;
+  };
+
+  const formatTeacherName = (
+    teacher: TeacherOption | { first_name: string; last_name: string },
+  ) => {
+    return `${formatFirstName(teacher.first_name)} ${teacher.last_name}`;
+  };
+
+  const fetchAllData = async () => {
     if (!establishmentID) return;
     try {
       setLoading(true);
-      const [resClasses, resClassrooms] = await Promise.all([
+      const [resClasses, resClassrooms, resTeachers] = await Promise.all([
         fetch(`${API_URL}/utils/classes`, { credentials: "include" }),
         fetch(`${API_URL}/api/utils/get-classrooms/${establishmentID}`, {
+          credentials: "include",
+        }),
+        fetch(`${API_URL}/api/teachers/get-list/${establishmentID}`, {
           credentials: "include",
         }),
       ]);
@@ -102,6 +137,11 @@ const Classes = () => {
         const classroomsData = await resClassrooms.json();
         setClassrooms(classroomsData);
       }
+
+      if (resTeachers.ok) {
+        const teachersData = await resTeachers.json();
+        setTeachers(teachersData);
+      }
     } catch (error) {
       enqueueSnackbar("Error loading data from API", { variant: "error" });
     } finally {
@@ -110,7 +150,7 @@ const Classes = () => {
   };
 
   useEffect(() => {
-    fetchClassesAndClassrooms();
+    fetchAllData();
   }, [establishmentID]);
 
   const handleOpenCreate = () => {
@@ -118,7 +158,7 @@ const Classes = () => {
     setForm({
       name: "",
       level: "",
-      teacher: "",
+      teacher_id: "",
       schedule: "",
       classroom_id: "",
     });
@@ -130,7 +170,7 @@ const Classes = () => {
     setForm({
       name: item.name,
       level: item.level,
-      teacher: item.teacher,
+      teacher_id: item.teacher_id,
       schedule: item.schedule,
       classroom_id: item.classroom_id,
     });
@@ -151,7 +191,7 @@ const Classes = () => {
     const payload = {
       name: form.name,
       level: form.level,
-      teacher: form.teacher || "",
+      teacher_id: form.teacher_id || "",
       schedule: form.schedule || "",
       classroom_id: form.classroom_id || "",
     };
@@ -181,7 +221,7 @@ const Classes = () => {
         { variant: "success" },
       );
       setOpen(false);
-      fetchClassesAndClassrooms();
+      fetchAllData();
     } catch (error: any) {
       enqueueSnackbar(error.message || "Error saving class", {
         variant: "error",
@@ -207,7 +247,7 @@ const Classes = () => {
 
       enqueueSnackbar("Class deleted successfully", { variant: "success" });
       setOpenDelete(false);
-      fetchClassesAndClassrooms();
+      fetchAllData();
     } catch (error: any) {
       enqueueSnackbar(error.message || "Error deleting class", {
         variant: "error",
@@ -216,6 +256,21 @@ const Classes = () => {
       setActionLoading(false);
     }
   };
+
+  const getTeacherGender = (item: ClassItem) => {
+    if (item.teacher_gender) return item.teacher_gender;
+    const found = teachers.find((t) => t.id === item.teacher_id);
+    return found ? found.gender : "male";
+  };
+
+  const getTeacherDisplayName = (item: ClassItem) => {
+    if (item.teacher_name) return item.teacher_name;
+    const found = teachers.find((t) => t.id === item.teacher_id);
+    return found ? formatTeacherName(found) : "None";
+  };
+
+  const selectedTeacherOption =
+    teachers.find((t) => t.id === form.teacher_id) || null;
 
   return (
     <Box sx={{ p: 2 }}>
@@ -288,12 +343,7 @@ const Classes = () => {
                           display: "flex",
                         }}
                       >
-                        <ApartmentIcon
-                        sx = {{
-                          height: 36,
-                          width: 36,
-                            // size: "3.5rem"
-                        }}/>
+                        <SchoolIcon />
                       </Box>
                       <Box sx={{ minWidth: 0 }}>
                         <Typography variant="h6" fontWeight="600" noWrap>
@@ -321,9 +371,23 @@ const Classes = () => {
                           color: "text.secondary",
                         }}
                       >
-                        <PersonIcon fontSize="small" color="action" />
+                        <img
+                          src={
+                            getTeacherGender(item) === "male"
+                              ? "/male.png"
+                              : "/female.png"
+                          }
+                          alt="Gender"
+                          style={{
+                            width: 20,
+                            height: 20,
+                            borderRadius: "50%",
+                            flexShrink: 0,
+                          }}
+                        />
                         <Typography variant="body2" noWrap>
-                          Teacher: <strong>{item.teacher || "None"}</strong>
+                          Teacher:{" "}
+                          <strong>{getTeacherDisplayName(item)}</strong>
                         </Typography>
                       </Box>
 
@@ -345,7 +409,21 @@ const Classes = () => {
                         </Typography>
                       </Box>
 
-                    
+                      {item.schedule && (
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 1,
+                            color: "text.secondary",
+                          }}
+                        >
+                          <CalendarMonthIcon fontSize="small" color="action" />
+                          <Typography variant="body2" noWrap>
+                            {item.schedule}
+                          </Typography>
+                        </Box>
+                      )}
                     </Box>
 
                     <Box
@@ -407,12 +485,80 @@ const Classes = () => {
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                fullWidth
-                label="Main Teacher"
-                value={form.teacher || ""}
+              <Autocomplete
+                options={teachers}
+                value={selectedTeacherOption}
+                getOptionLabel={(option) => formatTeacherName(option)}
+                isOptionEqualToValue={(option, value) => option.id === value.id}
                 disabled={actionLoading}
-                onChange={(e) => setForm({ ...form, teacher: e.target.value })}
+                onChange={(_, newValue) => {
+                  setForm({ ...form, teacher_id: newValue ? newValue.id : "" });
+                }}
+                renderOption={(props, option) => {
+                  const { key, ...optionProps } = props;
+                  return (
+                    <Box
+                      component="li"
+                      key={option.id}
+                      {...optionProps}
+                      sx={{ display: "flex", alignItems: "center", gap: 1.5 }}
+                    >
+                      <img
+                        src={
+                          option.gender === "male" ? "/male.png" : "/female.png"
+                        }
+                        alt={option.gender}
+                        style={{
+                          width: 28,
+                          height: 28,
+                          borderRadius: "50%",
+                          flexShrink: 0,
+                        }}
+                      />
+                      <Typography variant="body2">
+                        {formatTeacherName(option)}
+                      </Typography>
+                    </Box>
+                  );
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Main Teacher"
+                    placeholder="Select teacher..."
+                    fullWidth
+                    InputProps={{
+                      ...params.InputProps,
+                      startAdornment: (
+                        <>
+                          {selectedTeacherOption ? (
+                            <img
+                              src={
+                                selectedTeacherOption.gender === "male"
+                                  ? "/male.png"
+                                  : "/female.png"
+                              }
+                              alt="Selected Gender"
+                              style={{
+                                width: 22,
+                                height: 22,
+                                borderRadius: "50%",
+                                marginRight: 8,
+                                flexShrink: 0,
+                              }}
+                            />
+                          ) : (
+                            <PersonIcon
+                              color="action"
+                              sx={{ mr: 0.5, fontSize: 20 }}
+                            />
+                          )}
+                          {params.InputProps.startAdornment}
+                        </>
+                      ),
+                    }}
+                  />
+                )}
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
@@ -436,7 +582,15 @@ const Classes = () => {
                 ))}
               </TextField>
             </Grid>
-  
+            <Grid size={12}>
+              <TextField
+                fullWidth
+                label="Schedule"
+                value={form.schedule || ""}
+                disabled={actionLoading}
+                onChange={(e) => setForm({ ...form, schedule: e.target.value })}
+              />
+            </Grid>
           </Grid>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
