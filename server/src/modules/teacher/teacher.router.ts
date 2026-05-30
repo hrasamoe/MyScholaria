@@ -1,7 +1,13 @@
 import { Request, Response, Router } from "express";
 import { RequireAuthOnly } from "../../middleware/auth.middleware";
 import { teacherSchema } from "./teacher.schema";
-import { createTeacher, getTeacherList } from "./teacher.service";
+import {
+  createTeacher,
+  deleteTeacher,
+  getTeacherDetails,
+  getTeacherList,
+  updateTeacher,
+} from "./teacher.service";
 
 export const teacherRouter = Router();
 
@@ -24,6 +30,7 @@ teacherRouter.post(
         gender: body.gender || undefined,
         contractType: body.contractType || undefined,
         hpw: body.hpw || undefined,
+        qualification: body.qualification || undefined,
       });
 
       await createTeacher(data, establishmentID);
@@ -57,6 +64,79 @@ teacherRouter.get(
           .json({ message: error.errors[0].message, errors: error.errors });
       }
       console.log("OTHER ERROR:", error.message);
+      res.status(400).json({ error: error.message });
+    }
+  },
+);
+
+teacherRouter.get(
+  "/details/:id",
+  RequireAuthOnly,
+  async (req: Request, res: Response) => {
+    try {
+      const teacherID = req.params?.id as string;
+      const teacherDetails = await getTeacherDetails(teacherID);
+      res.status(200).json(teacherDetails);
+    } catch (error: any) {
+      if (error.errors) {
+        console.log("ZOD ERRORS:", JSON.stringify(error.errors, null, 2));
+        return res
+          .status(400)
+          .json({ message: error.errors[0].message, errors: error.errors });
+      }
+      console.log("OTHER ERROR:", error.message);
+      res.status(400).json({ error: error.message });
+    }
+  },
+);
+
+teacherRouter.put(
+  "/update/:id",
+  RequireAuthOnly,
+  async (req: Request, res: Response) => {
+    try {
+      const teacherID = req.params?.id as string;
+      const body = req.body;
+      const data = teacherSchema.parse({
+        firstName: body.firstName,
+        IDNumber: body.IDNumber,
+        lastName: body.lastName,
+        hire_date: body.hire_date,
+        gender: body.gender,
+        subject: body.subject,
+        hpw: body.hpw,
+        contractType: body.contractType,
+        qualification: body.qualification,
+        email: body.email || undefined,
+        phone: body.phone || undefined,
+        address: body.address || undefined,
+      });
+
+      await updateTeacher(teacherID, data);
+      res.status(200).json({ message: "Teacher updated successfully" });
+    } catch (error: any) {
+      if (error.errors) {
+        console.log("ZOD ERRORS:", JSON.stringify(error.errors, null, 2));
+        return res
+          .status(400)
+          .json({ message: error.errors[0].message, errors: error.errors });
+      }
+      console.log("OTHER ERROR:", error.message);
+      res.status(400).json({ error: error.message });
+    }
+  },
+);
+
+teacherRouter.delete(
+  "/delete/:id",
+  RequireAuthOnly,
+  async (req: Request, res: Response) => {
+    try {
+      const teacherID = req.params?.id as string;
+      await deleteTeacher(teacherID);
+      res.status(200).json({ message: "Teacher deleted successfully" });
+    } catch (error: any) {
+      console.log("ERROR:", error.message);
       res.status(400).json({ error: error.message });
     }
   },
