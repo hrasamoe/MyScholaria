@@ -1,7 +1,8 @@
 import { Pool } from "pg";
+import pg from "pg";
 
+pg.types.setTypeParser(1082, (value) => value);
 export let pool: Pool;
-
 export async function initPool() {
   pool = new Pool({
     host: process.env.DB_HOST,
@@ -15,6 +16,6 @@ export async function initPool() {
   });
 
   const client = await pool.connect();
-  console.log("✅ PostgreSQL connecté — MyScholaria");
+  console.log("[OK] PostgreSQL connecté — MyScholaria");
   client.release();
 }
