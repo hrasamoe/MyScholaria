@@ -26,7 +26,7 @@ const shared: ThemeOptions = {
       styleOverrides: {
         root: ({ theme }) => ({
           boxShadow: "0 1px 3px 0 rgb(0 0 0 / 0.1)",
-          border: `1px solid ${theme.palette.divider}`,
+          border: `3px solid ${theme.palette.divider}`,
         }),
       },
     },
@@ -109,8 +109,8 @@ export const darkTheme = createTheme({
       styleOverrides: {
         root: {
           boxShadow: "0 4px 24px rgba(0,0,0,0.5)",
-          border: "1px solid #2a2f3d",
-          backgroundImage: "none", // supprime le lift MUI dark par défaut
+          border: "3px solid #2a2f3d",
+          backgroundImage: "none",
         },
       },
     },
@@ -125,7 +125,7 @@ export const darkTheme = createTheme({
       styleOverrides: {
         paper: {
           backgroundColor: "#13161e",
-          borderRight: "1px solid #2a2f3d",
+          borderRight: "2px solid #2a2f3d",
         },
       },
     },
@@ -133,7 +133,7 @@ export const darkTheme = createTheme({
       styleOverrides: {
         root: {
           backgroundColor: "#13161e",
-          borderBottom: "1px solid #2a2f3d",
+          borderBottom: "2px solid #2a2f3d",
           boxShadow: "none",
         },
       },

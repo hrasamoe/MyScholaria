@@ -1,13 +1,13 @@
+import { darkTheme, lightTheme } from "@/theme";
+import { CssBaseline, ThemeProvider } from "@mui/material";
 import {
   createContext,
   useContext,
-  useState,
-  useMemo,
   useEffect,
+  useMemo,
+  useState,
   type ReactNode,
 } from "react";
-import { CssBaseline, ThemeProvider } from "@mui/material";
-import { lightTheme, darkTheme } from "@/theme";
 
 interface ThemeContextType {
   isDark: boolean;
@@ -23,7 +23,7 @@ export const useThemeMode = () => useContext(ThemeContext);
 
 export function AppThemeProvider({ children }: { children: ReactNode }) {
   const [isDark, setIsDark] = useState<boolean>(() => {
-    const saved = localStorage.getItem("myscholaria_theme");
+    const saved = localStorage.getItem("myscholaria_theme") || "dark";
     if (saved) return saved === "dark";
   });
   const toggle = () => {
@@ -36,10 +36,10 @@ export function AppThemeProvider({ children }: { children: ReactNode }) {
 
   return (
     <ThemeContext.Provider value={value}>
-        <ThemeProvider theme={isDark ? darkTheme : lightTheme}>
-            <CssBaseline/>
-            {children}
-        </ThemeProvider>
+      <ThemeProvider theme={isDark ? darkTheme : lightTheme}>
+        <CssBaseline />
+        {children}
+      </ThemeProvider>
     </ThemeContext.Provider>
-  )
+  );
 }
