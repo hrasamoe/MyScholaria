@@ -9,6 +9,7 @@ import {
   Divider,
   FormControl,
   FormControlLabel,
+  FormHelperText,
   FormLabel,
   MenuItem,
   Paper,
@@ -72,6 +73,9 @@ const CreateTeacher = () => {
     contractType: "",
     hoursPerDay: "",
   });
+
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
   const { user } = useAuth();
   const navigate = useNavigate();
   const establishmentID = user?.establishment_id;
@@ -94,11 +98,14 @@ const CreateTeacher = () => {
       contractType: "",
       hoursPerDay: "",
     });
+    setErrors({});
     setRgpdAccepted(false);
     navigate("/teachers");
   };
 
   const handleSave = async () => {
+    setErrors({});
+
     if (
       !form.idNumber ||
       !form.firstName ||
@@ -150,7 +157,7 @@ const CreateTeacher = () => {
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.message || "An error occurred");
+        throw result;
       }
 
       enqueueSnackbar("Teacher profile created successfully", {
@@ -158,7 +165,18 @@ const CreateTeacher = () => {
       });
       handleCancel();
     } catch (error: any) {
-      enqueueSnackbar(`${error.message || error}`, { variant: "error" });
+      const errorMessage = error.message || error.error || "An error occurred";
+      enqueueSnackbar(errorMessage, { variant: "error" });
+
+      if (error.errors && Array.isArray(error.errors)) {
+        const fieldErrors: Record<string, string> = {};
+        error.errors.forEach((err: any) => {
+          if (err.path && err.path[0]) {
+            fieldErrors[err.path[0]] = err.message;
+          }
+        });
+        setErrors(fieldErrors);
+      }
     } finally {
       setLoading(false);
     }
@@ -193,6 +211,8 @@ const CreateTeacher = () => {
               value={form.idNumber || ""}
               onChange={(e) => setForm({ ...form, idNumber: e.target.value })}
               disabled={loading}
+              error={!!errors.IDNumber}
+              helperText={errors.IDNumber}
             />
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }}>
@@ -202,6 +222,8 @@ const CreateTeacher = () => {
               value={form.firstName || ""}
               onChange={(e) => setForm({ ...form, firstName: e.target.value })}
               disabled={loading}
+              error={!!errors.firstName}
+              helperText={errors.firstName}
             />
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }}>
@@ -211,6 +233,8 @@ const CreateTeacher = () => {
               value={form.lastName || ""}
               onChange={(e) => setForm({ ...form, lastName: e.target.value })}
               disabled={loading}
+              error={!!errors.lastName}
+              helperText={errors.lastName}
             />
           </Grid>
 
@@ -218,6 +242,7 @@ const CreateTeacher = () => {
             <FormControl
               component="fieldset"
               disabled={loading}
+              error={!!errors.gender}
               sx={{
                 display: "flex",
                 flexDirection: "column",
@@ -226,6 +251,7 @@ const CreateTeacher = () => {
                 width: "100%",
                 height: "56px",
                 borderRadius: 1,
+                border: errors.gender ? "1px solid #d32f2f" : "none",
                 px: 2,
               }}
             >
@@ -233,7 +259,7 @@ const CreateTeacher = () => {
                 component="legend"
                 sx={{
                   fontSize: "0.95rem",
-                  color: "text.secondary",
+                  color: errors.gender ? "#d32f2f" : "text.secondary",
                   textAlign: "center",
                   mb: 0.5,
                 }}
@@ -258,6 +284,9 @@ const CreateTeacher = () => {
                   label="Female"
                 />
               </RadioGroup>
+              {errors.gender && (
+                <FormHelperText color="error">{errors.gender}</FormHelperText>
+              )}
             </FormControl>
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }}>
@@ -288,6 +317,8 @@ const CreateTeacher = () => {
               onChange={(e) => setForm({ ...form, hire_date: e.target.value })}
               disabled={loading}
               slotProps={{ inputLabel: { shrink: true } }}
+              error={!!errors.hire_date}
+              helperText={errors.hire_date}
             />
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }}>
@@ -300,6 +331,8 @@ const CreateTeacher = () => {
                 setForm({ ...form, subject: e.target.value as TeacherSubject })
               }
               disabled={loading}
+              error={!!errors.subject}
+              helperText={errors.subject}
             >
               {TEACHER_SUBJECTS.map((subject) => (
                 <MenuItem key={subject} value={subject}>
@@ -321,6 +354,8 @@ const CreateTeacher = () => {
                 })
               }
               disabled={loading}
+              error={!!errors.contractType}
+              helperText={errors.contractType}
             >
               {CONTRACT_TYPES.map((type) => (
                 <MenuItem key={type} value={type}>
@@ -342,6 +377,8 @@ const CreateTeacher = () => {
                 setForm({ ...form, hoursPerDay: e.target.value })
               }
               disabled={loading}
+              error={!!errors.hpw}
+              helperText={errors.hpw}
             />
           </Grid>
         </Grid>
@@ -359,6 +396,8 @@ const CreateTeacher = () => {
               value={form.phone || ""}
               onChange={(e) => setForm({ ...form, phone: e.target.value })}
               disabled={loading}
+              error={!!errors.phone}
+              helperText={errors.phone || "Format: +26134XXXXXXX or 034XXXXXXX"}
             />
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }}>
@@ -369,6 +408,8 @@ const CreateTeacher = () => {
               value={form.email || ""}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
               disabled={loading}
+              error={!!errors.email}
+              helperText={errors.email}
             />
           </Grid>
           <Grid size={{ xs: 12 }}>
@@ -378,6 +419,8 @@ const CreateTeacher = () => {
               value={form.address || ""}
               onChange={(e) => setForm({ ...form, address: e.target.value })}
               disabled={loading}
+              error={!!errors.address}
+              helperText={errors.address}
             />
           </Grid>
         </Grid>

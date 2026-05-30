@@ -51,3 +51,26 @@ export async function createTeacher(
     client.release();
   }
 }
+
+export async function getTeacherList(establishmentID: string) {
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+    const queryText = `
+    SELECT p.id, p.first_name, p.last_name, p.gender, t.contract_type AS "contractType", t.specialization AS subject 
+    FROM profiles p
+    INNER JOIN teachers t ON  p.id = t.profile_id
+    WHERE p.profile_statut = 'teacher'
+    AND p.establishment_id = $1 
+    `;
+    const { rows } = await client.query(queryText, [establishmentID]);
+    await client.query("COMMIT");
+    return rows;
+  } catch (error: any) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+}
