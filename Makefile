@@ -14,3 +14,6 @@ po: mmdh
 
 pc: po
 	git push organization main dev hrasamoe
+
+dp: pc
+	cd client && make deploy
