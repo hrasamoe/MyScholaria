@@ -1,7 +1,6 @@
 import { z } from "zod";
 
-const phoneRegex =
-  /^(?:\+261|0)(?:32|33|34|37|38)(?:\d{7}|\d{2}\s\d{2}\s\d{3}\d{2})$/;
+const phoneRegex = /^(?:\+261\s?|0)\s?(?:32|33|34|37|38)(?:[\s-]?\d){7}$/;
 
 export const teacherSchema = z.object({
   IDNumber: z.string().min(5, "Please provide a valid ID number"),
@@ -28,6 +27,7 @@ export const teacherSchema = z.object({
   gender: z.enum(["male", "female"]).optional(),
   contractType: z.enum(["permanent", "contract", "vacation"]).optional(),
   hpw: z.number().int().nonnegative().optional(),
+  qualification: z.string().min(0, "Please provide a qualification"),
 });
 
 export type TeacherInfo = z.infer<typeof teacherSchema>;
