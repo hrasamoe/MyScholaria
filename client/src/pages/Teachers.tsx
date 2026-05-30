@@ -44,6 +44,7 @@ interface Teacher {
   last_name: string;
   gender: "male" | "female";
   subject: TeacherSubject;
+  contractType: "permanent" | "contract" | "vacation";
 }
 
 const Teachers = () => {
@@ -65,7 +66,7 @@ const Teachers = () => {
     try {
       setActionLoading(true);
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/utils/delete-teacher/${id}`,
+        `${import.meta.env.VITE_API_URL}/api/teachers/delete/${id}`,
         {
           method: "DELETE",
           credentials: "include",
@@ -117,7 +118,7 @@ const Teachers = () => {
       try {
         setLoading(true);
         const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/api/utils/get-teacher-list/${establishmentID}`,
+          `${import.meta.env.VITE_API_URL}/api/teachers/get-list/${establishmentID}`,
           {
             method: "GET",
             credentials: "include",
@@ -281,9 +282,44 @@ const Teachers = () => {
                         {formatFirstName(teacher.first_name)}{" "}
                         {teacher.last_name}
                       </Typography>
-                      <Typography variant="body2" color="text.secondary" noWrap>
-                        {teacher.subject}
-                      </Typography>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          gap: 1,
+                          flexWrap: "wrap",
+                          alignItems: "center",
+                          mt: 1,
+                        }}
+                      >
+                        {" "}
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          noWrap
+                        >
+                          {teacher.subject}
+                        </Typography>{" "}
+                        <Typography
+                          sx={{
+                            backgroundColor:
+                              teacher.contractType === "permanent"
+                                ? "#03420a"
+                                : teacher.contractType === "contract"
+                                  ? "warning.main"
+                                  : "info.main",
+                            color: "#fff",
+                            px: 1,
+                            borderRadius: 0.5,
+                            padding: "0.2rem 0.5rem",
+                          }}
+                          variant="body2"
+                          color="text.secondary"
+                          noWrap
+                        >
+                          {teacher.contractType.toUpperCase().charAt(0) +
+                            teacher.contractType.slice(1)}
+                        </Typography>
+                      </Box>
                     </Box>
                   </Box>
 
