@@ -1,13 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import PageHeader from "@/components/PageHeader";
 import AddIcon from "@mui/icons-material/Add";
 import {
   Button,
   TextField,
-  MenuItem,
-  Select,
-  FormControl,
-  InputLabel,
   Box,
   Paper,
   Typography,
@@ -17,6 +13,13 @@ import {
   Autocomplete,
   Chip,
   FormHelperText,
+  InputLabel,
+  Select,
+  MenuItem,
+  Radio,
+  RadioGroup,
+  FormControl,
+  FormLabel,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import SaveIcon from "@mui/icons-material/Save";
@@ -24,6 +27,7 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import SearchIcon from "@mui/icons-material/Search";
 import { useSnackbar } from "notistack";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/Authcontext";
 
 interface StudentForm {
   firstName: string;
@@ -44,14 +48,18 @@ interface StudentForm {
 
 interface ParentOption {
   id: string;
-  fullName: string;
-  phone: string;
+  first_name: string;
+  last_name: string;
+  gender: "male" | "female";
 }
 
 interface ClassOption {
   id: string;
   className: string;
 }
+
+const phoneRegex = /^(?:\+261\s?|0)\s?(?:32|33|34|37|38)(?:[\s-]?\d){7}$/;
+const API_URL = import.meta.env.VITE_API_URL;
 
 const CreateStudent = () => {
   const [form, setForm] = useState<Partial<StudentForm>>({
@@ -60,30 +68,47 @@ const CreateStudent = () => {
     parent_ids: [],
     class_id: "",
     medical_notes: "",
+    phone: "",
+    gender: "",
   });
   const navigate = useNavigate();
   const [rgpdAccepted, setRgpdAccepted] = useState(false);
   const [medicalConsentAccepted, setMedicalConsentAccepted] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
+  const { user } = useAuth();
+  const establishmentID = user?.establishment_id || "";
+  const [parentOptions, setParentOptions] = useState<ParentOption[]>([]);
+  const [classOptions, setClassOptions] = useState<ClassOption[]>([]);
 
-  const [parentOptions] = useState<ParentOption[]>([
-    {
-      id: "404dbc2c-865e-43c8-8796-8398a5942256",
-      fullName: "Heritiana Hasina",
-      phone: "0340000001",
-    },
-    {
-      id: "a1e922e1-4202-4430-95a8-8cc6e902e566",
-      fullName: "Naël Hasinirina",
-      phone: "0340000002",
-    },
-  ]);
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!establishmentID) return;
+      try {
+        const [resClasses, resParents] = await Promise.all([
+          fetch(`${API_URL}/utils/classes`, { credentials: "include" }),
+          fetch(`${API_URL}/api/utils/get-parent-list/${establishmentID}`, {
+            credentials: "include",
+          }),
+        ]);
 
-  const [classOptions] = useState<ClassOption[]>([
-    { id: "c1", className: "Grade 10 - A" },
-    { id: "c2", className: "Grade 11 - B" },
-    { id: "c3", className: "Terminalos S" },
-  ]);
+        if (resClasses.ok) {
+          const classesData = await resClasses.json();
+          setClassOptions(classesData);
+        }
+
+        if (resParents.ok) {
+          const parentsData = await resParents.json();
+          setParentOptions(parentsData);
+        }
+      } catch (error) {
+        enqueueSnackbar("Error loading context data from API", {
+          variant: "error",
+        });
+      }
+    };
+
+    fetchData();
+  }, [enqueueSnackbar, establishmentID]);
 
   const handleCancel = () => {
     setForm({
@@ -92,6 +117,8 @@ const CreateStudent = () => {
       parent_ids: [],
       class_id: "",
       medical_notes: "",
+      phone: "",
+      gender: "",
     });
     setRgpdAccepted(false);
     setMedicalConsentAccepted(false);
@@ -106,6 +133,13 @@ const CreateStudent = () => {
       !form.status
     ) {
       enqueueSnackbar("Please fill all required fields (*)", {
+        variant: "error",
+      });
+      return;
+    }
+
+    if (form.phone && !phoneRegex.test(form.phone)) {
+      enqueueSnackbar("Invalid Madagascar phone number format", {
         variant: "error",
       });
       return;
@@ -129,13 +163,45 @@ const CreateStudent = () => {
     }
 
     try {
+      const response = await fetch(`${API_URL}/establishment/students`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(form),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Registration failed");
+      }
+
       enqueueSnackbar("Student created successfully", { variant: "success" });
       handleCancel();
-    } catch (error) {
-      enqueueSnackbar("An error occurred during registration", {
-        variant: "error",
-      });
+    } catch (error: any) {
+      enqueueSnackbar(
+        error.message || "An error occurred during registration",
+        {
+          variant: "error",
+        },
+      );
     }
+  };
+
+  const formatParentName = (parent: ParentOption) => {
+    if (!parent) return "";
+    const firstName = parent.first_name || "";
+    const lastName = parent.last_name || "";
+    const parts = firstName.trim().split(/\s+/);
+    const formattedFirst =
+      parts.length <= 1
+        ? parts[0]
+        : `${parts[0]} ${parts
+            .slice(1)
+            .map((part) => `${part[0].toUpperCase()}.`)
+            .join(" ")}`;
+    return `${formattedFirst} ${lastName}`.trim();
   };
 
   const selectedParents = parentOptions.filter((option) =>
@@ -154,7 +220,7 @@ const CreateStudent = () => {
           <Button
             variant="outlined"
             startIcon={<ArrowBackIcon />}
-            onClick={handleCancel}
+            onClick={() => navigate(-1)}
           >
             Back to List
           </Button>
@@ -183,16 +249,26 @@ const CreateStudent = () => {
             />
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }}>
-            <FormControl fullWidth>
-              <InputLabel>Gender</InputLabel>
-              <Select
+            <FormControl component="fieldset" sx={{ mt: 1 }}>
+              <FormLabel component="legend" sx={{ fontSize: "0.85rem" }}>
+                Gender
+              </FormLabel>
+              <RadioGroup
+                row
                 value={form.gender || ""}
-                label="Gender"
                 onChange={(e) => setForm({ ...form, gender: e.target.value })}
               >
-                <MenuItem value="Male">Male</MenuItem>
-                <MenuItem value="Female">Female</MenuItem>
-              </Select>
+                <FormControlLabel
+                  value="Male"
+                  control={<Radio size="small" />}
+                  label="Male"
+                />
+                <FormControlLabel
+                  value="Female"
+                  control={<Radio size="small" />}
+                  label="Female"
+                />
+              </RadioGroup>
             </FormControl>
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }}>
@@ -222,6 +298,12 @@ const CreateStudent = () => {
               label="Phone"
               value={form.phone || ""}
               onChange={(e) => setForm({ ...form, phone: e.target.value })}
+              error={!!form.phone && !phoneRegex.test(form.phone)}
+              helperText={
+                !!form.phone && !phoneRegex.test(form.phone)
+                  ? "Expected format: +261 32 11 987 65 or 032 11 98 765"
+                  : ""
+              }
             />
           </Grid>
           <Grid size={{ xs: 12 }}>
@@ -304,7 +386,6 @@ const CreateStudent = () => {
               </Select>
             </FormControl>
           </Grid>
-
           <Grid size={{ xs: 12, sm: 12 }}>
             <TextField
               fullWidth
@@ -321,10 +402,15 @@ const CreateStudent = () => {
                 sx={{
                   mt: 1,
                   p: 2,
-                  bgcolor: "error.shades",
+                  bgcolor: medicalConsentAccepted
+                    ? "success.shades"
+                    : "error.shades",
                   border: "1px solid",
-                  borderColor: "error.light",
+                  borderColor: medicalConsentAccepted
+                    ? "success.light"
+                    : "error.light",
                   borderRadius: 1,
+                  transition: "all 0.2s ease-in-out",
                 }}
               >
                 <FormControlLabel
@@ -334,13 +420,15 @@ const CreateStudent = () => {
                       onChange={(e) =>
                         setMedicalConsentAccepted(e.target.checked)
                       }
-                      color="error"
+                      color={medicalConsentAccepted ? "success" : "error"}
                     />
                   }
                   label={
                     <Typography
                       variant="body2"
-                      color="error.main"
+                      color={
+                        medicalConsentAccepted ? "success.main" : "error.main"
+                      }
                       fontWeight="500"
                     >
                       I confirm that the parents have provided signed explicit
@@ -348,7 +436,14 @@ const CreateStudent = () => {
                     </Typography>
                   }
                 />
-                <FormHelperText error>
+                <FormHelperText
+                  error={!medicalConsentAccepted}
+                  sx={{
+                    color: medicalConsentAccepted
+                      ? "success.main"
+                      : "error.main",
+                  }}
+                >
                   GDPR compliance: Health data requires explicit authorization
                   and must be restricted to authorized staff only.
                 </FormHelperText>
@@ -387,9 +482,7 @@ const CreateStudent = () => {
               multiple
               options={parentOptions}
               value={selectedParents}
-              getOptionLabel={(option) =>
-                `${option.fullName} (${option.phone})`
-              }
+              getOptionLabel={(option) => formatParentName(option)}
               isOptionEqualToValue={(option, value) => option.id === value.id}
               onChange={(_, newValue) => {
                 setForm({
@@ -397,13 +490,51 @@ const CreateStudent = () => {
                   parent_ids: newValue.map((parent) => parent.id),
                 });
               }}
+              renderOption={(props, option) => {
+                const { key, ...optionProps } = props;
+                return (
+                  <Box
+                    component="li"
+                    key={option.id}
+                    {...optionProps}
+                    sx={{ display: "flex", alignItems: "center", gap: 1.5 }}
+                  >
+                    <img
+                      src={
+                        option.gender === "male" ? "/male.png" : "/female.png"
+                      }
+                      alt={option.gender}
+                      style={{
+                        width: 30,
+                        height: 30,
+                        borderRadius: "50%",
+                        flexShrink: 0,
+                      }}
+                    />
+                    <Typography variant="body2">
+                      {formatParentName(option)}
+                    </Typography>
+                  </Box>
+                );
+              }}
               renderTags={(tagValue, getTagProps) =>
                 tagValue.map((option, index) => {
                   const { key, ...tagProps } = getTagProps({ index });
                   return (
                     <Chip
                       key={option.id}
-                      label={`${option.fullName} (${option.phone})`}
+                      avatar={
+                        <img
+                          src={
+                            option.gender === "male"
+                              ? "/male.png"
+                              : "/female.png"
+                          }
+                          alt={option.gender}
+                          style={{ width: 24, height: 24, borderRadius: "50%" }}
+                        />
+                      }
+                      label={formatParentName(option)}
                       {...tagProps}
                     />
                   );
@@ -448,7 +579,7 @@ const CreateStudent = () => {
               <Checkbox
                 checked={rgpdAccepted}
                 onChange={(e) => setRgpdAccepted(e.target.checked)}
-                color="primary"
+                color={rgpdAccepted ? "success" : "primary"}
               />
             }
             label="I acknowledge that I have read and understood the data protection notice *"
