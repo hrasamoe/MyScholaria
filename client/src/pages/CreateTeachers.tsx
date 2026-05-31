@@ -397,7 +397,7 @@ const CreateTeacher = () => {
               onChange={(e) => setForm({ ...form, phone: e.target.value })}
               disabled={loading}
               error={!!errors.phone}
-              helperText={errors.phone || "Format: +26134XXXXXXX or 034XXXXXXX"}
+              helperText={errors.phone || "Format: +2613XXXXXXXX or 03XXXXXXXX"}
             />
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }}>

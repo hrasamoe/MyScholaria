@@ -486,7 +486,7 @@ const EditTeacher = () => {
                 disabled={loading}
                 error={!!errors.phone}
                 helperText={
-                  errors.phone || "Format: +26134XXXXXXX or 034XXXXXXX"
+                  errors.phone || "Format: +2613XXXXXXXX or 03XXXXXXXX"
                 }
               />
             )}
