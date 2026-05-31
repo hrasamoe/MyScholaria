@@ -4,5 +4,7 @@ pc:
 dp:
 	cd ../; make dp
 
+build: 
+	npm run build
 start_server:
-	npm run build && npm run start
+	npm run start

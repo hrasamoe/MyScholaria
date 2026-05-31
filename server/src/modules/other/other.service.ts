@@ -1,5 +1,5 @@
 import { pool } from "../../db/pool";
-import { ClassInfo, ParentInfo, RoomInfo } from "./other.schema";
+import { ParentInfo, RoomInfo } from "./other.schema";
 
 export async function createParent(
   parentData: ParentInfo,
