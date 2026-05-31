@@ -4,6 +4,7 @@ import AddIcon from "@mui/icons-material/Add";
 import ApartmentIcon from "@mui/icons-material/Apartment";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
+import GroupsIcon from "@mui/icons-material/Groups";
 import MeetingRoomIcon from "@mui/icons-material/MeetingRoom";
 import PersonIcon from "@mui/icons-material/Person";
 import {
@@ -28,21 +29,24 @@ import { useEffect, useState } from "react";
 
 interface ClassItem {
   id: string;
+  establishment_id: string;
   name: string;
-  level: string;
-  teacher_id: string;
+  level: string | null;
+  academic_year: string;
+  main_teacher_id: string | null;
   teacher_name?: string;
   teacher_gender?: "male" | "female";
-  classroom_id: string;
+  room_id: string;
   classroom_name?: string;
-  students?: number;
-  academic_year: string;
+  created_at: string;
+  updated_at: string;
 }
 
 interface ClassroomOption {
   id: string;
   name: string;
   building: string;
+  capacity: number | null;
 }
 
 interface TeacherOption {
@@ -57,27 +61,31 @@ const API_URL = import.meta.env.VITE_API_URL;
 const initialFakeClasses: ClassItem[] = [
   {
     id: "fake-1",
+    establishment_id: "",
     name: "Terminale S1",
     level: "Lycée",
-    teacher_id: "",
+    academic_year: "2025-2026",
+    main_teacher_id: "",
     teacher_name: "Mme Rasoa R.",
     teacher_gender: "female",
-    classroom_id: "",
+    room_id: "",
     classroom_name: "Salle 102 (Bâtiment A)",
-    students: 35,
-    academic_year: "2025-2026",
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
   },
   {
     id: "fake-2",
+    establishment_id: "",
     name: "Seconde G2",
     level: "Lycée",
-    teacher_id: "",
+    academic_year: "2025-2026",
+    main_teacher_id: "",
     teacher_name: "Mr Rakoto J.",
     teacher_gender: "male",
-    classroom_id: "",
+    room_id: "",
     classroom_name: "Labo Physique",
-    students: 30,
-    academic_year: "2025-2026",
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
   },
 ];
 
@@ -157,10 +165,9 @@ const Classes = () => {
     setForm({
       name: "",
       level: "",
-      teacher_id: "",
-      schedule: "",
-      classroom_id: "",
       academic_year: "",
+      main_teacher_id: "",
+      room_id: "",
     });
     setOpen(true);
   };
@@ -169,10 +176,10 @@ const Classes = () => {
     setSelectedClass(item);
     setForm({
       name: item.name,
-      level: item.level,
-      teacher_id: item.teacher_id,
-      classroom_id: item.classroom_id,
-      academic_year: item.academic_year || "",
+      level: item.level || "",
+      academic_year: item.academic_year,
+      main_teacher_id: item.main_teacher_id || "",
+      room_id: item.room_id,
     });
     setOpen(true);
   };
@@ -183,18 +190,21 @@ const Classes = () => {
   };
 
   const handleSave = async () => {
-    if (!form.name || !form.level || !form.academic_year) {
-      enqueueSnackbar("Please fill required fields", { variant: "error" });
+    if (!form.name || !form.academic_year || !form.room_id) {
+      enqueueSnackbar(
+        "Please fill required fields (Name, Academic Year, Classroom)",
+        { variant: "error" },
+      );
       return;
     }
 
     const payload = {
+      establishment_id: establishmentID,
       name: form.name,
-      level: form.level,
-      teacher_id: form.teacher_id || "",
-      schedule: form.schedule || "",
-      classroom_id: form.classroom_id || "",
+      level: form.level || null,
       academic_year: form.academic_year,
+      main_teacher_id: form.main_teacher_id || null,
+      room_id: form.room_id,
     };
 
     try {
@@ -260,18 +270,23 @@ const Classes = () => {
 
   const getTeacherGender = (item: ClassItem) => {
     if (item.teacher_gender) return item.teacher_gender;
-    const found = teachers.find((t) => t.id === item.teacher_id);
+    const found = teachers.find((t) => t.id === item.main_teacher_id);
     return found ? found.gender : "male";
   };
 
   const getTeacherDisplayName = (item: ClassItem) => {
     if (item.teacher_name) return item.teacher_name;
-    const found = teachers.find((t) => t.id === item.teacher_id);
+    const found = teachers.find((t) => t.id === item.main_teacher_id);
     return found ? formatTeacherName(found) : "None";
   };
 
+  const getClassroomCapacity = (item: ClassItem) => {
+    const found = classrooms.find((r) => r.id === item.room_id);
+    return found ? found.capacity : null;
+  };
+
   const selectedTeacherOption =
-    teachers.find((t) => t.id === form.teacher_id) || null;
+    teachers.find((t) => t.id === form.main_teacher_id) || null;
 
   return (
     <Box sx={{ p: 2 }}>
@@ -314,152 +329,171 @@ const Classes = () => {
                 </Card>
               </Grid>
             ))
-          : classes.map((item) => (
-              <Grid size={{ xs: 12, sm: 6, md: 4 }} key={item.id}>
-                <Card
-                  variant="outlined"
-                  sx={{
-                    borderRadius: 2,
-                    border: "1px solid #2a2f3d",
-                    position: "relative",
-                    transition: "transform 0.2s",
-                    "&:hover": { transform: "translateY(-2px)" },
-                  }}
-                >
-                  <CardContent sx={{ p: 3 }}>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 2,
-                        mb: 2,
-                      }}
-                    >
+          : classes.map((item) => {
+              const capacity = getClassroomCapacity(item);
+              return (
+                <Grid size={{ xs: 12, sm: 6, md: 4 }} key={item.id}>
+                  <Card
+                    variant="outlined"
+                    sx={{
+                      borderRadius: 2,
+                      border: "1px solid #2a2f3d",
+                      position: "relative",
+                      transition: "transform 0.2s",
+                      "&:hover": { transform: "translateY(-2px)" },
+                    }}
+                  >
+                    <CardContent sx={{ p: 3 }}>
                       <Box
                         sx={{
-                          p: 1,
-                          borderRadius: 1,
-                          bgcolor: "success.shades",
-                          color: "success.main",
                           display: "flex",
+                          alignItems: "center",
+                          gap: 2,
+                          mb: 2,
                         }}
                       >
-                        <ApartmentIcon
-                          sx={{
-                            height: "34px",
-                            width: "34px",
-                          }}
-                        />
-                      </Box>
-                      <Box sx={{ minWidth: 0, flexGrow: 1 }}>
-                        <Typography variant="h6" fontWeight="600" noWrap>
-                          {item.name}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          Level: {item.level}
-                        </Typography>
-                      </Box>
-                      {item.academic_year && (
                         <Box
                           sx={{
-                            alignSelf: "flex-start",
-                            px: 1,
-                            py: 0.5,
+                            p: 1,
                             borderRadius: 1,
-                            bgcolor: "action.selected",
-                            border: "1px solid",
-                            borderColor: "divider",
+                            bgcolor: "success.shades",
+                            color: "success.main",
+                            display: "flex",
                           }}
                         >
-                          <Typography variant="caption" fontWeight="600">
-                            {item.academic_year}
+                          <ApartmentIcon
+                            sx={{
+                              height: "34px",
+                              width: "34px",
+                            }}
+                          />
+                        </Box>
+                        <Box sx={{ minWidth: 0, flexGrow: 1 }}>
+                          <Typography variant="h6" fontWeight="600" noWrap>
+                            {item.name}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            Level: {item.level || "N/A"}
                           </Typography>
                         </Box>
-                      )}
-                    </Box>
+                        {item.academic_year && (
+                          <Box
+                            sx={{
+                              alignSelf: "flex-start",
+                              px: 1,
+                              py: 0.5,
+                              borderRadius: 1,
+                              bgcolor: "action.selected",
+                              border: "1px solid",
+                              borderColor: "divider",
+                            }}
+                          >
+                            <Typography variant="caption" fontWeight="600">
+                              {item.academic_year}
+                            </Typography>
+                          </Box>
+                        )}
+                      </Box>
 
-                    <Box
-                      sx={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 1,
-                        mb: 1,
-                      }}
-                    >
                       <Box
                         sx={{
                           display: "flex",
-                          alignItems: "center",
+                          flexDirection: "column",
                           gap: 1,
-                          color: "text.secondary",
+                          mb: 1,
                         }}
                       >
-                        <img
-                          src={
-                            getTeacherGender(item) === "male"
-                              ? "/male.png"
-                              : "/female.png"
-                          }
-                          alt="Gender"
-                          style={{
-                            width: 20,
-                            height: 20,
-                            borderRadius: "50%",
-                            flexShrink: 0,
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 1,
+                            color: "text.secondary",
                           }}
-                        />
-                        <Typography variant="body2" noWrap>
-                          Teacher:{" "}
-                          <strong>{getTeacherDisplayName(item)}</strong>
-                        </Typography>
+                        >
+                          <img
+                            src={
+                              getTeacherGender(item) === "male"
+                                ? "/male.png"
+                                : "/female.png"
+                            }
+                            alt="Gender"
+                            style={{
+                              width: 20,
+                              height: 20,
+                              borderRadius: "50%",
+                              flexShrink: 0,
+                            }}
+                          />
+                          <Typography variant="body2" noWrap>
+                            Teacher:{" "}
+                            <strong>{getTeacherDisplayName(item)}</strong>
+                          </Typography>
+                        </Box>
+
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 1,
+                            color: "text.secondary",
+                          }}
+                        >
+                          <MeetingRoomIcon fontSize="small" color="action" />
+                          <Typography variant="body2" noWrap>
+                            Room:{" "}
+                            {item.classroom_name ||
+                              classrooms.find((r) => r.id === item.room_id)
+                                ?.name ||
+                              "None"}
+                          </Typography>
+                        </Box>
+
+                        {capacity !== null && capacity !== undefined && (
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 1,
+                              color: "text.secondary",
+                            }}
+                          >
+                            <GroupsIcon fontSize="small" color="action" />
+                            <Typography variant="body2" noWrap>
+                              Room Capacity: {capacity} seats
+                            </Typography>
+                          </Box>
+                        )}
                       </Box>
 
                       <Box
                         sx={{
                           display: "flex",
-                          alignItems: "center",
+                          justifyContent: "flex-end",
                           gap: 1,
-                          color: "text.secondary",
+                          mt: 2,
                         }}
                       >
-                        <MeetingRoomIcon fontSize="small" color="action" />
-                        <Typography variant="body2" noWrap>
-                          Room:{" "}
-                          {item.classroom_name ||
-                            classrooms.find((r) => r.id === item.classroom_id)
-                              ?.name ||
-                            "None"}
-                        </Typography>
+                        <IconButton
+                          size="small"
+                          onClick={() => handleOpenEdit(item)}
+                          disabled={actionLoading}
+                        >
+                          <EditIcon fontSize="small" color="primary" />
+                        </IconButton>
+                        <IconButton
+                          size="small"
+                          onClick={() => handleOpenDelete(item)}
+                          disabled={actionLoading}
+                        >
+                          <DeleteIcon fontSize="small" color="error" />
+                        </IconButton>
                       </Box>
-                    </Box>
-
-                    <Box
-                      sx={{
-                        display: "flex",
-                        justifyContent: "flex-end",
-                        gap: 1,
-                        mt: 2,
-                      }}
-                    >
-                      <IconButton
-                        size="small"
-                        onClick={() => handleOpenEdit(item)}
-                        disabled={actionLoading}
-                      >
-                        <EditIcon fontSize="small" color="primary" />
-                      </IconButton>
-                      <IconButton
-                        size="small"
-                        onClick={() => handleOpenDelete(item)}
-                        disabled={actionLoading}
-                      >
-                        <DeleteIcon fontSize="small" color="error" />
-                      </IconButton>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Grid>
-            ))}
+                    </CardContent>
+                  </Card>
+                </Grid>
+              );
+            })}
       </Grid>
 
       <Dialog
@@ -485,13 +519,13 @@ const Classes = () => {
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 fullWidth
-                label="Level *"
+                label="Level"
                 value={form.level || ""}
                 disabled={actionLoading}
                 onChange={(e) => setForm({ ...form, level: e.target.value })}
               />
             </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
+            <Grid size={{ xs: 12, sm: 12 }}>
               <TextField
                 fullWidth
                 label="Academic Year *"
@@ -511,7 +545,10 @@ const Classes = () => {
                 isOptionEqualToValue={(option, value) => option.id === value.id}
                 disabled={actionLoading}
                 onChange={(_, newValue) => {
-                  setForm({ ...form, teacher_id: newValue ? newValue.id : "" });
+                  setForm({
+                    ...form,
+                    main_teacher_id: newValue ? newValue.id : "",
+                  });
                 }}
                 renderOption={(props, option) => {
                   const { key, ...optionProps } = props;
@@ -584,19 +621,18 @@ const Classes = () => {
               <TextField
                 select
                 fullWidth
-                label="Classroom"
-                value={form.classroom_id || ""}
+                label="Classroom *"
+                value={form.room_id || ""}
                 disabled={actionLoading}
-                onChange={(e) =>
-                  setForm({ ...form, classroom_id: e.target.value })
-                }
+                onChange={(e) => setForm({ ...form, room_id: e.target.value })}
               >
-                <MenuItem value="">
-                  <em>None</em>
+                <MenuItem value="" disabled>
+                  <em>Select a room</em>
                 </MenuItem>
                 {classrooms.map((room) => (
                   <MenuItem key={room.id} value={room.id}>
                     {room.name} {room.building ? `(${room.building})` : ""}
+                    {room.capacity ? ` - Max: ${room.capacity} seats` : ""}
                   </MenuItem>
                 ))}
               </TextField>

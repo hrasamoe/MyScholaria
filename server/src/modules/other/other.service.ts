@@ -1,5 +1,5 @@
 import { pool } from "../../db/pool";
-import { ParentInfo, RoomInfo } from "./other.schema";
+import { ClassInfo, ParentInfo, RoomInfo } from "./other.schema";
 
 export async function createParent(
   parentData: ParentInfo,
@@ -206,6 +206,32 @@ export async function deleteRoom(roomID: any) {
     await client.query("BEGIN");
     const queryText = "DELETE FROM rooms WHERE id = $1";
     await client.query(queryText, [roomID]);
+    await client.query("COMMIT");
+  } catch (error: any) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+export async function createClasses(establishmentID: string, classData: ClassInfo) {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const queryText = `
+      INSERT INTO classes (name, level, academic_year, establishment_id, main_teacher_id,  created_at, updated_at)
+      VALUES ($1, $2, $3, $4, $5, $6)
+    `;
+    const values = [
+      classData.name,
+      classData.level,
+      classData.academicYear,
+      establishmentID,
+      new Date(),
+      new Date(),
+    ];
+    await client.query(queryText, values);
     await client.query("COMMIT");
   } catch (error: any) {
     await client.query("ROLLBACK");
