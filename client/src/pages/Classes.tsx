@@ -34,12 +34,17 @@ interface ClassItem {
   level: string | null;
   academic_year: string;
   main_teacher_id: string | null;
-  teacher_name?: string;
-  teacher_gender?: "male" | "female";
   room_id: string;
-  classroom_name?: string;
   created_at: string;
   updated_at: string;
+  teacher_pid: string | null;
+  teacher_profile_id: string | null;
+  teacher_full_name: string | null;
+  teacher_gender: "male" | "female" | null;
+  classroom_name: string | null;
+  classroom_capacity: number | null;
+  classroom_building: string | null;
+  classroom_type: string | null;
 }
 
 interface ClassroomOption {
@@ -59,43 +64,12 @@ interface TeacherOption {
 
 const API_URL = import.meta.env.VITE_API_URL;
 
-const initialFakeClasses: ClassItem[] = [
-  {
-    id: "fake-1",
-    establishment_id: "",
-    name: "Terminale S1",
-    level: "Lycée",
-    academic_year: "2025-2026",
-    main_teacher_id: "",
-    teacher_name: "Mme Rasoa R.",
-    teacher_gender: "female",
-    room_id: "",
-    classroom_name: "Salle 102 (Bâtiment A)",
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: "fake-2",
-    establishment_id: "",
-    name: "Seconde G2",
-    level: "Lycée",
-    academic_year: "2025-2026",
-    main_teacher_id: "",
-    teacher_name: "Mr Rakoto J.",
-    teacher_gender: "male",
-    room_id: "",
-    classroom_name: "Labo Physique",
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-];
-
 const Classes = () => {
   const { user } = useAuth();
   const establishmentID = user?.establishment_id || "";
   const { enqueueSnackbar } = useSnackbar();
 
-  const [classes, setClasses] = useState<ClassItem[]>(initialFakeClasses);
+  const [classes, setClasses] = useState<ClassItem[]>([]);
   const [classrooms, setClassrooms] = useState<ClassroomOption[]>([]);
   const [teachers, setTeachers] = useState<TeacherOption[]>([]);
   const [loading, setLoading] = useState(false);
@@ -127,7 +101,9 @@ const Classes = () => {
     try {
       setLoading(true);
       const [resClasses, resClassrooms, resTeachers] = await Promise.all([
-        fetch(`${API_URL}/utils/classes`, { credentials: "include" }),
+        fetch(`${API_URL}/api/establishment/classes-list/${establishmentID}`, {
+          credentials: "include",
+        }),
         fetch(`${API_URL}/api/utils/get-classrooms/${establishmentID}`, {
           credentials: "include",
         }),
@@ -138,7 +114,7 @@ const Classes = () => {
 
       if (resClasses.ok) {
         const classesData = await resClasses.json();
-        setClasses(classesData.length > 0 ? classesData : initialFakeClasses);
+        setClasses(classesData.length > 0 ? classesData : null);
       }
 
       if (resClassrooms.ok) {
@@ -207,10 +183,11 @@ const Classes = () => {
       establishementID: establishmentID,
       classRoomID: form.room_id,
     };
+
     try {
       setActionLoading(true);
       const url = selectedClass
-        ? `${API_URL}/api/establishment/classes/${selectedClass.id}`
+        ? `${API_URL}/api/establishment/edit-classes/${selectedClass.id}`
         : `${API_URL}/api/establishment/classes/${establishmentID}`;
 
       const method = selectedClass ? "PUT" : "POST";
@@ -247,11 +224,8 @@ const Classes = () => {
     try {
       setActionLoading(true);
       const response = await fetch(
-        `${API_URL}/api/establishment/classes/${selectedClass.id}`,
-        {
-          method: "DELETE",
-          credentials: "include",
-        },
+        `${API_URL}/api/establishment/delete-classes/${selectedClass.id}`,
+        { method: "DELETE", credentials: "include" },
       );
 
       if (!response.ok) throw new Error("Deletion failed");
@@ -266,23 +240,6 @@ const Classes = () => {
     } finally {
       setActionLoading(false);
     }
-  };
-
-  const getTeacherGender = (item: ClassItem) => {
-    if (item.teacher_gender) return item.teacher_gender;
-  const found = teachers.find((t) => t.pid === item.main_teacher_id);
-  return found ? found.gender : "male";
-  };
-
-  const getTeacherDisplayName = (item: ClassItem) => {
-    if (item.teacher_name) return item.teacher_name;
-    const found = teachers.find((t) => t.pid === item.main_teacher_id);
-    return found ? formatTeacherName(found) : "None";
-  };
-
-  const getClassroomCapacity = (item: ClassItem) => {
-    const found = classrooms.find((r) => r.id === item.room_id);
-    return found ? found.capacity : null;
   };
 
   const selectedTeacherOption =
@@ -329,80 +286,116 @@ const Classes = () => {
                 </Card>
               </Grid>
             ))
-          : classes.map((item) => {
-              const capacity = getClassroomCapacity(item);
-              return (
-                <Grid size={{ xs: 12, sm: 6, md: 4 }} key={item.id}>
-                  <Card
-                    variant="outlined"
-                    sx={{
-                      borderRadius: 2,
-                      border: "1px solid #2a2f3d",
-                      position: "relative",
-                      transition: "transform 0.2s",
-                      "&:hover": { transform: "translateY(-2px)" },
-                    }}
-                  >
-                    <CardContent sx={{ p: 3 }}>
+          : classes.map((item) => (
+              <Grid size={{ xs: 12, sm: 6, md: 4 }} key={item.id}>
+                <Card
+                  variant="outlined"
+                  sx={{
+                    borderRadius: 2,
+                    border: "1px solid #2a2f3d",
+                    position: "relative",
+                    transition: "transform 0.2s",
+                    "&:hover": { transform: "translateY(-2px)" },
+                  }}
+                >
+                  <CardContent sx={{ p: 3 }}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 2,
+                        mb: 2,
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          p: 1,
+                          borderRadius: 1,
+                          bgcolor: "success.shades",
+                          color: "success.main",
+                          display: "flex",
+                        }}
+                      >
+                        <ApartmentIcon sx={{ height: "34px", width: "34px" }} />
+                      </Box>
+                      <Box sx={{ minWidth: 0, flexGrow: 1 }}>
+                        <Typography variant="h6" fontWeight="600" noWrap>
+                          {item.name}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Level: {item.level || "N/A"}
+                        </Typography>
+                      </Box>
+                      {item.academic_year && (
+                        <Box
+                          sx={{
+                            alignSelf: "flex-start",
+                            px: 1,
+                            py: 0.5,
+                            borderRadius: 1,
+                            bgcolor: "action.selected",
+                            border: "1px solid",
+                            borderColor: "divider",
+                          }}
+                        >
+                          <Typography variant="caption" fontWeight="600">
+                            {item.academic_year}
+                          </Typography>
+                        </Box>
+                      )}
+                    </Box>
+
+                    <Box
+                      sx={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 1,
+                        mb: 1,
+                      }}
+                    >
                       <Box
                         sx={{
                           display: "flex",
                           alignItems: "center",
-                          gap: 2,
-                          mb: 2,
+                          gap: 1,
+                          color: "text.secondary",
                         }}
                       >
-                        <Box
-                          sx={{
-                            p: 1,
-                            borderRadius: 1,
-                            bgcolor: "success.shades",
-                            color: "success.main",
-                            display: "flex",
+                        <img
+                          src={
+                            item.teacher_gender === "female"
+                              ? "/female.png"
+                              : "/male.png"
+                          }
+                          alt="Gender"
+                          style={{
+                            width: 20,
+                            height: 20,
+                            borderRadius: "50%",
+                            flexShrink: 0,
                           }}
-                        >
-                          <ApartmentIcon
-                            sx={{
-                              height: "34px",
-                              width: "34px",
-                            }}
-                          />
-                        </Box>
-                        <Box sx={{ minWidth: 0, flexGrow: 1 }}>
-                          <Typography variant="h6" fontWeight="600" noWrap>
-                            {item.name}
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            Level: {item.level || "N/A"}
-                          </Typography>
-                        </Box>
-                        {item.academic_year && (
-                          <Box
-                            sx={{
-                              alignSelf: "flex-start",
-                              px: 1,
-                              py: 0.5,
-                              borderRadius: 1,
-                              bgcolor: "action.selected",
-                              border: "1px solid",
-                              borderColor: "divider",
-                            }}
-                          >
-                            <Typography variant="caption" fontWeight="600">
-                              {item.academic_year}
-                            </Typography>
-                          </Box>
-                        )}
+                        />
+                        <Typography variant="body2" noWrap>
+                          Teacher:{" "}
+                          <strong>{item.teacher_full_name || "None"}</strong>
+                        </Typography>
                       </Box>
 
                       <Box
                         sx={{
                           display: "flex",
-                          flexDirection: "column",
+                          alignItems: "center",
                           gap: 1,
-                          mb: 1,
+                          color: "text.secondary",
                         }}
                       >
+                        <MeetingRoomIcon fontSize="small" color="action" />
+                        <Typography variant="body2" noWrap>
+                          Room: {item.classroom_name || "None"}
+                        </Typography>
+                      </Box>
+
+                      {item.classroom_capacity != null && (
                         <Box
                           sx={{
                             display: "flex",
@@ -411,89 +404,41 @@ const Classes = () => {
                             color: "text.secondary",
                           }}
                         >
-                          <img
-                            src={
-                              getTeacherGender(item) === "male"
-                                ? "/male.png"
-                                : "/female.png"
-                            }
-                            alt="Gender"
-                            style={{
-                              width: 20,
-                              height: 20,
-                              borderRadius: "50%",
-                              flexShrink: 0,
-                            }}
-                          />
+                          <GroupsIcon fontSize="small" color="action" />
                           <Typography variant="body2" noWrap>
-                            Teacher:{" "}
-                            <strong>{getTeacherDisplayName(item)}</strong>
+                            Room Capacity: {item.classroom_capacity} seats
                           </Typography>
                         </Box>
+                      )}
+                    </Box>
 
-                        <Box
-                          sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 1,
-                            color: "text.secondary",
-                          }}
-                        >
-                          <MeetingRoomIcon fontSize="small" color="action" />
-                          <Typography variant="body2" noWrap>
-                            Room:{" "}
-                            {item.classroom_name ||
-                              classrooms.find((r) => r.id === item.room_id)
-                                ?.name ||
-                              "None"}
-                          </Typography>
-                        </Box>
-
-                        {capacity !== null && capacity !== undefined && (
-                          <Box
-                            sx={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: 1,
-                              color: "text.secondary",
-                            }}
-                          >
-                            <GroupsIcon fontSize="small" color="action" />
-                            <Typography variant="body2" noWrap>
-                              Room Capacity: {capacity} seats
-                            </Typography>
-                          </Box>
-                        )}
-                      </Box>
-
-                      <Box
-                        sx={{
-                          display: "flex",
-                          justifyContent: "flex-end",
-                          gap: 1,
-                          mt: 2,
-                        }}
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "flex-end",
+                        gap: 1,
+                        mt: 2,
+                      }}
+                    >
+                      <IconButton
+                        size="small"
+                        onClick={() => handleOpenEdit(item)}
+                        disabled={actionLoading}
                       >
-                        <IconButton
-                          size="small"
-                          onClick={() => handleOpenEdit(item)}
-                          disabled={actionLoading}
-                        >
-                          <EditIcon fontSize="small" color="primary" />
-                        </IconButton>
-                        <IconButton
-                          size="small"
-                          onClick={() => handleOpenDelete(item)}
-                          disabled={actionLoading}
-                        >
-                          <DeleteIcon fontSize="small" color="error" />
-                        </IconButton>
-                      </Box>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              );
-            })}
+                        <EditIcon fontSize="small" color="primary" />
+                      </IconButton>
+                      <IconButton
+                        size="small"
+                        onClick={() => handleOpenDelete(item)}
+                        disabled={actionLoading}
+                      >
+                        <DeleteIcon fontSize="small" color="error" />
+                      </IconButton>
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
       </Grid>
 
       <Dialog
@@ -542,7 +487,9 @@ const Classes = () => {
                 options={teachers}
                 value={selectedTeacherOption}
                 getOptionLabel={(option) => formatTeacherName(option)}
-                isOptionEqualToValue={(option, value) => option.pid === value.pid}
+                isOptionEqualToValue={(option, value) =>
+                  option.pid === value.pid
+                }
                 disabled={actionLoading}
                 onChange={(_, newValue) => {
                   setForm({

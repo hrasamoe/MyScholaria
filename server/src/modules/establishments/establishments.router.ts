@@ -8,8 +8,11 @@ import {
   approveMember,
   createClasses,
   createEtablishments,
+  deleteClass,
+  editClass,
   findAllMemberAproved,
   findPendingMember,
+  getClassList,
   getMyEstablishment,
   joinEstablishment,
   selectEstablishment,
@@ -210,6 +213,89 @@ establishementRouter.post(
       res
         .status(500)
         .json({ message: "An error occurred while creating the class" });
+    }
+  },
+);
+
+establishementRouter.get(
+  "/classes-list/:id",
+  RequireAuthOnly,
+  async (req: Request, res: Response) => {
+    try {
+      const establishmentID = req.params.id as string;
+      const classList = await getClassList(establishmentID);
+      res.status(200).json(classList);
+    } catch (error: any) {
+      if (error.errors) {
+        console.log(
+          "An error was occured while fetching the class list:",
+          error.errors[0].message,
+        );
+        return res.status(400).json({
+          message: error.errors[0].message,
+        });
+      }
+      res
+        .status(500)
+        .json({ message: "An error occurred while creating the class" });
+    }
+  },
+);
+
+establishementRouter.put(
+  "/edit-classes/:id",
+  RequireAuthOnly,
+  async (req: Request, res: Response) => {
+    try {
+      const establishmentID = req.params.id as string;
+      const classData = req.body as ClassInfo;
+      const newClass = await editClass(establishmentID, classData);
+      res.status(201).json({
+        message: "Class updated successfully",
+        data: newClass,
+      });
+    } catch (error: any) {
+      if (error.errors) {
+        console.log(
+          "An error was occured while editing the class:",
+          error.errors[0].message,
+        );
+        return res.status(400).json({
+          message: error.errors[0].message,
+        });
+      }
+
+      res
+        .status(500)
+        .json({ message: "An error occurred while updating the class" });
+    }
+  },
+);
+
+establishementRouter.delete(
+  "/delete-classes/:id",
+  RequireAuthOnly,
+  async (req: Request, res: Response) => {
+    try {
+      const classID = req.params.id as string;
+      await deleteClass(classID);
+      res.status(200).json({
+        message: "Class deleted successfully",
+      });
+    } catch (error: any) {
+      if (error.errors) {
+        console.log(
+          "An error was occured while deleting the class:",
+          error.errors[0].message,
+        );
+        return res.status(400).json({
+          message: error.errors[0].message,
+        });
+      }
+
+      res
+        .status(500)
+        .json({ message: "An error occurred while deleting the class" });
     }
   },
 );

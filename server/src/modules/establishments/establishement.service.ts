@@ -421,3 +421,88 @@ export async function createClasses(
     }
   }
 }
+
+export async function getClassList(establishmentID: string) {
+  const client = await pool.connect();
+  try {
+    const { rows } = await client.query(
+      `SELECT
+        c.id,
+        c.name,
+        c.level,
+        c.academic_year,
+        c.establishment_id,
+        c.main_teacher_id,
+        c.room_id,
+        c.created_at,
+        c.updated_at,
+
+        t.id                                    AS teacher_pid,
+        p.id                                    AS teacher_profile_id,
+        CONCAT(p.first_name, ' ', p.last_name)  AS teacher_full_name,
+        p.gender                                AS teacher_gender,
+
+        cr.name                                 AS classroom_name,
+        cr.capacity                             AS classroom_capacity,
+        cr.building                             AS classroom_building,
+        cr.type                                 AS classroom_type
+
+      FROM classes c
+      LEFT JOIN teachers t    ON c.main_teacher_id = t.id
+      LEFT JOIN profiles p    ON t.profile_id = p.id
+      LEFT JOIN rooms cr ON c.room_id = cr.id
+
+      WHERE c.establishment_id = $1
+      ORDER BY c.created_at DESC`,
+      [establishmentID],
+    );
+    return rows;
+  } catch (error: any) {
+    console.error("Error fetching class list:", error);
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+export async function editClass(classID: string, classData: ClassInfo) {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const queryText = `
+    UPDATE classes SET name = $1, level = $2, academic_year = $3, main_teacher_id = $4, room_id = $5, updated_at = $6
+    WHERE id = $7
+    `;
+    const values = [
+      classData.name,
+      classData.level,
+      classData.academicYear,
+      classData.mainTeacherID,
+      classData.classRoomID,
+      new Date(),
+      classID
+    ];
+    await client.query(queryText, values);
+    await client.query("COMMIT");
+  } catch (error: any) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+export async function deleteClass(classID: string) {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const queryText = `DELETE FROM classes WHERE id = $1`;
+    await client.query(queryText, [classID]);
+    await client.query("COMMIT");
+  } catch (error: any) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+}
