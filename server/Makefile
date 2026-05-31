@@ -5,4 +5,4 @@ dp:
 	cd ../; make dp
 
 start_server:
-	npm run built && npm run start
+	npm run build && npm run start
