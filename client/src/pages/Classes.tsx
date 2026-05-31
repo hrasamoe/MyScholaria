@@ -1,31 +1,30 @@
-import { useState, useEffect } from "react";
 import PageHeader from "@/components/PageHeader";
-import {
-  Button,
-  TextField,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  MenuItem,
-  Skeleton,
-  Card,
-  CardContent,
-  Typography,
-  Box,
-  IconButton,
-  Autocomplete,
-} from "@mui/material";
-import Grid from "@mui/material/Grid";
+import { useAuth } from "@/hooks/Authcontext";
 import AddIcon from "@mui/icons-material/Add";
-import EditIcon from "@mui/icons-material/Edit";
+import ApartmentIcon from "@mui/icons-material/Apartment";
 import DeleteIcon from "@mui/icons-material/Delete";
-import SchoolIcon from "@mui/icons-material/School";
+import EditIcon from "@mui/icons-material/Edit";
 import MeetingRoomIcon from "@mui/icons-material/MeetingRoom";
 import PersonIcon from "@mui/icons-material/Person";
-import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
+import {
+  Autocomplete,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  IconButton,
+  MenuItem,
+  Skeleton,
+  TextField,
+  Typography,
+} from "@mui/material";
+import Grid from "@mui/material/Grid";
 import { useSnackbar } from "notistack";
-import { useAuth } from "@/hooks/Authcontext";
+import { useEffect, useState } from "react";
 
 interface ClassItem {
   id: string;
@@ -34,10 +33,10 @@ interface ClassItem {
   teacher_id: string;
   teacher_name?: string;
   teacher_gender?: "male" | "female";
-  schedule: string;
   classroom_id: string;
   classroom_name?: string;
   students?: number;
+  academic_year: string;
 }
 
 interface ClassroomOption {
@@ -67,6 +66,7 @@ const initialFakeClasses: ClassItem[] = [
     classroom_id: "",
     classroom_name: "Salle 102 (Bâtiment A)",
     students: 35,
+    academic_year: "2025-2026",
   },
   {
     id: "fake-2",
@@ -79,6 +79,7 @@ const initialFakeClasses: ClassItem[] = [
     classroom_id: "",
     classroom_name: "Labo Physique",
     students: 30,
+    academic_year: "2025-2026",
   },
 ];
 
@@ -161,6 +162,7 @@ const Classes = () => {
       teacher_id: "",
       schedule: "",
       classroom_id: "",
+      academic_year: "",
     });
     setOpen(true);
   };
@@ -171,8 +173,8 @@ const Classes = () => {
       name: item.name,
       level: item.level,
       teacher_id: item.teacher_id,
-      schedule: item.schedule,
       classroom_id: item.classroom_id,
+      academic_year: item.academic_year || "",
     });
     setOpen(true);
   };
@@ -183,7 +185,7 @@ const Classes = () => {
   };
 
   const handleSave = async () => {
-    if (!form.name || !form.level) {
+    if (!form.name || !form.level || !form.academic_year) {
       enqueueSnackbar("Please fill required fields", { variant: "error" });
       return;
     }
@@ -194,6 +196,7 @@ const Classes = () => {
       teacher_id: form.teacher_id || "",
       schedule: form.schedule || "",
       classroom_id: form.classroom_id || "",
+      academic_year: form.academic_year,
     };
 
     try {
@@ -343,9 +346,14 @@ const Classes = () => {
                           display: "flex",
                         }}
                       >
-                        <SchoolIcon />
+                        <ApartmentIcon
+                          sx={{
+                            height: "34px",
+                            width: "34px",
+                          }}
+                        />
                       </Box>
-                      <Box sx={{ minWidth: 0 }}>
+                      <Box sx={{ minWidth: 0, flexGrow: 1 }}>
                         <Typography variant="h6" fontWeight="600" noWrap>
                           {item.name}
                         </Typography>
@@ -353,6 +361,23 @@ const Classes = () => {
                           Level: {item.level}
                         </Typography>
                       </Box>
+                      {item.academic_year && (
+                        <Box
+                          sx={{
+                            alignSelf: "flex-start",
+                            px: 1,
+                            py: 0.5,
+                            borderRadius: 1,
+                            bgcolor: "action.selected",
+                            border: "1px solid",
+                            borderColor: "divider",
+                          }}
+                        >
+                          <Typography variant="caption" fontWeight="600">
+                            {item.academic_year}
+                          </Typography>
+                        </Box>
+                      )}
                     </Box>
 
                     <Box
@@ -408,22 +433,6 @@ const Classes = () => {
                             "None"}
                         </Typography>
                       </Box>
-
-                      {item.schedule && (
-                        <Box
-                          sx={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 1,
-                            color: "text.secondary",
-                          }}
-                        >
-                          <CalendarMonthIcon fontSize="small" color="action" />
-                          <Typography variant="body2" noWrap>
-                            {item.schedule}
-                          </Typography>
-                        </Box>
-                      )}
                     </Box>
 
                     <Box
@@ -482,6 +491,18 @@ const Classes = () => {
                 value={form.level || ""}
                 disabled={actionLoading}
                 onChange={(e) => setForm({ ...form, level: e.target.value })}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TextField
+                fullWidth
+                label="Academic Year *"
+                placeholder="ex: 2025-2026"
+                value={form.academic_year || ""}
+                disabled={actionLoading}
+                onChange={(e) =>
+                  setForm({ ...form, academic_year: e.target.value })
+                }
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
@@ -581,15 +602,6 @@ const Classes = () => {
                   </MenuItem>
                 ))}
               </TextField>
-            </Grid>
-            <Grid size={12}>
-              <TextField
-                fullWidth
-                label="Schedule"
-                value={form.schedule || ""}
-                disabled={actionLoading}
-                onChange={(e) => setForm({ ...form, schedule: e.target.value })}
-              />
             </Grid>
           </Grid>
         </DialogContent>
