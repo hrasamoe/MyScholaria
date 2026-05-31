@@ -1,33 +1,34 @@
-import { useState, useEffect } from "react";
 import PageHeader from "@/components/PageHeader";
+import { useAuth } from "@/hooks/Authcontext";
 import AddIcon from "@mui/icons-material/Add";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import SaveIcon from "@mui/icons-material/Save";
+import SearchIcon from "@mui/icons-material/Search";
 import {
-  Button,
-  TextField,
-  Box,
-  Paper,
-  Typography,
-  Divider,
-  FormControlLabel,
-  Checkbox,
   Autocomplete,
+  Box,
+  Button,
+  Checkbox,
   Chip,
+  Container,
+  Divider,
+  FormControl,
+  FormControlLabel,
   FormHelperText,
+  FormLabel,
   InputLabel,
-  Select,
   MenuItem,
+  Paper,
   Radio,
   RadioGroup,
-  FormControl,
-  FormLabel,
+  Select,
+  TextField,
+  Typography,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
-import SaveIcon from "@mui/icons-material/Save";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import SearchIcon from "@mui/icons-material/Search";
 import { useSnackbar } from "notistack";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/hooks/Authcontext";
 
 interface StudentForm {
   firstName: string;
@@ -40,7 +41,7 @@ interface StudentForm {
   student_number: string;
   enrollment_date: string;
   class_id: string;
-  status: "active" | "inactive" | "suspended" | "graduated";
+  status: "active" | "expelled" | "transferred" | "graduated";
   medical_notes: string;
   photo_url: string;
   parent_ids: string[];
@@ -55,7 +56,7 @@ interface ParentOption {
 
 interface ClassOption {
   id: string;
-  className: string;
+  name: string;
 }
 
 const phoneRegex = /^(?:\+261\s?|0)\s?(?:32|33|34|37|38)(?:[\s-]?\d){7}$/;
@@ -85,7 +86,10 @@ const CreateStudent = () => {
       if (!establishmentID) return;
       try {
         const [resClasses, resParents] = await Promise.all([
-          fetch(`${API_URL}/utils/classes`, { credentials: "include" }),
+          fetch(
+            `${API_URL}/api/establishment/classes-list/${establishmentID}`,
+            { credentials: "include" },
+          ),
           fetch(`${API_URL}/api/utils/get-parent-list/${establishmentID}`, {
             credentials: "include",
           }),
@@ -148,9 +152,7 @@ const CreateStudent = () => {
     if (form.medical_notes?.trim() && !medicalConsentAccepted) {
       enqueueSnackbar(
         "You must obtain explicit consent to save health-related data",
-        {
-          variant: "warning",
-        },
+        { variant: "warning" },
       );
       return;
     }
@@ -163,7 +165,7 @@ const CreateStudent = () => {
     }
 
     try {
-      const response = await fetch(`${API_URL}/establishment/students`, {
+      const response = await fetch(`${API_URL}/api/students/create/${establishmentID}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -182,9 +184,7 @@ const CreateStudent = () => {
     } catch (error: any) {
       enqueueSnackbar(
         error.message || "An error occurred during registration",
-        {
-          variant: "error",
-        },
+        { variant: "error" },
       );
     }
   };
@@ -208,11 +208,12 @@ const CreateStudent = () => {
     form.parent_ids?.includes(option.id),
   );
 
+  // ✅ Corrigé : utilise "name" au lieu de "className"
   const selectedClass =
     classOptions.find((option) => option.id === form.class_id) || null;
 
   return (
-    <Box sx={{ maxWidth: 900, mx: "auto", p: 2 }}>
+    <Container sx={{ maxWidth: 900, mx: "auto", p: 2 }}>
       <PageHeader
         title="Create New Student"
         subtitle="Register a new student in your establishment"
@@ -301,7 +302,7 @@ const CreateStudent = () => {
               error={!!form.phone && !phoneRegex.test(form.phone)}
               helperText={
                 !!form.phone && !phoneRegex.test(form.phone)
-                  ? "Expected format: +261 32 11 987 65 or 032 11 98 765"
+                  ? "Expected format: +261 3X 11 987 65 or 03X 11 98 765"
                   : ""
               }
             />
@@ -348,7 +349,7 @@ const CreateStudent = () => {
             <Autocomplete
               options={classOptions}
               value={selectedClass}
-              getOptionLabel={(option) => option.className}
+              getOptionLabel={(option) => option.name}
               isOptionEqualToValue={(option, value) => option.id === value.id}
               onChange={(_, newValue) => {
                 setForm({
@@ -380,13 +381,13 @@ const CreateStudent = () => {
                 }
               >
                 <MenuItem value="active">Active</MenuItem>
-                <MenuItem value="inactive">Inactive</MenuItem>
-                <MenuItem value="suspended">Suspended</MenuItem>
+                <MenuItem value="expelled">Expelled</MenuItem>
+                <MenuItem value="transferred">Transferred</MenuItem>
                 <MenuItem value="graduated">Graduated</MenuItem>
               </Select>
             </FormControl>
           </Grid>
-          <Grid size={{ xs: 12, sm: 12 }}>
+          <Grid size={{ xs: 12 }}>
             <TextField
               fullWidth
               multiline
@@ -465,7 +466,6 @@ const CreateStudent = () => {
           <Typography variant="h6" sx={{ fontWeight: 600 }}>
             Parents / Guardians Link
           </Typography>
-
           <Button
             startIcon={<AddIcon />}
             variant="contained"
@@ -565,14 +565,23 @@ const CreateStudent = () => {
 
         <Box sx={{ mb: 3 }}>
           <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-            Data Protection Notice (RGPD)
+            Data Protection Notice (GDPR)
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
             The personal data collected through this form is strictly intended
             for the academic and administrative management of the student within
-            our establishment. It will not be shared with third parties without
-            your explicit consent and will be retained in accordance with legal
-            requirements.
+            our establishment. You can exercise your rights (access,
+            rectification, erasure) by contacting our Data Protection Officer.
+            Read our full{" "}
+            <a
+              href="/policy"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: "inherit", textDecoration: "underline" }}
+            >
+              Privacy Policy
+            </a>
+            .
           </Typography>
           <FormControlLabel
             control={
@@ -606,7 +615,7 @@ const CreateStudent = () => {
           </Button>
         </Box>
       </Paper>
-    </Box>
+    </Container>
   );
 };
 
