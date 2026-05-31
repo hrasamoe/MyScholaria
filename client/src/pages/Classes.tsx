@@ -50,6 +50,7 @@ interface ClassroomOption {
 }
 
 interface TeacherOption {
+  pid: string;
   id: string;
   first_name: string;
   last_name: string;
@@ -199,19 +200,18 @@ const Classes = () => {
     }
 
     const payload = {
-      establishment_id: establishmentID,
       name: form.name,
       level: form.level || null,
-      academic_year: form.academic_year,
-      main_teacher_id: form.main_teacher_id || null,
-      room_id: form.room_id,
+      academicYear: form.academic_year,
+      mainTeacherID: form.main_teacher_id || null,
+      establishementID: establishmentID,
+      classRoomID: form.room_id,
     };
-
     try {
       setActionLoading(true);
       const url = selectedClass
-        ? `${API_URL}/establishment/classes/${selectedClass.id}`
-        : `${API_URL}/establishment/classes/${establishmentID}`;
+        ? `${API_URL}/api/establishment/classes/${selectedClass.id}`
+        : `${API_URL}/api/establishment/classes/${establishmentID}`;
 
       const method = selectedClass ? "PUT" : "POST";
 
@@ -247,7 +247,7 @@ const Classes = () => {
     try {
       setActionLoading(true);
       const response = await fetch(
-        `${API_URL}/establishment/classes/${selectedClass.id}`,
+        `${API_URL}/api/establishment/classes/${selectedClass.id}`,
         {
           method: "DELETE",
           credentials: "include",
@@ -270,13 +270,13 @@ const Classes = () => {
 
   const getTeacherGender = (item: ClassItem) => {
     if (item.teacher_gender) return item.teacher_gender;
-    const found = teachers.find((t) => t.id === item.main_teacher_id);
-    return found ? found.gender : "male";
+  const found = teachers.find((t) => t.pid === item.main_teacher_id);
+  return found ? found.gender : "male";
   };
 
   const getTeacherDisplayName = (item: ClassItem) => {
     if (item.teacher_name) return item.teacher_name;
-    const found = teachers.find((t) => t.id === item.main_teacher_id);
+    const found = teachers.find((t) => t.pid === item.main_teacher_id);
     return found ? formatTeacherName(found) : "None";
   };
 
@@ -286,7 +286,7 @@ const Classes = () => {
   };
 
   const selectedTeacherOption =
-    teachers.find((t) => t.id === form.main_teacher_id) || null;
+    teachers.find((t) => t.pid === form.main_teacher_id) || null;
 
   return (
     <Box sx={{ p: 2 }}>
@@ -542,12 +542,12 @@ const Classes = () => {
                 options={teachers}
                 value={selectedTeacherOption}
                 getOptionLabel={(option) => formatTeacherName(option)}
-                isOptionEqualToValue={(option, value) => option.id === value.id}
+                isOptionEqualToValue={(option, value) => option.pid === value.pid}
                 disabled={actionLoading}
                 onChange={(_, newValue) => {
                   setForm({
                     ...form,
-                    main_teacher_id: newValue ? newValue.id : "",
+                    main_teacher_id: newValue ? newValue.pid : "",
                   });
                 }}
                 renderOption={(props, option) => {
@@ -555,7 +555,7 @@ const Classes = () => {
                   return (
                     <Box
                       component="li"
-                      key={option.id}
+                      key={option.pid}
                       {...optionProps}
                       sx={{ display: "flex", alignItems: "center", gap: 1.5 }}
                     >

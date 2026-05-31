@@ -1,7 +1,12 @@
-import { Router, Request, Response } from "express";
-import { establishementSchema, joinSchema } from "./establishments.schema";
+import { Request, Response, Router } from "express";
+import {
+  AuthRequest,
+  RequireAuth,
+  RequireAuthOnly,
+} from "../../middleware/auth.middleware";
 import {
   approveMember,
+  createClasses,
   createEtablishments,
   findAllMemberAproved,
   findPendingMember,
@@ -10,10 +15,10 @@ import {
   selectEstablishment,
 } from "./establishement.service";
 import {
-  AuthRequest,
-  RequireAuth,
-  RequireAuthOnly,
-} from "../../middleware/auth.middleware";
+  ClassInfo,
+  establishementSchema,
+  joinSchema,
+} from "./establishments.schema";
 
 export const establishementRouter = Router();
 
@@ -163,13 +168,48 @@ establishementRouter.post(
   async (req: AuthRequest, res: Response) => {
     try {
       const { email, establishmentId, isAproved, role } = req.body;
-      const response = await approveMember(email, establishmentId, isAproved, role);
+      const response = await approveMember(
+        email,
+        establishmentId,
+        isAproved,
+        role,
+      );
       return res.status(200).json(response);
     } catch (error: any) {
       console.error(error);
       return res
         .status(400)
         .json({ message: error.message || "An error occurred" });
+    }
+  },
+);
+
+establishementRouter.post(
+  "/classes/:id",
+  RequireAuthOnly,
+  async (req: Request, res: Response) => {
+    try {
+      const establishmentID = req.params.id as string;
+      const classData = req.body as ClassInfo;
+      const newClass = await createClasses(establishmentID, classData);
+      res.status(201).json({
+        message: "Class created successfully",
+        data: newClass,
+      });
+    } catch (error: any) {
+      if (error.errors) {
+        console.log(
+          "An error was occured while creating the class:",
+          error.errors[0].message,
+        );
+        return res.status(400).json({
+          message: error.errors[0].message,
+        });
+      }
+
+      res
+        .status(500)
+        .json({ message: "An error occurred while creating the class" });
     }
   },
 );

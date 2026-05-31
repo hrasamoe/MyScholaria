@@ -59,7 +59,7 @@ export async function getTeacherList(establishmentID: string) {
   try {
     await client.query("BEGIN");
     const queryText = `
-    SELECT p.id, p.first_name, p.last_name, p.gender, t.contract_type AS "contractType", t.specialization AS subject 
+    SELECT p.id, p.first_name, p.last_name, p.gender, t.contract_type AS "contractType", t.specialization AS subject, t.id AS "pid"
     FROM profiles p
     INNER JOIN teachers t ON  p.id = t.profile_id
     WHERE p.profile_statut = 'teacher'

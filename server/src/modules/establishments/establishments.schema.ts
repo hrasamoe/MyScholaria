@@ -67,11 +67,12 @@ export const joinSchema = z.object({
 
 export const classSchema = z.object({
   name: z.string().min(2, "Please provide the class name"),
-  level: z.string().min(4, "Please provide the class level"),
+  level: z.string().nullable().optional(),
   academicYear: z
     .string()
     .min(9, "Please provide the academic year in format YYYY-YYYY"),
-  mainTeacherID: z.string().min(4, "Please provide class main teacher"),
+  mainTeacherID: z.string().nullable().optional(), 
+  establishementID: z.string().min(4, "Please provide the establishment ID"),
   classRoomID: z.string().min(4, "Please provide the classroom"),
 });
 

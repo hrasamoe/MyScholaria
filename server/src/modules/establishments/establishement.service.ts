@@ -1,7 +1,11 @@
 import bcrypt from "bcryptjs";
 import { pool } from "../../db/pool";
-import { EstablishmentInput, JoinInput, ClassInfo } from "./establishments.schema";
 import { sendApprovalEmail } from "../../services/email/aprovalTemplate";
+import {
+  ClassInfo,
+  EstablishmentInput,
+  JoinInput,
+} from "./establishments.schema";
 
 export async function createEtablishments(data: EstablishmentInput) {
   const client = await pool.connect();
@@ -409,6 +413,7 @@ export async function createClasses(
     if (client) {
       await client.query("ROLLBACK");
     }
+    console.log(error);
     throw error;
   } finally {
     if (client) {
