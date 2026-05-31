@@ -65,5 +65,16 @@ export const joinSchema = z.object({
     .default("student"),
 });
 
+export const classSchema = z.object({
+  name: z.string().min(2, "Please provide the class name"),
+  level: z.string().min(4, "Please provide the class level"),
+  academicYear: z
+    .string()
+    .min(9, "Please provide the academic year in format YYYY-YYYY"),
+  mainTeacherID: z.string().min(4, "Please provide class main teacher"),
+  classRoomID: z.string().min(4, "Please provide the classroom"),
+});
+
+export type ClassInfo = z.infer<typeof classSchema>;
 export type JoinInput = z.infer<typeof joinSchema>;
 export type EstablishmentInput = z.infer<typeof establishementSchema>;

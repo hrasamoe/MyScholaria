@@ -1,6 +1,6 @@
 import bcrypt from "bcryptjs";
 import { pool } from "../../db/pool";
-import { EstablishmentInput, JoinInput } from "./establishments.schema";
+import { EstablishmentInput, JoinInput, ClassInfo } from "./establishments.schema";
 import { sendApprovalEmail } from "../../services/email/aprovalTemplate";
 
 export async function createEtablishments(data: EstablishmentInput) {
@@ -379,5 +379,40 @@ export async function approveMember(
     throw error;
   } finally {
     client.release();
+  }
+}
+
+export async function createClasses(
+  establishmentID: string,
+  classData: ClassInfo,
+) {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const queryText = `
+      INSERT INTO classes (name, level, academic_year, establishment_id, main_teacher_id, room_id, created_at, updated_at)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    `;
+    const values = [
+      classData.name,
+      classData.level,
+      classData.academicYear,
+      establishmentID,
+      classData.mainTeacherID,
+      classData.classRoomID,
+      new Date(),
+      new Date(),
+    ];
+    await client.query(queryText, values);
+    await client.query("COMMIT");
+  } catch (error: any) {
+    if (client) {
+      await client.query("ROLLBACK");
+    }
+    throw error;
+  } finally {
+    if (client) {
+      client.release();
+    }
   }
 }
