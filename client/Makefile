@@ -8,3 +8,6 @@ deploy: build
 
 pc:
 	cd ../; make pc
+
+start_client:
+	npm run dev
