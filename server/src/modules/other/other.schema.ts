@@ -32,6 +32,14 @@ export const roomSchema = z.object({
   equipment: z.string().min(0),
 });
 
+export const classSchema = z.object({
+  name: z.string().min(2, "Please provide the class name"),
+  level: z.string().min(4, "Please provide the class level"),
+  academicYear: z
+    .string()
+    .min(9, "Please provide the academic year in format YYYY-YYYY"),
+});
 
 export type ParentInfo = z.infer<typeof parentSchema>;
 export type RoomInfo = z.infer<typeof roomSchema>;
+export type ClassInfo = z.infer<typeof classSchema>;
