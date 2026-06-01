@@ -286,15 +286,6 @@ const StudentDetails = () => {
               <Button
                 size="small"
                 variant="outlined"
-                color="primary"
-                startIcon={<SchoolIcon />}
-                onClick={() => navigate(`/students/edit/${id}`)}
-              >
-                Change Class
-              </Button>
-              <Button
-                size="small"
-                variant="outlined"
                 color="success"
                 startIcon={<PersonAddIcon />}
                 onClick={() => navigate(`/students/edit/${id}`)}
