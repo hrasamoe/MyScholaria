@@ -13,6 +13,7 @@ import {
   Button,
   Card,
   CardContent,
+  Container,
   Dialog,
   DialogActions,
   DialogContent,
@@ -246,7 +247,7 @@ const Classes = () => {
     teachers.find((t) => t.pid === form.main_teacher_id) || null;
 
   return (
-    <Box sx={{ p: 2 }}>
+    <Container sx={{ p: 2 }}>
       <PageHeader
         title="Classes"
         subtitle={`${classes.length} classes`}
@@ -630,7 +631,7 @@ const Classes = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </Container>
   );
 };
 

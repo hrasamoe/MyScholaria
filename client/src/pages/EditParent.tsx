@@ -5,7 +5,7 @@ import {
   TextField,
   Box,
   Paper,
-  Typography,
+  Typography,Container,
   FormControl,
   FormLabel,
   RadioGroup,
@@ -148,7 +148,7 @@ const EditParent = () => {
   };
 
   return (
-    <Box sx={{ maxWidth: 900, mx: "auto", p: 2 }}>
+    <Container sx={{ maxWidth: 900, mx: "auto", p: 2 }}>
       <PageHeader
         title="Modify Parent Profile"
         subtitle="View and update information for this legal guardian"
@@ -372,7 +372,7 @@ const EditParent = () => {
           )}
         </Box>
       </Paper>
-    </Box>
+    </Container>
   );
 };
 

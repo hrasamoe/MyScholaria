@@ -12,7 +12,7 @@ import {
   FormHelperText,
   FormLabel,
   MenuItem,
-  Paper,
+  Paper,Container,
   Radio,
   RadioGroup,
   TextField,
@@ -183,7 +183,7 @@ const CreateTeacher = () => {
   };
 
   return (
-    <Box sx={{ maxWidth: 900, mx: "auto", p: 2 }}>
+    <Container sx={{ maxWidth: 900, mx: "auto", p: 2 }}>
       <PageHeader
         title="Create New Teacher Profile"
         subtitle="Register a new educator account in the system"
@@ -468,7 +468,7 @@ const CreateTeacher = () => {
           </Button>
         </Box>
       </Paper>
-    </Box>
+    </Container>
   );
 };
 
