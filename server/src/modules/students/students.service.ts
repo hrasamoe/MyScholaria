@@ -131,3 +131,39 @@ export async function deleteStudent(studentID: string) {
     client.release();
   }
 }
+
+export async function getStudentDetails(studentID: string) {
+  const client = await pool.connect();
+  try {
+    const query = `
+    SELECT 
+        s.id, 
+        s.student_number, 
+        s.status, 
+        s.medical_notes, 
+        p.first_name, 
+        p.last_name, 
+        p.email, 
+        p.phone, 
+        p.address,
+        p.date_of_birth, 
+        p.gender, 
+        c.name AS class_name,
+        p_parent.first_name AS parent_first_name,
+        p_parent.last_name AS parent_last_name
+    FROM students s
+    JOIN profiles p ON s.profile_id = p.id
+    JOIN classes c ON s.class_id = c.id
+    JOIN student_parents sp ON s.id = sp.student_id
+    JOIN profiles p_parent ON sp.parent_profile_id = p_parent.id
+    WHERE s.id = $1
+    `;
+    const { rows } = await client.query(query, [studentID]);
+    return rows[0];
+  } catch (error: any) {
+    console.log(error);
+    throw error;
+  } finally {
+    client.release();
+  }
+}
