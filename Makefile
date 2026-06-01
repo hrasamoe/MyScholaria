@@ -17,7 +17,8 @@ pc: po
 
 dp: pc
 	cd client && make deploy
-
+dev:
+	cd server && make dev
 start_client:
 	cd client && npm run dev
 

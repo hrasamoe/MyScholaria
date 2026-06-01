@@ -6,5 +6,8 @@ dp:
 
 build: 
 	npm run build
-start_server:
+start_server: build
 	npm run start
+
+dev:
+	npm run dev
