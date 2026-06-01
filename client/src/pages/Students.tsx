@@ -9,6 +9,7 @@ import {
   Button,
   Card,
   CardContent,
+  Chip,
   Dialog,
   DialogActions,
   DialogContent,
@@ -27,8 +28,10 @@ import { useNavigate } from "react-router-dom";
 interface Student {
   id: string;
   first_name: string;
+  student_number: string;
   last_name: string;
   gender: "male" | "female";
+  class_name: string;
 }
 
 const Students = () => {
@@ -242,17 +245,28 @@ const Students = () => {
                         style={{ width: 60, height: 60, flexShrink: 0 }}
                       />
                     )}
-                    <Typography
-                      fontWeight="500"
-                      noWrap
-                      sx={{
-                        textOverflow: "ellipsis",
-                        overflow: "hidden",
-                        fontSize: "18px",
-                      }}
-                    >
-                      {formatFirstName(student.first_name)} {student.last_name}
-                    </Typography>
+                    <Box>
+                      {" "}
+                      <Typography
+                        fontWeight="500"
+                        noWrap
+                        sx={{
+                          textOverflow: "ellipsis",
+                          overflow: "hidden",
+                          fontSize: "18px",
+                        }}
+                      >
+                        {formatFirstName(student.first_name)}{" "}
+                        {student.last_name}
+                      </Typography>{" "}
+                      <Chip
+                        label={student.student_number}
+                        size="small"
+                        variant="outlined"
+                        color="primary"
+                        sx={{ fontWeight: 600, borderRadius: 1 }}
+                      />
+                    </Box>
                   </Box>
 
                   <Box sx={{ display: "flex", gap: 0.5, flexShrink: 0 }}>
