@@ -207,7 +207,7 @@ const Students = () => {
               <Card
                 key={student.id}
                 variant="outlined"
-                onClick={() => navigate(`/students/edit/${student.id}`)}
+                onClick={() => navigate(`/students/details/${student.id}`)}
                 sx={{
                   cursor: "pointer",
                   border: "1px solid #2a2f3d",

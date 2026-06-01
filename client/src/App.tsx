@@ -10,7 +10,6 @@ import {
   RoleRoute,
 } from "./hooks/ProtectRoute";
 import { AppThemeProvider } from "./hooks/Themecontext";
-
 import Announcements from "./pages/Announcements";
 import Attendance from "./pages/Attendance";
 import Budget from "./pages/Budget";
@@ -26,6 +25,7 @@ import Dashboard from "./pages/Dashboard";
 import Diplomas from "./pages/Diplomas";
 import Duty from "./pages/Duty";
 import EditParent from "./pages/EditParent";
+import EditStudent from "./pages/EditStudent";
 import EditTeacher from "./pages/EditTeacher";
 import Events from "./pages/Events";
 import Exams from "./pages/Exams";
@@ -52,6 +52,7 @@ import Settings from "./pages/Settings";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
 import Staff from "./pages/Staff";
+import StudentDetails from "./pages/StudentDetails";
 import StudentPortal from "./pages/StudentPortal";
 import Students from "./pages/Students";
 import Subjects from "./pages/Subjects";
@@ -149,6 +150,11 @@ const App = () => (
               <Route element={<RoleRoute roles={["admin", "teacher"]} />}>
                 <Route path="/students/create" element={<CreateStudent />} />
                 <Route path="/students" element={<Students />} />
+                <Route
+                  path="/students/details/:id"
+                  element={<StudentDetails />}
+                />
+                <Route path="/students/edit/:id" element={<EditStudent />} />
                 <Route path="/teachers" element={<Teachers />} />
                 <Route path="/teachers/create" element={<CreateTeacher />} />
                 <Route path="/teachers/edit/:id" element={<EditTeacher />} />
