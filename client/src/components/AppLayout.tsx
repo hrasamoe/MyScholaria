@@ -1,9 +1,9 @@
-import { ReactNode, useEffect, useRef, useState } from "react";
-import { Box } from "@mui/material";
-import AppSidebar, { DRAWER_WIDTH, COLLAPSED_WIDTH } from "./AppSidebar";
-import { Outlet } from "react-router-dom";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+import { Box, Container } from "@mui/material";
 import { useSnackbar } from "notistack";
+import { useEffect, useRef, useState } from "react";
+import { Outlet } from "react-router-dom";
+import AppSidebar, { COLLAPSED_WIDTH, DRAWER_WIDTH } from "./AppSidebar";
 
 const AppLayout = ({}: {}) => {
   const isFirstRender = useRef(true);
@@ -44,7 +44,7 @@ const AppLayout = ({}: {}) => {
         collapsed={collapsed}
         onToggleCollapsed={() => setCollapsed((c) => !c)}
       />
-      <Box
+      <Container
         component="main"
         sx={{
           flexGrow: 1,
@@ -56,7 +56,7 @@ const AppLayout = ({}: {}) => {
         }}
       >
         <Outlet />
-      </Box>
+      </Container>
     </Box>
   );
 };
