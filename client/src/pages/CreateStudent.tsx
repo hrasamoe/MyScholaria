@@ -43,7 +43,6 @@ interface StudentForm {
   class_id: string;
   status: "active" | "expelled" | "transferred" | "graduated";
   medical_notes: string;
-  photo_url: string;
   parent_ids: string[];
 }
 
@@ -73,6 +72,7 @@ const CreateStudent = () => {
     gender: "",
   });
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
   const [rgpdAccepted, setRgpdAccepted] = useState(false);
   const [medicalConsentAccepted, setMedicalConsentAccepted] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
@@ -85,32 +85,28 @@ const CreateStudent = () => {
     const fetchData = async () => {
       if (!establishmentID) return;
       try {
+        setLoading(true);
         const [resClasses, resParents] = await Promise.all([
           fetch(
             `${API_URL}/api/establishment/classes-list/${establishmentID}`,
-            { credentials: "include" },
+            {
+              credentials: "include",
+            },
           ),
           fetch(`${API_URL}/api/utils/get-parent-list/${establishmentID}`, {
             credentials: "include",
           }),
         ]);
-
-        if (resClasses.ok) {
-          const classesData = await resClasses.json();
-          setClassOptions(classesData);
-        }
-
-        if (resParents.ok) {
-          const parentsData = await resParents.json();
-          setParentOptions(parentsData);
-        }
-      } catch (error) {
+        if (resClasses.ok) setClassOptions(await resClasses.json());
+        if (resParents.ok) setParentOptions(await resParents.json());
+      } catch {
         enqueueSnackbar("Error loading context data from API", {
           variant: "error",
         });
+      } finally {
+        setLoading(false);
       }
     };
-
     fetchData();
   }, [enqueueSnackbar, establishmentID]);
 
@@ -165,14 +161,32 @@ const CreateStudent = () => {
     }
 
     try {
-      const response = await fetch(`${API_URL}/api/students/create/${establishmentID}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      setLoading(true);
+      const body = {
+        firstName: form.firstName,
+        lastName: form.lastName,
+        gender: form.gender || null,
+        dateOfBirth: form.dateOfBirth || null,
+        email: form.email || null,
+        phone: form.phone || null,
+        address: form.address || null,
+        student_number: form.student_number,
+        enrollment_date: form.enrollment_date,
+        class_id: form.class_id || null,
+        status: form.status || "active",
+        medical_notes: form.medical_notes || null,
+        parent_ids: form.parent_ids || [],
+      };
+
+      const response = await fetch(
+        `${API_URL}/api/students/create/${establishmentID}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify(body),
         },
-        credentials: "include",
-        body: JSON.stringify(form),
-      });
+      );
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -186,6 +200,8 @@ const CreateStudent = () => {
         error.message || "An error occurred during registration",
         { variant: "error" },
       );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -199,18 +215,16 @@ const CreateStudent = () => {
         ? parts[0]
         : `${parts[0]} ${parts
             .slice(1)
-            .map((part) => `${part[0].toUpperCase()}.`)
+            .map((p) => `${p[0].toUpperCase()}.`)
             .join(" ")}`;
     return `${formattedFirst} ${lastName}`.trim();
   };
 
-  const selectedParents = parentOptions.filter((option) =>
-    form.parent_ids?.includes(option.id),
+  const selectedParents = parentOptions.filter((o) =>
+    form.parent_ids?.includes(o.id),
   );
-
-  // ✅ Corrigé : utilise "name" au lieu de "className"
   const selectedClass =
-    classOptions.find((option) => option.id === form.class_id) || null;
+    classOptions.find((o) => o.id === form.class_id) || null;
 
   return (
     <Container sx={{ maxWidth: 900, mx: "auto", p: 2 }}>
@@ -220,6 +234,7 @@ const CreateStudent = () => {
         action={
           <Button
             variant="outlined"
+            disabled={loading}
             startIcon={<ArrowBackIcon />}
             onClick={() => navigate(-1)}
           >
@@ -260,12 +275,12 @@ const CreateStudent = () => {
                 onChange={(e) => setForm({ ...form, gender: e.target.value })}
               >
                 <FormControlLabel
-                  value="Male"
+                  value="male"
                   control={<Radio size="small" />}
                   label="Male"
                 />
                 <FormControlLabel
-                  value="Female"
+                  value="female"
                   control={<Radio size="small" />}
                   label="Female"
                 />
@@ -351,12 +366,9 @@ const CreateStudent = () => {
               value={selectedClass}
               getOptionLabel={(option) => option.name}
               isOptionEqualToValue={(option, value) => option.id === value.id}
-              onChange={(_, newValue) => {
-                setForm({
-                  ...form,
-                  class_id: newValue ? newValue.id : "",
-                });
-              }}
+              onChange={(_, newValue) =>
+                setForm({ ...form, class_id: newValue ? newValue.id : "" })
+              }
               renderInput={(params) => (
                 <TextField
                   {...params}
@@ -471,7 +483,7 @@ const CreateStudent = () => {
             variant="contained"
             onClick={() => navigate("/parents/create")}
             color="success"
-            sx={{ height: "30px", width: "auto" }}
+            sx={{ height: "30px" }}
           >
             Create new parent
           </Button>
@@ -484,12 +496,9 @@ const CreateStudent = () => {
               value={selectedParents}
               getOptionLabel={(option) => formatParentName(option)}
               isOptionEqualToValue={(option, value) => option.id === value.id}
-              onChange={(_, newValue) => {
-                setForm({
-                  ...form,
-                  parent_ids: newValue.map((parent) => parent.id),
-                });
-              }}
+              onChange={(_, newValue) =>
+                setForm({ ...form, parent_ids: newValue.map((p) => p.id) })
+              }
               renderOption={(props, option) => {
                 const { key, ...optionProps } = props;
                 return (
@@ -598,7 +607,7 @@ const CreateStudent = () => {
         <Box
           sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mt: 4 }}
         >
-          <Button variant="outlined" onClick={handleCancel}>
+          <Button disabled={loading} variant="outlined" onClick={handleCancel}>
             Reset Form
           </Button>
           <Button
@@ -608,6 +617,7 @@ const CreateStudent = () => {
             onClick={handleSave}
             disabled={
               !rgpdAccepted ||
+              loading ||
               (!!form.medical_notes?.trim() && !medicalConsentAccepted)
             }
           >
