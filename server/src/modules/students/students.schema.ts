@@ -6,6 +6,7 @@ export const studentSchema = z.object({
   firstName: z.string().min(2, "Please provide the student's first name"),
   lastName: z.string().min(2, "Please provide the student's last name"),
   birth_date: z.string().min(1, "Please provide a birth date"),
+  enrollment_date: z.string().min(1, "Please provide an enrollment date"),
   email: z.string().email("Invalid email").optional(),
   phone: z.string().regex(phoneRegex, "Invalid phone number").optional(),
   address: z.string().min(5, "Invalid address").optional(),
@@ -13,7 +14,9 @@ export const studentSchema = z.object({
   classID: z.string().min(1, "Please provide a class"),
   IDNumber: z.string().min(1, "Please provide an ID number"),
   parentID: z.string().min(1, "Please provide a parent"),
-  status: z.enum(["active", "expelled", "transferred", "graduated"]).default("active"),
+  status: z
+    .enum(["active", "expelled", "transferred", "graduated"])
+    .default("active"),
   medical_notes: z.string().optional(),
 });
 
