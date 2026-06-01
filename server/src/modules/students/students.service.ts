@@ -142,6 +142,7 @@ export async function getStudentDetails(studentID: string) {
         s.student_number, 
         s.status, 
         s.medical_notes, 
+        s.class_id,
         p.first_name, 
         p.last_name, 
         p.email, 

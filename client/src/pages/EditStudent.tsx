@@ -22,6 +22,7 @@ import {
   Radio,
   RadioGroup,
   Select,
+  Skeleton,
   TextField,
   Typography,
 } from "@mui/material";
@@ -135,7 +136,7 @@ const EditStudent = () => {
           enrollment_date: data.enrollment_date
             ? data.enrollment_date.split("T")[0]
             : "",
-          class_id: data.class_id || "",
+          class_id: data.class_id ? String(data.class_id) : "",
           status: data.status || "active",
           medical_notes: data.medical_notes || "",
           parent_ids: data.parent_ids || [],
@@ -253,8 +254,9 @@ const EditStudent = () => {
   const selectedParents = parentOptions.filter((o) =>
     form.parent_ids?.includes(o.id),
   );
+
   const selectedClass =
-    classOptions.find((o) => o.id === form.class_id) || null;
+    classOptions.find((o) => String(o.id) === String(form.class_id)) || null;
 
   return (
     <Container sx={{ maxWidth: 900, mx: "auto", p: 2 }}>
@@ -274,295 +276,351 @@ const EditStudent = () => {
       />
 
       <Paper variant="outlined" sx={{ p: 4, mt: 3, borderRadius: 2 }}>
-        <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-          Identity & Profile Information
-        </Typography>
-        <Grid container spacing={3}>
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <TextField
-              fullWidth
-              label="First Name *"
-              value={form.firstName || ""}
-              onChange={(e) => setForm({ ...form, firstName: e.target.value })}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <TextField
-              fullWidth
-              label="Last Name *"
-              value={form.lastName || ""}
-              onChange={(e) => setForm({ ...form, lastName: e.target.value })}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <FormControl component="fieldset" sx={{ mt: 1 }}>
-              <FormLabel component="legend" sx={{ fontSize: "0.85rem" }}>
-                Gender
-              </FormLabel>
-              <RadioGroup
-                row
-                value={form.gender || ""}
-                onChange={(e) => setForm({ ...form, gender: e.target.value })}
-              >
-                <FormControlLabel
-                  value="male"
-                  control={<Radio size="small" />}
-                  label="Male"
-                />
-                <FormControlLabel
-                  value="female"
-                  control={<Radio size="small" />}
-                  label="Female"
-                />
-              </RadioGroup>
-            </FormControl>
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <TextField
-              fullWidth
-              label="Date of Birth"
-              type="date"
-              InputLabelProps={{ shrink: true }}
-              value={form.dateOfBirth || ""}
-              onChange={(e) =>
-                setForm({ ...form, dateOfBirth: e.target.value })
-              }
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <TextField
-              fullWidth
-              label="Email"
-              type="email"
-              value={form.email || ""}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <TextField
-              fullWidth
-              label="Phone"
-              value={form.phone || ""}
-              onChange={(e) => setForm({ ...form, phone: e.target.value })}
-              error={!!form.phone && !phoneRegex.test(form.phone)}
-              helperText={
-                !!form.phone && !phoneRegex.test(form.phone)
-                  ? "Expected format: +261 3X 11 987 65 or 03X 11 98 765"
-                  : ""
-              }
-            />
-          </Grid>
-          <Grid size={{ xs: 12 }}>
-            <TextField
-              fullWidth
-              label="Address"
-              value={form.address || ""}
-              onChange={(e) => setForm({ ...form, address: e.target.value })}
-            />
-          </Grid>
-        </Grid>
-
-        <Divider sx={{ my: 4 }} />
-
-        <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-          Academic Institutional Data
-        </Typography>
-        <Grid container spacing={3}>
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <TextField
-              fullWidth
-              label="Student ID *"
-              value={form.student_number || ""}
-              onChange={(e) =>
-                setForm({ ...form, student_number: e.target.value })
-              }
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <TextField
-              fullWidth
-              label="Enrollment Date *"
-              type="date"
-              InputLabelProps={{ shrink: true }}
-              value={form.enrollment_date || ""}
-              onChange={(e) =>
-                setForm({ ...form, enrollment_date: e.target.value })
-              }
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <Autocomplete
-              options={classOptions}
-              value={selectedClass}
-              getOptionLabel={(option) => option.name}
-              isOptionEqualToValue={(option, value) => option.id === value.id}
-              onChange={(_, newValue) =>
-                setForm({ ...form, class_id: newValue ? newValue.id : "" })
-              }
-              renderInput={(params) => (
+        {loading ? (
+          <Box>
+            <Skeleton variant="text" width={250} height={32} sx={{ mb: 2 }} />
+            <Grid container spacing={3}>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Skeleton variant="rounded" height={56} />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Skeleton variant="rounded" height={56} />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Skeleton variant="rounded" height={40} sx={{ mt: 1 }} />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Skeleton variant="rounded" height={56} />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Skeleton variant="rounded" height={56} />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Skeleton variant="rounded" height={56} />
+              </Grid>
+              <Grid size={{ xs: 12 }}>
+                <Skeleton variant="rounded" height={56} />
+              </Grid>
+            </Grid>
+            <Divider sx={{ my: 4 }} />
+            <Skeleton variant="text" width={250} height={32} sx={{ mb: 2 }} />
+            <Grid container spacing={3}>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Skeleton variant="rounded" height={56} />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Skeleton variant="rounded" height={56} />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Skeleton variant="rounded" height={56} />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Skeleton variant="rounded" height={56} />
+              </Grid>
+              <Grid size={{ xs: 12 }}>
+                <Skeleton variant="rounded" height={80} />
+              </Grid>
+            </Grid>
+            <Divider sx={{ my: 4 }} />
+            <Box
+              sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}
+            >
+              <Skeleton variant="text" width={200} height={32} />
+              <Skeleton variant="rounded" width={140} height={30} />
+            </Box>
+            <Skeleton variant="rounded" height={56} />
+            <Divider sx={{ my: 4 }} />
+            <Skeleton variant="rectangular" height={60} sx={{ mb: 2 }} />
+            <Skeleton variant="text" width={400} height={24} />
+          </Box>
+        ) : (
+          <>
+            <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+              Identity & Profile Information
+            </Typography>
+            <Grid container spacing={3}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
-                  {...params}
-                  label="Class"
-                  placeholder="Select a class..."
                   fullWidth
-                />
-              )}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <FormControl fullWidth>
-              <InputLabel>Status *</InputLabel>
-              <Select
-                value={form.status || "active"}
-                label="Status *"
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    status: e.target.value as StudentForm["status"],
-                  })
-                }
-              >
-                <MenuItem value="active">Active</MenuItem>
-                <MenuItem value="expelled">Expelled</MenuItem>
-                <MenuItem value="transferred">Transferred</MenuItem>
-                <MenuItem value="graduated">Graduated</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid size={{ xs: 12 }}>
-            <TextField
-              fullWidth
-              multiline
-              rows={3}
-              label="Medical Notes (Allergies, chronic conditions, etc.)"
-              value={form.medical_notes || ""}
-              onChange={(e) =>
-                setForm({ ...form, medical_notes: e.target.value })
-              }
-            />
-            {form.medical_notes?.trim() && (
-              <Box
-                sx={{
-                  mt: 1,
-                  p: 2,
-                  bgcolor: medicalConsentAccepted
-                    ? "success.shades"
-                    : "error.shades",
-                  border: "1px solid",
-                  borderColor: medicalConsentAccepted
-                    ? "success.light"
-                    : "error.light",
-                  borderRadius: 1,
-                  transition: "all 0.2s ease-in-out",
-                }}
-              >
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={medicalConsentAccepted}
-                      onChange={(e) =>
-                        setMedicalConsentAccepted(e.target.checked)
-                      }
-                      color={medicalConsentAccepted ? "success" : "error"}
-                    />
-                  }
-                  label={
-                    <Typography
-                      variant="body2"
-                      color={
-                        medicalConsentAccepted ? "success.main" : "error.main"
-                      }
-                      fontWeight="500"
-                    >
-                      I confirm that the parents have provided signed explicit
-                      consent to record these sensitive medical details. *
-                    </Typography>
+                  label="First Name *"
+                  value={form.firstName || ""}
+                  onChange={(e) =>
+                    setForm({ ...form, firstName: e.target.value })
                   }
                 />
-                <FormHelperText
-                  error={!medicalConsentAccepted}
-                  sx={{
-                    color: medicalConsentAccepted
-                      ? "success.main"
-                      : "error.main",
-                  }}
-                >
-                  GDPR compliance: Health data requires explicit authorization
-                  and must be restricted to authorized staff only.
-                </FormHelperText>
-              </Box>
-            )}
-          </Grid>
-        </Grid>
-
-        <Divider sx={{ my: 4 }} />
-
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            mb: 2,
-          }}
-        >
-          <Typography variant="h6" sx={{ fontWeight: 600 }}>
-            Parents / Guardians Link
-          </Typography>
-          <Button
-            startIcon={<AddIcon />}
-            variant="contained"
-            onClick={() => navigate("/parents/create")}
-            color="success"
-            sx={{ height: "30px" }}
-          >
-            Create new parent
-          </Button>
-        </Box>
-        <Grid container spacing={3}>
-          <Grid size={{ xs: 12 }}>
-            <Autocomplete
-              multiple
-              options={parentOptions}
-              value={selectedParents}
-              getOptionLabel={(option) => formatParentName(option)}
-              isOptionEqualToValue={(option, value) => option.id === value.id}
-              onChange={(_, newValue) =>
-                setForm({ ...form, parent_ids: newValue.map((p) => p.id) })
-              }
-              renderOption={(props, option) => {
-                const { key, ...optionProps } = props;
-                return (
-                  <Box
-                    component="li"
-                    key={option.id}
-                    {...optionProps}
-                    sx={{ display: "flex", alignItems: "center", gap: 1.5 }}
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  fullWidth
+                  label="Last Name *"
+                  value={form.lastName || ""}
+                  onChange={(e) =>
+                    setForm({ ...form, lastName: e.target.value })
+                  }
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <FormControl component="fieldset" sx={{ mt: 1 }}>
+                  <FormLabel component="legend" sx={{ fontSize: "0.85rem" }}>
+                    Gender
+                  </FormLabel>
+                  <RadioGroup
+                    row
+                    value={form.gender || ""}
+                    onChange={(e) =>
+                      setForm({ ...form, gender: e.target.value })
+                    }
                   >
-                    <img
-                      src={
-                        option.gender === "male" ? "/male.png" : "/female.png"
-                      }
-                      alt={option.gender}
-                      style={{
-                        width: 30,
-                        height: 30,
-                        borderRadius: "50%",
-                        flexShrink: 0,
-                      }}
+                    <FormControlLabel
+                      value="male"
+                      control={<Radio size="small" />}
+                      label="Male"
                     />
-                    <Typography variant="body2">
-                      {formatParentName(option)}
-                    </Typography>
+                    <FormControlLabel
+                      value="female"
+                      control={<Radio size="small" />}
+                      label="Female"
+                    />
+                  </RadioGroup>
+                </FormControl>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  fullWidth
+                  label="Date of Birth"
+                  type="date"
+                  InputLabelProps={{ shrink: true }}
+                  value={form.dateOfBirth || ""}
+                  onChange={(e) =>
+                    setForm({ ...form, dateOfBirth: e.target.value })
+                  }
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  fullWidth
+                  label="Email"
+                  type="email"
+                  value={form.email || ""}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  fullWidth
+                  label="Phone"
+                  value={form.phone || ""}
+                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                  error={!!form.phone && !phoneRegex.test(form.phone)}
+                  helperText={
+                    !!form.phone && !phoneRegex.test(form.phone)
+                      ? "Expected format: +261 3X 11 987 65 or 03X 11 98 765"
+                      : ""
+                  }
+                />
+              </Grid>
+              <Grid size={{ xs: 12 }}>
+                <TextField
+                  fullWidth
+                  label="Address"
+                  value={form.address || ""}
+                  onChange={(e) =>
+                    setForm({ ...form, address: e.target.value })
+                  }
+                />
+              </Grid>
+            </Grid>
+
+            <Divider sx={{ my: 4 }} />
+
+            <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+              Academic Institutional Data
+            </Typography>
+            <Grid container spacing={3}>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  fullWidth
+                  label="Student ID *"
+                  value={form.student_number || ""}
+                  onChange={(e) =>
+                    setForm({ ...form, student_number: e.target.value })
+                  }
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  fullWidth
+                  label="Enrollment Date *"
+                  type="date"
+                  InputLabelProps={{ shrink: true }}
+                  value={form.enrollment_date || ""}
+                  onChange={(e) =>
+                    setForm({ ...form, enrollment_date: e.target.value })
+                  }
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Autocomplete
+                  options={classOptions}
+                  value={selectedClass}
+                  getOptionLabel={(option) => option.name}
+                  isOptionEqualToValue={(option, value) =>
+                    String(option.id) === String(value.id)
+                  }
+                  onChange={(_, newValue) =>
+                    setForm({
+                      ...form,
+                      class_id: newValue ? String(newValue.id) : "",
+                    })
+                  }
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Class"
+                      placeholder="Select a class..."
+                      fullWidth
+                    />
+                  )}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <FormControl fullWidth>
+                  <InputLabel>Status *</InputLabel>
+                  <Select
+                    value={form.status || "active"}
+                    label="Status *"
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        status: e.target.value as StudentForm["status"],
+                      })
+                    }
+                  >
+                    <MenuItem value="active">Active</MenuItem>
+                    <MenuItem value="expelled">Expelled</MenuItem>
+                    <MenuItem value="transferred">Transferred</MenuItem>
+                    <MenuItem value="graduated">Graduated</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid size={{ xs: 12 }}>
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={3}
+                  label="Medical Notes (Allergies, chronic conditions, etc.)"
+                  value={form.medical_notes || ""}
+                  onChange={(e) =>
+                    setForm({ ...form, medical_notes: e.target.value })
+                  }
+                />
+                {form.medical_notes?.trim() && (
+                  <Box
+                    sx={{
+                      mt: 1,
+                      p: 2,
+                      bgcolor: medicalConsentAccepted
+                        ? "success.shades"
+                        : "error.shades",
+                      border: "1px solid",
+                      borderColor: medicalConsentAccepted
+                        ? "success.light"
+                        : "error.light",
+                      borderRadius: 1,
+                      transition: "all 0.2s ease-in-out",
+                    }}
+                  >
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={medicalConsentAccepted}
+                          onChange={(e) =>
+                            setMedicalConsentAccepted(e.target.checked)
+                          }
+                          color={medicalConsentAccepted ? "success" : "error"}
+                        />
+                      }
+                      label={
+                        <Typography
+                          variant="body2"
+                          color={
+                            medicalConsentAccepted
+                              ? "success.main"
+                              : "error.main"
+                          }
+                          fontWeight="500"
+                        >
+                          I confirm that the parents have provided signed
+                          explicit consent to record these sensitive medical
+                          details. *
+                        </Typography>
+                      }
+                    />
+                    <FormHelperText
+                      error={!medicalConsentAccepted}
+                      sx={{
+                        color: medicalConsentAccepted
+                          ? "success.main"
+                          : "error.main",
+                      }}
+                    >
+                      GDPR compliance: Health data requires explicit
+                      authorization and must be restricted to authorized staff
+                      only.
+                    </FormHelperText>
                   </Box>
-                );
+                )}
+              </Grid>
+            </Grid>
+
+            <Divider sx={{ my: 4 }} />
+
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                mb: 2,
               }}
-              renderTags={(tagValue, getTagProps) =>
-                tagValue.map((option, index) => {
-                  const { key, ...tagProps } = getTagProps({ index });
-                  return (
-                    <Chip
-                      key={option.id}
-                      avatar={
+            >
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                Parents / Guardians Link
+              </Typography>
+              <Button
+                startIcon={<AddIcon />}
+                variant="contained"
+                onClick={() => navigate("/parents/create")}
+                color="success"
+                sx={{ height: "30px" }}
+              >
+                Create new parent
+              </Button>
+            </Box>
+            <Grid container spacing={3}>
+              <Grid size={{ xs: 12 }}>
+                <Autocomplete
+                  multiple
+                  options={parentOptions}
+                  value={selectedParents}
+                  getOptionLabel={(option) => formatParentName(option)}
+                  isOptionEqualToValue={(option, value) =>
+                    String(option.id) === String(value.id)
+                  }
+                  onChange={(_, newValue) =>
+                    setForm({
+                      ...form,
+                      parent_ids: newValue.map((p) => String(p.id)),
+                    })
+                  }
+                  renderOption={(props, option) => {
+                    const { key, ...optionProps } = props;
+                    return (
+                      <Box
+                        component="li"
+                        key={option.id}
+                        {...optionProps}
+                        sx={{ display: "flex", alignItems: "center", gap: 1.5 }}
+                      >
                         <img
                           src={
                             option.gender === "male"
@@ -570,90 +628,131 @@ const EditStudent = () => {
                               : "/female.png"
                           }
                           alt={option.gender}
-                          style={{ width: 24, height: 24, borderRadius: "50%" }}
+                          style={{
+                            width: 30,
+                            height: 30,
+                            borderRadius: "50%",
+                            flexShrink: 0,
+                          }}
                         />
-                      }
-                      label={formatParentName(option)}
-                      {...tagProps}
-                    />
-                  );
-                })
-              }
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Select Parents / Guardians"
-                  placeholder="Search and add parents..."
-                  fullWidth
-                  InputProps={{
-                    ...params.InputProps,
-                    startAdornment: (
-                      <>
-                        <SearchIcon color="action" sx={{ mr: 1 }} />
-                        {params.InputProps.startAdornment}
-                      </>
-                    ),
+                        <Typography variant="body2">
+                          {formatParentName(option)}
+                        </Typography>
+                      </Box>
+                    );
                   }}
+                  renderTags={(tagValue, getTagProps) =>
+                    tagValue.map((option, index) => {
+                      const { key, ...tagProps } = getTagProps({ index });
+                      return (
+                        <Chip
+                          key={option.id}
+                          avatar={
+                            <img
+                              src={
+                                option.gender === "male"
+                                  ? "/male.png"
+                                  : "/female.png"
+                              }
+                              alt={option.gender}
+                              style={{
+                                width: 24,
+                                height: 24,
+                                borderRadius: "50%",
+                              }}
+                            />
+                          }
+                          label={formatParentName(option)}
+                          {...tagProps}
+                        />
+                      );
+                    })
+                  }
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Select Parents / Guardians"
+                      placeholder="Search and add parents..."
+                      fullWidth
+                      InputProps={{
+                        ...params.InputProps,
+                        startAdornment: (
+                          <>
+                            <SearchIcon color="action" sx={{ mr: 1 }} />
+                            {params.InputProps.startAdornment}
+                          </>
+                        ),
+                      }}
+                    />
+                  )}
                 />
-              )}
-            />
-          </Grid>
-        </Grid>
+              </Grid>
+            </Grid>
 
-        <Divider sx={{ my: 4 }} />
+            <Divider sx={{ my: 4 }} />
 
-        <Box sx={{ mb: 3 }}>
-          <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-            Data Protection Notice (GDPR)
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            The personal data collected through this form is strictly intended
-            for the academic and administrative management of the student within
-            our establishment. You can exercise your rights (access,
-            rectification, erasure) by contacting our Data Protection Officer.
-            Read our full{" "}
-            <a
-              href="/policy"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ color: "inherit", textDecoration: "underline" }}
-            >
-              Privacy Policy
-            </a>
-            .
-          </Typography>
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={rgpdAccepted}
-                onChange={(e) => setRgpdAccepted(e.target.checked)}
-                color={rgpdAccepted ? "success" : "primary"}
+            <Box sx={{ mb: 3 }}>
+              <Typography
+                variant="subtitle2"
+                color="text.secondary"
+                gutterBottom
+              >
+                Data Protection Notice (GDPR)
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                The personal data collected through this form is strictly
+                intended for the academic and administrative management of the
+                student within our establishment. You can exercise your rights
+                (access, rectification, erasure) by contacting our Data
+                Protection Officer. Read our full{" "}
+                <a
+                  href="/policy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: "inherit", textDecoration: "underline" }}
+                >
+                  Privacy Policy
+                </a>
+                .
+              </Typography>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={rgpdAccepted}
+                    onChange={(e) => setRgpdAccepted(e.target.checked)}
+                    color={rgpdAccepted ? "success" : "primary"}
+                  />
+                }
+                label="I acknowledge that I have read and understood the data protection notice *"
               />
-            }
-            label="I acknowledge that I have read and understood the data protection notice *"
-          />
-        </Box>
+            </Box>
 
-        <Box
-          sx={{ display: "flex", justifyContent: "flex-end", gap: 2, mt: 4 }}
-        >
-          <Button disabled={loading} variant="outlined" onClick={handleReset}>
-            Reset Changes
-          </Button>
-          <Button
-            variant="contained"
-            color="success"
-            startIcon={<SaveIcon />}
-            onClick={handleSave}
-            disabled={
-              !rgpdAccepted ||
-              loading ||
-              (!!form.medical_notes?.trim() && !medicalConsentAccepted)
-            }
-          >
-            Update Student
-          </Button>
-        </Box>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "flex-end",
+                gap: 2,
+                mt: 4,
+              }}
+            >
+              <Button variant="outlined" onClick={handleReset}>
+                Reset Changes
+              </Button>
+              <Button
+                variant="contained"
+                color="success"
+                startIcon={<SaveIcon />}
+                onClick={handleSave}
+                disabled={
+                  !rgpdAccepted ||
+                  (!!form.medical_notes?.trim() && !medicalConsentAccepted)
+                }
+              >
+                Update Student
+              </Button>
+            </Box>
+          </>
+        )}
       </Paper>
     </Container>
   );
