@@ -67,3 +67,67 @@ export async function createStudent(
     client.release();
   }
 }
+
+export async function getStudentList(establishmentID: string) {
+  const client = await pool.connect();
+  try {
+    const query = `
+      SELECT s.id, s.student_number, p.first_name, p.last_name, p.gender, c.name AS class_name
+      FROM students s
+      JOIN profiles p ON s.profile_id = p.id
+      JOIN classes c ON s.class_id = c.id
+      WHERE s.establishment_id = $1
+    `;
+    const { rows } = await client.query(query, [establishmentID]);
+    return rows;
+  } catch (error: any) {
+    console.log(error);
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+export async function deleteStudent(studentID: string) {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    const getProfileQuery = `
+      SELECT profile_id 
+      FROM students 
+      WHERE id = $1
+    `;
+    const { rows } = await client.query(getProfileQuery, [studentID]);
+
+    if (rows.length > 0) {
+      const profileID = rows[0].profile_id;
+
+      const deleteParentsQuery = `
+        DELETE FROM student_parents 
+        WHERE student_id = $1
+      `;
+      await client.query(deleteParentsQuery, [studentID]);
+
+      const deleteStudentQuery = `
+        DELETE FROM students 
+        WHERE id = $1
+      `;
+      await client.query(deleteStudentQuery, [studentID]);
+
+      const deleteProfileQuery = `
+        DELETE FROM profiles 
+        WHERE id = $1
+      `;
+      await client.query(deleteProfileQuery, [profileID]);
+    }
+
+    await client.query("COMMIT");
+  } catch (error: any) {
+    await client.query("ROLLBACK");
+    console.log(error);
+    throw error;
+  } finally {
+    client.release();
+  }
+}
