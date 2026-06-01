@@ -37,6 +37,8 @@ interface StudentDetail {
   status: "active" | "expelled" | "transferred" | "graduated";
   medical_notes: string | null;
   parent_ids: string[];
+  parent_first_name?: string | null;
+  parent_last_name?: string | null;
 }
 
 interface ParentOption {
@@ -50,7 +52,9 @@ interface TeacherOption {
   id: string;
   first_name: string;
   last_name: string;
+  link_id: string;
   subject: string;
+  gender: "male" | "female";
 }
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -138,28 +142,44 @@ const StudentDetails = () => {
     const fetchAll = async () => {
       try {
         setLoading(true);
-        const [resStudent, resParents, resTeacher] = await Promise.all([
-          fetch(`${API_URL}/api/students/details/${id}`, {
-            credentials: "include",
-          }),
-          fetch(`${API_URL}/api/utils/get-parent-list-by-student/${id}`, {
-            credentials: "include",
-          }),
-          fetch(`${API_URL}/api/students/teacher/${id}`, {
-            credentials: "include",
-          }),
-        ]);
+        const res = await fetch(`${API_URL}/api/students/details/${id}`, {
+          credentials: "include",
+        });
 
-        if (!resStudent.ok) {
-          const err = await resStudent.json();
-          throw new Error(err.message || "Failed to load student");
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.message || "Failed to load student data");
         }
 
-        setStudent(await resStudent.json());
-        if (resParents.ok) setParents(await resParents.json());
-        if (resTeacher.ok) {
-          const t = await resTeacher.json();
-          setTeacher(t || null);
+        const data: StudentDetail = await res.json();
+        setStudent(data);
+
+        if (data.parent_first_name || data.parent_last_name) {
+          setParents([
+            {
+              id: data.parent_ids?.[0] || "",
+              first_name: data.parent_first_name || "",
+              last_name: data.parent_last_name || "",
+              gender: "male",
+            },
+          ]);
+        } else {
+          setParents([]);
+        }
+
+        try {
+          const resTeacher = await fetch(
+            `${API_URL}/api/students/teacher/${id}`,
+            {
+              credentials: "include",
+            },
+          );
+          if (resTeacher.ok) {
+            const t = await resTeacher.json();
+            setTeacher(t || null);
+          }
+        } catch (teacherError) {
+          setTeacher(null);
         }
       } catch (e: any) {
         enqueueSnackbar(e.message || "Error loading student", {
@@ -440,16 +460,20 @@ const StudentDetails = () => {
                 <Chip
                   avatar={
                     <img
-                      src="/teacher.png"
+                      src={
+                        teacher.gender === "female"
+                          ? "/female.png"
+                          : "/male.png"
+                      }
                       alt="teacher"
                       style={{ width: 24, height: 24, borderRadius: "50%" }}
                     />
                   }
-                  label={`${teacher.first_name} ${teacher.last_name} — ${teacher.subject}`}
-                  onClick={() => navigate(`/teachers/edit/${teacher.id}`)}
+                  label={`${teacher.first_name} ${teacher.last_name} - ${teacher.subject}`}
+                  onClick={() => navigate(`/teachers/edit/${teacher.link_id}`)}
                   sx={{
                     cursor: "pointer",
-                    bgcolor: "primary.main",
+                    // bgcolor: "primary.main",
                     color: "white",
                     fontWeight: 500,
                   }}
