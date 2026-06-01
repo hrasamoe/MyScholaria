@@ -4,7 +4,9 @@ import { studentSchema } from "./students.schema";
 import {
   createStudent,
   deleteStudent,
+  getStudentDetails,
   getStudentList,
+  getStudentMainTeacher,
 } from "./students.service";
 
 export const studentRouter = Router();
@@ -62,6 +64,39 @@ studentRouter.delete(
       await deleteStudent(studentID);
       res.status(200).json({ message: "Student deleted successfully" });
     } catch (error: any) {
+      res.status(500).json({
+        message: error.message || "Internal server error",
+      });
+    }
+  },
+);
+
+studentRouter.get(
+  "/details/:id",
+  RequireAuthOnly,
+  async (req: Request, res: Response) => {
+    const studentID = req.params.id as string;
+    try {
+      const studentDetails = await getStudentDetails(studentID);
+      res.status(200).json(studentDetails);
+    } catch (error: any) {
+      res.status(500).json({
+        message: error.message || "Internal server error",
+      });
+    }
+  },
+);
+
+studentRouter.get(
+  "/teacher/:id",
+  RequireAuthOnly,
+  async (req: Request, res: Response) => {
+    const studentID = req.params.id as string;
+    try {
+      const teacher = await getStudentMainTeacher(studentID);
+      res.status(200).json(teacher);
+    } catch (error: any) {
+      console.log(error);
       res.status(500).json({
         message: error.message || "Internal server error",
       });
