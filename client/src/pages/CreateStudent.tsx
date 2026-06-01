@@ -69,7 +69,7 @@ const CreateStudent = () => {
     class_id: "",
     medical_notes: "",
     phone: "",
-    gender: "",
+    gender: "male",
   });
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -195,6 +195,7 @@ const CreateStudent = () => {
 
       enqueueSnackbar("Student created successfully", { variant: "success" });
       handleCancel();
+      navigate(-1);
     } catch (error: any) {
       enqueueSnackbar(
         error.message || "An error occurred during registration",
