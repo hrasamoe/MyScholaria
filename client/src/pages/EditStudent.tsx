@@ -139,7 +139,7 @@ const EditStudent = () => {
           class_id: data.class_id ? String(data.class_id) : "",
           status: data.status || "active",
           medical_notes: data.medical_notes || "",
-          parent_ids: data.parent_ids || [],
+          parent_ids: data.parents?.map((p: { id: string }) => p.id) || [],
         });
         if (data.medical_notes?.trim()) {
           setMedicalConsentAccepted(true);
