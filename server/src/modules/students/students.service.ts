@@ -1,5 +1,7 @@
+import { browserEmail } from "zod/v4/core/regexes.cjs";
 import { pool } from "../../db/pool";
 import { StudentInfo } from "./students.schema";
+import { Client } from "pg";
 
 export async function createStudent(
   studentData: StudentInfo,
@@ -195,6 +197,64 @@ export async function getStudentMainTeacher(studentID: string) {
   } catch (error) {
     console.log(error);
     return null;
+  } finally {
+    client.release();
+  }
+}
+
+export async function updateStudent(
+  studentID: string,
+  studentData: StudentInfo,
+) {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const s_request = `
+    UPDATE students SET
+    class_id = $1, student_number = $2, status = $3, medical_notes = $4,
+    enrollment_date = $5, updated_at = NOW()
+    WHERE id = $6
+    RETURNING profile_id`;
+    const values = [
+      studentData.class_id,
+      studentData.student_number,
+      studentData.status,
+      studentData.medical_notes,
+      studentData.enrollment_date,
+      studentID,
+    ];
+    const { rows: newStudentData } = await client.query(s_request, values);
+    const p_request = `
+    UPDATE profiles SET
+    first_name = $1, last_name = $2, email = $3, phone = $4,
+    address = $5, date_of_birth = $6, gender = $7
+    WHERE id = $8`;
+    const p_values = [
+      studentData.firstName,
+      studentData.lastName,
+      studentData.email,
+      studentData.phone,
+      studentData.address,
+      studentData.dateOfBirth,
+      studentData.gender,
+      newStudentData[0].profile_id,
+    ];
+    await client.query(p_request, p_values);
+    if (studentData.parent_ids?.length > 0) {
+      const parent_request = `
+      UPDATE student_parenrs SET
+      parent_profile_id = $1
+      WHERE student_id = $2
+      `;
+      for (const parentID of studentData.parent_ids) {
+        await client.query(parent_request, [parentID, studentID]);
+      }
+    }
+    await client.query("COMMIT");
+  } catch (error: any) {
+    console.log(error);
+    await client.query("ROLLBACK");
+    throw error;
   } finally {
     client.release();
   }
