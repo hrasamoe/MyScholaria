@@ -6,6 +6,7 @@ import {
   deleteStaff,
   getStaffDetails,
   getStaffList,
+  updateStaff,
 } from "./staff.service";
 
 export const staffRouter = Router();
@@ -72,6 +73,28 @@ staffRouter.get(
     try {
       const result = await getStaffDetails(staffID);
       res.status(200).json(result);
+    } catch (error: any) {
+      res.status(400).json({ errors: error.message, message: error.message });
+    }
+  },
+);
+
+staffRouter.put(
+  "/update/:id",
+  RequireAuthOnly,
+  async (req: Request, res: Response) => {
+    const staffID = req.params.id as string;
+    const parsed = staffSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({
+        message: parsed.error.flatten().fieldErrors,
+        errors: parsed.error.flatten().fieldErrors,
+      });
+      return;
+    }
+    try {
+      await updateStaff(staffID, parsed.data);
+      res.status(200).json({ message: "Staff member updated successfully" });
     } catch (error: any) {
       res.status(400).json({ errors: error.message, message: error.message });
     }

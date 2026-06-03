@@ -109,3 +109,50 @@ export async function getStaffDetails(staffID: string) {
     client.release();
   }
 }
+
+export async function updateStaff(staffID: string, staffData: StaffInfo) {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const staff_request = `
+    UPDATE staff
+    SET position = $1, department = $2, hire_date = $3, contract_type = $4, salary = $5, statut = $6, updated_at = NOW()
+    WHERE id = $7
+    RETURNING profile_id
+    `;
+    const staff_values = [
+      staffData.position,
+      staffData.departement,
+      staffData.hire_date,
+      staffData.contract_type,
+      staffData.salary,
+      staffData.status,
+      staffID,
+    ];
+    const { rows: staffRows } = await client.query(staff_request, staff_values);
+    const profileID = staffRows[0].profile_id;
+    const profiles_request = `
+    UPDATE profiles
+    SET first_name = $1, last_name = $2, gender = $3, phone = $4, address = $5, date_of_birth = $6, email = $7, updated_at = NOW()
+    WHERE id = $8
+    `;
+    const profiles_values = [
+      staffData.firstName,
+      staffData.lastName,
+      staffData.gender,
+      staffData.phone || null,
+      staffData.address || null,
+      staffData.birth_date,
+      staffData.email || null,
+      profileID,
+    ];
+    await client.query(profiles_request, profiles_values);
+    await client.query("COMMIT");
+  } catch (error: any) {
+    console.log(error);
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+}
