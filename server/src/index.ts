@@ -15,6 +15,7 @@ import { establishementRouter } from "./modules/establishments/establishments.ro
 import { utilschemaRouter } from "./modules/other/other.router";
 import { studentRouter } from "./modules/students/students.router";
 import { teacherRouter } from "./modules/teacher/teacher.router";
+import { staffRouter } from "./modules/staff/staff.router";
 
 setDefaultResultOrder("ipv4first");
 
@@ -53,6 +54,7 @@ app.use("/api/utils", utilschemaRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/establishment", establishementRouter);
 app.use("/api/students", studentRouter);
+app.use("/api/staff", staffRouter);
 
 app.get("/api/health", (_, res) => {
   res.json({ status: "ok", project: "MyScholaria" });
