@@ -63,6 +63,9 @@ import Timetable from "./pages/Timetable";
 import Users from "./pages/Users";
 import VerifyEmail from "./pages/VerifyEmail";
 import VerifyEmailMember from "./pages/VerifyEmailMember";
+import StaffDetails from "./pages/StaffDetails";
+import CreateStaff from "./pages/CreateStaff";
+import EditStaff from "./pages/EditStaff";
 
 const App = () => (
   <AppThemeProvider>
@@ -139,6 +142,9 @@ const App = () => (
                 <Route path="/users" element={<Users />} />
                 <Route path="/roles" element={<Roles />} />
                 <Route path="/staff" element={<Staff />} />
+                <Route path="/staff/edit/:id" element={<EditStaff />} />
+                <Route path="/staff/create" element={<CreateStaff />} />
+                <Route path="/staff/details/:id" element={<StaffDetails />} />
                 <Route path="/budget" element={<Budget />} />
                 <Route path="/payments" element={<Payments />} />
                 <Route path="/facturation" element={<Facturation />} />
