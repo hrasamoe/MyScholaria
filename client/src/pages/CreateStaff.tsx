@@ -29,7 +29,7 @@ interface StaffForm {
   firstName: string;
   lastName: string;
   position: string;
-  department: string;
+  departement: string;
   hire_date: string;
   contract_type: "permanent" | "contract" | "vacation";
   salary: string;
@@ -52,7 +52,7 @@ const CreateStaff = () => {
     gender: "male",
     salary: "",
     position: "",
-    department: "",
+    departement: "",
   });
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -70,7 +70,7 @@ const CreateStaff = () => {
       firstName: "",
       lastName: "",
       position: "",
-      department: "",
+      departement: "",
       salary: "",
       address: "",
       dateOfBirth: "",
@@ -85,10 +85,12 @@ const CreateStaff = () => {
       !form.firstName ||
       !form.lastName ||
       !form.position ||
-      !form.department ||
+      !form.departement ||
       !form.hire_date ||
       !form.contract_type ||
-      !form.status
+      !form.status ||
+      !form.salary ||
+      !form.dateOfBirth
     ) {
       enqueueSnackbar("Please fill all required fields (*)", {
         variant: "error",
@@ -115,17 +117,17 @@ const CreateStaff = () => {
       const body = {
         firstName: form.firstName,
         lastName: form.lastName,
+        gender: form.gender,
+        birth_date: form.dateOfBirth,
+        email: form.email || undefined,
+        phone: form.phone || undefined,
+        address: form.address || undefined,
         position: form.position,
-        department: form.department,
+        departement: form.departement,
         hire_date: form.hire_date,
         contract_type: form.contract_type,
-        salary: form.salary ? parseFloat(form.salary) : null,
-        gender: form.gender || null,
-        address: form.address || null,
-        dateOfBirth: form.dateOfBirth || null,
-        email: form.email || null,
-        phone: form.phone || null,
-        status: form.status || "active",
+        salary: parseFloat(form.salary),
+        status: form.status,
       };
 
       const response = await fetch(
@@ -151,7 +153,7 @@ const CreateStaff = () => {
     } catch (error: any) {
       enqueueSnackbar(
         error.message || "An error occurred during registration",
-        { variant: "error" },
+        { variant: "error", autoHideDuration: 3000 },
       );
     } finally {
       setLoading(false);
@@ -227,7 +229,7 @@ const CreateStaff = () => {
           <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               fullWidth
-              label="Date of Birth"
+              label="Date of Birth *"
               type="date"
               InputLabelProps={{ shrink: true }}
               value={form.dateOfBirth || ""}
@@ -301,10 +303,10 @@ const CreateStaff = () => {
             <FormControl fullWidth>
               <InputLabel>Department *</InputLabel>
               <Select
-                value={form.department || ""}
+                value={form.departement || ""}
                 label="Department *"
                 onChange={(e) =>
-                  setForm({ ...form, department: e.target.value })
+                  setForm({ ...form, departement: e.target.value })
                 }
               >
                 <MenuItem value="Direction & Administration">
@@ -315,9 +317,6 @@ const CreateStaff = () => {
                 </MenuItem>
                 <MenuItem value="Student Life & Discipline">
                   Student Life & Discipline
-                </MenuItem>
-                <MenuItem value="Vie Scolaire">
-                  Vie Scolaire & Discipline
                 </MenuItem>
                 <MenuItem value="Logistics & Transport">
                   Logistics & Transport
@@ -345,7 +344,7 @@ const CreateStaff = () => {
             <FormControl fullWidth>
               <InputLabel>Contract Type *</InputLabel>
               <Select
-                value={form.contract_type || "CDI"}
+                value={form.contract_type || "permanent"}
                 label="Contract Type *"
                 onChange={(e) =>
                   setForm({
@@ -363,7 +362,7 @@ const CreateStaff = () => {
           <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               fullWidth
-              label="Salary (MGA)"
+              label="Salary (MGA) *"
               type="number"
               value={form.salary || ""}
               onChange={(e) => setForm({ ...form, salary: e.target.value })}
