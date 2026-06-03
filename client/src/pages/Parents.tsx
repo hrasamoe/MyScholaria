@@ -202,7 +202,7 @@ const ParentsList = () => {
               <Card
                 key={parent.id}
                 variant="outlined"
-                onClick={() => navigate(`/parents/edit/${parent.id}`)}
+                onClick={() => navigate(`/parents/details/${parent.id}`)}
                 sx={{
                   cursor: "pointer",
                   border: "1px solid #2a2f3d",

@@ -235,7 +235,7 @@ const Teachers = () => {
                 key={teacher.id}
                 variant="outlined"
                 onClick={() =>
-                  !actionLoading && navigate(`/teachers/edit/${teacher.id}`)
+                  !actionLoading && navigate(`/teachers/details/${teacher.id}`)
                 }
                 sx={{
                   cursor: "pointer",
