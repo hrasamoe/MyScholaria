@@ -17,3 +17,5 @@ export const staffSchema = z.object({
   salary: z.number().positive("Please provide a staff salary"),
   status: z.string().min(2, "Please provide a staff status"),
 });
+
+export type StaffInfo = z.infer<typeof staffSchema>
