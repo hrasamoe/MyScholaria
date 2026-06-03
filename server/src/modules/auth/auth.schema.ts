@@ -4,7 +4,8 @@ export const registerSchema = z.object({
   email: z.string().email("Email must be valid"),
   password: z.string().min(8, "Minimum 8 characters"),
   full_name: z.string().min(2, "Minimum 2 characters"),
-
+  first_name: z.string().min(2, "Minimum 2 characters"),
+  last_name: z.string().min(2, "Minimum 2 characters"),
   role: z
     .enum([
       "admin",
