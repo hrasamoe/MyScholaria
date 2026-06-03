@@ -288,6 +288,7 @@ const CreateStaff = () => {
                   Administrative Assistant
                 </MenuItem>
                 <MenuItem value="Bursar">Bursar</MenuItem>
+                <MenuItem value="Librarian">Librarian</MenuItem>
                 <MenuItem value="Supervisor">Supervisor</MenuItem>
                 <MenuItem value="School Nurse">School Nurse</MenuItem>
                 <MenuItem value="Runner">Runner</MenuItem>
