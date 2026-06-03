@@ -115,7 +115,7 @@ const Classes = () => {
 
       if (resClasses.ok) {
         const classesData = await resClasses.json();
-        setClasses(classesData.length > 0 ? classesData : null);
+        setClasses(classesData.length > 0 ? classesData : []);
       }
 
       if (resClassrooms.ok) {
@@ -250,7 +250,7 @@ const Classes = () => {
     <Container sx={{ p: 2 }}>
       <PageHeader
         title="Classes"
-        subtitle={`${classes.length} classes`}
+        subtitle={`${classes.length ?? 0} classes`}
         action={
           <Button
             variant="contained"
