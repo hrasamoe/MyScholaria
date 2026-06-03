@@ -8,6 +8,7 @@ import {
   Box,
   Button,
   Card,
+  Container,
   CardContent,
   Chip,
   Dialog,
@@ -124,7 +125,7 @@ const Staff = () => {
   }, [establishmentID]);
 
   return (
-    <Box sx={{ p: 2 }}>
+    <Container sx={{ p: 2 }}>
       <PageHeader
         title="Staff Members"
         subtitle="Manage administrative, pedagogical, and support personnel records"
@@ -328,7 +329,7 @@ const Staff = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </Container>
   );
 };
 
