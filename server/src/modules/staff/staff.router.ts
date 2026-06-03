@@ -1,7 +1,7 @@
 import { Request, Response, Router } from "express";
 import { RequireAuthOnly } from "../../middleware/auth.middleware";
 import { staffSchema } from "./staff.schema";
-import { createStaff, getStaffList } from "./staff.service";
+import { createStaff, deleteStaff, getStaffList } from "./staff.service";
 
 export const staffRouter = Router();
 
@@ -41,6 +41,20 @@ staffRouter.get(
       res.status(500).json({
         message: error.message || "Internal server error",
       });
+    }
+  },
+);
+
+staffRouter.delete(
+  "/delete/:id",
+  RequireAuthOnly,
+  async (req: Request, res: Response) => {
+    const staffID = req.params.id as string;
+    try {
+      await deleteStaff(staffID);
+      res.status(200).json({ message: "Staff member deleted successfully" });
+    } catch (error: any) {
+      res.status(400).json({ errors: error.message, message: error.message });
     }
   },
 );
