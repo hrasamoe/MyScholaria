@@ -34,6 +34,7 @@ export async function createEstablishment(
     credentials: "include",
     headers: {
       "Content-Type": "application/json",
+      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
     },
     body: JSON.stringify(data),
   });
@@ -58,14 +59,14 @@ export async function getMyEstablishments(userID: string): Promise<any[]> {
   return result.data;
 }
 
-export async function approvedMember(email: string, establishmentID: string) {
+export async function approvedMember(email: string, establishmentId: string) {
   const res = await fetch(`${API_URL}/api/establishment/approve-member`, {
     method: "POST",
     credentials: "include",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ email, establishmentID }),
+  body: JSON.stringify({ email, establishmentId }),
   });
 
   const result = await res.json();

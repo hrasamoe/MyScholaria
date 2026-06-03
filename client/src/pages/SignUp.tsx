@@ -1,31 +1,30 @@
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import { useState } from "react";
-import { Link as RouterLink } from "react-router-dom";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import {
+  Alert,
   Box,
+  Button,
   Card,
   CardContent,
-  TextField,
-  Button,
-  Typography,
-  Stack,
+  Checkbox,
+  CircularProgress,
   Divider,
+  FormControlLabel,
   IconButton,
   InputAdornment,
-  CircularProgress,
-  Checkbox,
-  FormControlLabel,
-  Link,
-  Alert,
   LinearProgress,
+  Link,
+  Stack,
+  TextField,
+  Typography,
   useTheme,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
-import VisibilityIcon from "@mui/icons-material/Visibility";
-import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import { useSnackbar } from "notistack";
+import { useState } from "react";
+import { Link as RouterLink } from "react-router-dom";
 import { register, registerMember } from "../services/auth.service";
-
 
 const passwordStrength = (pw: string) => {
   let s = 0;
@@ -97,6 +96,8 @@ const SignUp = () => {
           form.email,
           form.password,
           fullName,
+          form.firstName,
+          form.lastName,
           form.role,
           form.schoolName,
         );

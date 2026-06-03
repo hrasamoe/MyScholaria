@@ -40,8 +40,16 @@ export async function registerUserAsAdmin(data: RegisterInput) {
     const user = rows[0];
 
     await client.query(
-      "UPDATE profiles SET full_name = $1 WHERE user_id = $2",
-      [data.full_name, user.id],
+      "INSERT INTO profiles (user_id, gender, full_name, last_name, first_name, email, profile_statut) VALUES ($1, $2, $3, $4, $5, $6, $7)",
+      [
+        user.id,
+        "male",
+        data.full_name,
+        data.last_name,
+        data.first_name,
+        user.email,
+        "staff",
+      ],
     );
     await client.query(
       "INSERT INTO user_roles (user_id, role) VALUES ($1, $2)",
@@ -113,8 +121,17 @@ export async function registerUserAsMember(data: RegisterMemberInput) {
     const user = rows[0];
 
     await client.query(
-      "UPDATE profiles SET full_name = $1, last_name = $3, first_name = $4 WHERE user_id = $2",
-      [data.full_name, user.id, data.last_name, data.first_name],
+      "INSERT INTO profiles (user_id, gender, establishment_id, full_name, last_name, first_name, email, profile_statut) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
+      [
+        user.id,
+        "male",
+        establishment.id,
+        data.full_name,
+        data.last_name,
+        data.first_name,
+        data.email,
+        "staff",
+      ],
     );
     await client.query(
       "INSERT INTO user_roles (user_id, role) VALUES ($1, $2)",

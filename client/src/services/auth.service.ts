@@ -13,6 +13,8 @@ export async function register(
   email: string,
   password: string,
   full_name: string,
+  first_name: string,
+  last_name: string,
   role: string = "admin",
   schoolName: string,
 ): Promise<AuthResponse> {
@@ -23,7 +25,15 @@ export async function register(
       method: "POST",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password, full_name, role, schoolName }),
+      body: JSON.stringify({
+        email,
+        password,
+        full_name,
+        role,
+        schoolName,
+        first_name,
+        last_name,
+      }),
       signal: controller.signal,
     });
     const data = await res.json();

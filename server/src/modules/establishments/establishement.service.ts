@@ -50,7 +50,10 @@ export async function createEtablishments(data: EstablishmentInput) {
       ],
     );
     const establishment = rows[0];
-
+    await client.query(
+      "UPDATE profiles SET establishment_id = $1 WHERE user_id = $2",
+      [establishment.id, data.owner_id],
+    );
     await client.query(
       `INSERT INTO school_periods (
         establishment_id, name, start_date, end_date,
@@ -480,7 +483,7 @@ export async function editClass(classID: string, classData: ClassInfo) {
       classData.mainTeacherID,
       classData.classRoomID,
       new Date(),
-      classID
+      classID,
     ];
     await client.query(queryText, values);
     await client.query("COMMIT");
