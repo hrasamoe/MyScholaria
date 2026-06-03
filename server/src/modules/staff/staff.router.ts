@@ -1,7 +1,7 @@
 import { Request, Response, Router } from "express";
 import { RequireAuthOnly } from "../../middleware/auth.middleware";
 import { staffSchema } from "./staff.schema";
-import { createStaff } from "./staff.service";
+import { createStaff, getStaffList } from "./staff.service";
 
 export const staffRouter = Router();
 
@@ -24,6 +24,22 @@ staffRouter.post(
     } catch (error: any) {
       res.status(500).json({
         messsage: error.message || "Internal server errror",
+      });
+    }
+  },
+);
+
+staffRouter.get(
+  "/list/:id",
+  RequireAuthOnly,
+  async (req: Request, res: Response) => {
+    const establishementID = req.params.id as string;
+    try {
+      const result = await getStaffList(establishementID);
+      res.status(200).json(result);
+    } catch (error: any) {
+      res.status(500).json({
+        message: error.message || "Internal server error",
       });
     }
   },

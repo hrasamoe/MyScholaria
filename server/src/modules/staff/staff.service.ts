@@ -49,3 +49,22 @@ export async function createStaff(
     client.release();
   }
 }
+
+export async function getStaffList(establishementID: string) {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const profiles_request = `
+    SELECT s.id, s.position, s.department, p.first_name, p.last_name, p.gender
+    FROM staff s
+    JOIN profiles p ON s.profile_id = p.id
+    WHERE s.establishment_id = $1`;
+    const { rows } = await client.query(profiles_request, [establishementID]);
+    return rows;
+  } catch (error: any) {
+    console.log(error);
+    throw error;
+  } finally {
+    client.release();
+  }
+}
