@@ -19,12 +19,14 @@ import Classrooms from "./pages/Classrooms";
 import Coursebook from "./pages/Coursebook";
 import CreateEstablishment from "./pages/CreateEstablishment";
 import CreateParent from "./pages/CreateParent";
+import CreateStaff from "./pages/CreateStaff";
 import CreateStudent from "./pages/CreateStudent";
 import CreateTeacher from "./pages/CreateTeachers";
 import Dashboard from "./pages/Dashboard";
 import Diplomas from "./pages/Diplomas";
 import Duty from "./pages/Duty";
 import EditParent from "./pages/EditParent";
+import EditStaff from "./pages/EditStaff";
 import EditStudent from "./pages/EditStudent";
 import EditTeacher from "./pages/EditTeacher";
 import Events from "./pages/Events";
@@ -39,6 +41,7 @@ import NotFound from "./pages/NotFound";
 import Notifications from "./pages/Notifications";
 import ParentPortal from "./pages/ParentPortal";
 import ParentsList from "./pages/Parents";
+import ParentDetails from "./pages/ParentsDetails";
 import Payments from "./pages/Payments";
 import PendingApproval from "./pages/PendingEvaluation";
 import Privacy from "./pages/Privacy";
@@ -52,10 +55,12 @@ import Settings from "./pages/Settings";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
 import Staff from "./pages/Staff";
+import StaffDetails from "./pages/StaffDetails";
 import StudentDetails from "./pages/StudentDetails";
 import StudentPortal from "./pages/StudentPortal";
 import Students from "./pages/Students";
 import Subjects from "./pages/Subjects";
+import TeacherDetails from "./pages/TeacherDetails";
 import Teachers from "./pages/Teachers";
 import Terms from "./pages/Terms";
 import Theses from "./pages/Theses";
@@ -63,9 +68,6 @@ import Timetable from "./pages/Timetable";
 import Users from "./pages/Users";
 import VerifyEmail from "./pages/VerifyEmail";
 import VerifyEmailMember from "./pages/VerifyEmailMember";
-import StaffDetails from "./pages/StaffDetails";
-import CreateStaff from "./pages/CreateStaff";
-import EditStaff from "./pages/EditStaff";
 
 const App = () => (
   <AppThemeProvider>
@@ -164,10 +166,15 @@ const App = () => (
                 <Route path="/teachers" element={<Teachers />} />
                 <Route path="/teachers/create" element={<CreateTeacher />} />
                 <Route path="/teachers/edit/:id" element={<EditTeacher />} />
+                <Route
+                  path="/teachers/details/:id"
+                  element={<TeacherDetails />}
+                />
                 <Route path="/classes" element={<Classes />} />
                 <Route path="/subjects" element={<Subjects />} />
                 <Route path="/grades" element={<Grades />} />
                 <Route path="/exams" element={<Exams />} />
+                <Route path="/parents/details/:id" element={<ParentDetails/>} />
                 <Route path="/attendance" element={<Attendance />} />
                 <Route path="/duty" element={<Duty />} />
                 <Route path="/coursebook" element={<Coursebook />} />
