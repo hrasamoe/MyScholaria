@@ -83,6 +83,7 @@ export async function deleteStaff(staffID: string) {
     await client.query("DELETE FROM profiles WHERE id = $1", [
       staffdelted[0].profile_id,
     ]);
+    await client.query("COMMIT");
   } catch (error: any) {
     console.log(error);
     await client.query("ROLLBACK");
