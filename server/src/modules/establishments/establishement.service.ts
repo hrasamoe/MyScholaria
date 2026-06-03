@@ -279,11 +279,12 @@ export async function findAllMemberAproved(establishmentID: string) {
       ` SELECT u.id AS user_id,
     p.full_name AS name,
     u.email,
-    m.role_name AS role,
+    ur.role AS role,
     m.is_active,
     m.is_aproved,
     m.joined_at
     FROM establishment_members m
+    INNER JOIN user_roles ur ON m.user_id = ur.user_id
     INNER JOIN users u ON m.user_id = u.id
     INNER JOIN profiles p ON u.id = p.user_id
     WHERE m.is_aproved = true AND m.establishment_id = $1
