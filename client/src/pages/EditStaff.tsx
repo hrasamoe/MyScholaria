@@ -98,7 +98,7 @@ const EditStaff = () => {
           phone: result.phone || "",
           address: result.address || "",
           position: result.position || "",
-          departement: result.departement || "",
+          departement: result.department || "",
           hire_date: result.hire_date ? result.hire_date.substring(0, 10) : "",
           contract_type: result.contract_type || "",
           salary:
