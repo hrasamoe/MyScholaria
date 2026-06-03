@@ -255,7 +255,7 @@ const Users = () => {
       render: (r: User) => (
         <Chip
           size="small"
-          label={r.role.toUpperCase()}
+          label={r.role.toUpperCase().charAt(0) + r.role.slice(1)}
           color={roleColor(r.role)}
         />
       ),
@@ -439,12 +439,11 @@ const Users = () => {
                   label="Role"
                   onChange={(e) => setForm({ ...form, role: e.target.value })}
                 >
-                  <MenuItem value="Admin">Admin</MenuItem>
-                  <MenuItem value="Student">Student</MenuItem>
-                  <MenuItem value="Teacher">Teacher</MenuItem>
-                  <MenuItem value="Accountant">Accountant</MenuItem>
-                  <MenuItem value="Supervisor">Supervisor</MenuItem>
-                  <MenuItem value="Parent">Parent</MenuItem>
+                  <MenuItem value="admin">Admin</MenuItem>
+                  <MenuItem value="student">Student</MenuItem>
+                  <MenuItem value="teacher">Teacher</MenuItem>
+                  <MenuItem value="parent">Parent</MenuItem>
+                  <MenuItem value="staff">Staff</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
@@ -509,9 +508,8 @@ const Users = () => {
                     <MenuItem value="admin">Admin</MenuItem>
                     <MenuItem value="student">Student</MenuItem>
                     <MenuItem value="teacher">Teacher</MenuItem>
-                    <MenuItem value="accountant">Accountant</MenuItem>
-                    <MenuItem value="supervisor">Supervisor</MenuItem>
                     <MenuItem value="parent">Parent</MenuItem>
+                    <MenuItem value="staff">Staff</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>

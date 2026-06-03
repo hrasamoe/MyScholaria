@@ -48,7 +48,7 @@ export async function registerUserAsAdmin(data: RegisterInput) {
         data.last_name,
         data.first_name,
         user.email,
-        "staff",
+        "admin",
       ],
     );
     await client.query(
@@ -130,7 +130,7 @@ export async function registerUserAsMember(data: RegisterMemberInput) {
         data.last_name,
         data.first_name,
         data.email,
-        "staff",
+        "student",
       ],
     );
     await client.query(

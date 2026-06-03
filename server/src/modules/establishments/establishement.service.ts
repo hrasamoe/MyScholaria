@@ -358,7 +358,14 @@ export async function approveMember(
        RETURNING *`,
       [isAproved, role, userId, establishmentId],
     );
+    const profiles_request = `
+    UPDATE profiles SET profile_statut = $1
+    WHERE user_id = $2`;
+    await client.query(profiles_request, [role, userId]);
 
+    const role_request = `
+    UPDATE user_roles SET role = $1 WHERE user_id = $2`;
+    await client.query(role_request, [role, userId]);
     if (updateRes.rows.length === 0) {
       throw new Error("Membre introuvable dans cet établissement");
     }
