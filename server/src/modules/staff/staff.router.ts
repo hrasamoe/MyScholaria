@@ -1,7 +1,12 @@
 import { Request, Response, Router } from "express";
 import { RequireAuthOnly } from "../../middleware/auth.middleware";
 import { staffSchema } from "./staff.schema";
-import { createStaff, deleteStaff, getStaffList } from "./staff.service";
+import {
+  createStaff,
+  deleteStaff,
+  getStaffDetails,
+  getStaffList,
+} from "./staff.service";
 
 export const staffRouter = Router();
 
@@ -53,6 +58,20 @@ staffRouter.delete(
     try {
       await deleteStaff(staffID);
       res.status(200).json({ message: "Staff member deleted successfully" });
+    } catch (error: any) {
+      res.status(400).json({ errors: error.message, message: error.message });
+    }
+  },
+);
+
+staffRouter.get(
+  "/details/:id",
+  RequireAuthOnly,
+  async (req: Request, res: Response) => {
+    const staffID = req.params.id as string;
+    try {
+      const result = await getStaffDetails(staffID);
+      res.status(200).json(result);
     } catch (error: any) {
       res.status(400).json({ errors: error.message, message: error.message });
     }

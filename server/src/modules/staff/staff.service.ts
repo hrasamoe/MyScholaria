@@ -1,4 +1,3 @@
-import { ClientBase } from "pg";
 import { pool } from "../../db/pool";
 import { StaffInfo } from "./staff.schema";
 
@@ -87,6 +86,24 @@ export async function deleteStaff(staffID: string) {
   } catch (error: any) {
     console.log(error);
     await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+export async function getStaffDetails(staffID: string) {
+  const client = await pool.connect();
+  try {
+    const staff_request = `
+    SELECT s.id, s.position, s.department, s.hire_date, s.contract_type, s.salary, s.statut, p.first_name, p.last_name, p.gender, p.phone, p.address, p.date_of_birth, p.email
+    FROM staff s 
+    JOIN profiles p ON s.profile_id = p.id
+    WHERE s.id = $1`;
+    const { rows } = await client.query(staff_request, [staffID]);
+    return rows[0];
+  } catch (error: any) {
+    console.log(error);
     throw error;
   } finally {
     client.release();
