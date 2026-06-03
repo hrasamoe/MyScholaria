@@ -7,6 +7,7 @@ import {
   getStudentDetails,
   getStudentList,
   getStudentMainTeacher,
+  updateStudent,
 } from "./students.service";
 
 export const studentRouter = Router();
@@ -100,6 +101,39 @@ studentRouter.get(
       res.status(500).json({
         message: error.message || "Internal server error",
       });
+    }
+  },
+);
+
+studentRouter.put(
+  "/update/:id",
+  RequireAuthOnly,
+  async (req: Request, res: Response) => {
+    const studentID = req.params.id as string;
+    const parsed = studentSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({
+        message: parsed.error.flatten().fieldErrors,
+        errors: parsed.error.flatten().fieldErrors,
+      });
+      return;
+    }
+    try {
+      await updateStudent(studentID, parsed.data);
+      res.status(201).json({
+        message: "Student data updated successfully",
+      });
+    } catch (error: any) {
+      if (error.errors) {
+        console.log(error.errors[0].message);
+        res.status(500).json({
+          message: error.errors[0].message,
+          error: error.errors[0].message,
+        });
+        throw error.errors[0].message;
+      }
+      res.status(500).json({ message: error.message });
+      throw error.message;
     }
   },
 );

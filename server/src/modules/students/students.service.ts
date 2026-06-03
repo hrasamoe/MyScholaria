@@ -151,17 +151,22 @@ export async function getStudentDetails(studentID: string) {
         p.date_of_birth, 
         p.gender, 
         c.name AS class_name,
-        p_parent.first_name AS parent_first_name,
-        p_parent.last_name AS parent_last_name,
-        ARRAY_AGG(sp.parent_profile_id) FILTER (WHERE sp.parent_profile_id IS NOT NULL) AS parent_ids
+        ARRAY_AGG(
+          JSON_BUILD_OBJECT(
+            'id', pp.id,
+            'first_name', pp.first_name,
+            'last_name', pp.last_name,
+            'gender', pp.gender
+          )
+        ) FILTER (WHERE pp.id IS NOT NULL) AS parents
       FROM students s
       JOIN profiles p ON s.profile_id = p.id
       LEFT JOIN classes c ON s.class_id = c.id
       LEFT JOIN student_parents sp ON s.id = sp.student_id
-      LEFT JOIN profiles p_parent ON sp.parent_profile_id = p_parent.id
+      LEFT JOIN profiles pp ON sp.parent_profile_id = pp.id
       WHERE s.id = $1
-      GROUP BY s.id, p.id, c.id, p_parent.id
-    `;
+      GROUP BY s.id, p.id, c.id
+`;
     const { rows } = await client.query(query, [studentID]);
     return rows[0];
   } catch (error: any) {
@@ -195,6 +200,73 @@ export async function getStudentMainTeacher(studentID: string) {
   } catch (error) {
     console.log(error);
     return null;
+  } finally {
+    client.release();
+  }
+}
+
+export async function updateStudent(
+  studentID: string,
+  studentData: StudentInfo,
+) {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    const s_request = `
+      UPDATE students SET
+        class_id = $1, student_number = $2, status = $3, medical_notes = $4,
+        enrollment_date = $5, updated_at = NOW()
+      WHERE id = $6
+      RETURNING profile_id
+    `;
+    const values = [
+      studentData.class_id,
+      studentData.student_number,
+      studentData.status,
+      studentData.medical_notes,
+      studentData.enrollment_date,
+      studentID,
+    ];
+    const { rows: newStudentData } = await client.query(s_request, values);
+
+    const p_request = `
+      UPDATE profiles SET
+        first_name = $1, last_name = $2, email = $3, phone = $4,
+        address = $5, date_of_birth = $6, gender = $7
+      WHERE id = $8
+    `;
+    const p_values = [
+      studentData.firstName,
+      studentData.lastName,
+      studentData.email,
+      studentData.phone,
+      studentData.address,
+      studentData.dateOfBirth,
+      studentData.gender,
+      newStudentData[0].profile_id,
+    ];
+    await client.query(p_request, p_values);
+
+    await client.query(`DELETE FROM student_parents WHERE student_id = $1`, [
+      studentID,
+    ]);
+
+    if (studentData.parent_ids?.length > 0) {
+      const parent_request = `
+        INSERT INTO student_parents (student_id, parent_profile_id, created_at)
+        VALUES ($1, $2, NOW())
+      `;
+      for (const parentID of studentData.parent_ids) {
+        await client.query(parent_request, [studentID, parentID]);
+      }
+    }
+
+    await client.query("COMMIT");
+  } catch (error: any) {
+    console.log(error);
+    await client.query("ROLLBACK");
+    throw error;
   } finally {
     client.release();
   }

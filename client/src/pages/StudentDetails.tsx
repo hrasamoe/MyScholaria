@@ -36,9 +36,8 @@ interface StudentDetail {
   class_name: string | null;
   status: "active" | "expelled" | "transferred" | "graduated";
   medical_notes: string | null;
-  parent_ids: string[];
-  parent_first_name?: string | null;
-  parent_last_name?: string | null;
+  // ✅ Remplacé parent_ids + parent_first/last_name par un tableau d'objets
+  parents: ParentOption[] | null;
 }
 
 interface ParentOption {
@@ -154,31 +153,19 @@ const StudentDetails = () => {
         const data: StudentDetail = await res.json();
         setStudent(data);
 
-        if (data.parent_first_name || data.parent_last_name) {
-          setParents([
-            {
-              id: data.parent_ids?.[0] || "",
-              first_name: data.parent_first_name || "",
-              last_name: data.parent_last_name || "",
-              gender: "male",
-            },
-          ]);
-        } else {
-          setParents([]);
-        }
+        // ✅ Plus besoin de reconstruire manuellement : les parents viennent directement de l'API
+        setParents(data.parents || []);
 
         try {
           const resTeacher = await fetch(
             `${API_URL}/api/students/teacher/${id}`,
-            {
-              credentials: "include",
-            },
+            { credentials: "include" },
           );
           if (resTeacher.ok) {
             const t = await resTeacher.json();
             setTeacher(t || null);
           }
-        } catch (teacherError) {
+        } catch {
           setTeacher(null);
         }
       } catch (e: any) {
@@ -464,7 +451,6 @@ const StudentDetails = () => {
                   onClick={() => navigate(`/teachers/edit/${teacher.link_id}`)}
                   sx={{
                     cursor: "pointer",
-                    // bgcolor: "primary.main",
                     color: "white",
                     fontWeight: 500,
                   }}
