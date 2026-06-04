@@ -19,9 +19,14 @@ studentRouter.post(
     const establishmentID = req.params.id as string;
     const parsed = studentSchema.safeParse(req.body);
     if (!parsed.success) {
+      const fieldErrors = parsed.error.flatten().fieldErrors;
+      const message = Object.entries(fieldErrors)
+        .map(([field, errors]) => `${field}: ${errors?.join(", ")}`)
+        .join(" | ");
+
       res.status(400).json({
-        message: parsed.error.flatten().fieldErrors,
-        errors: parsed.error.flatten().fieldErrors,
+        message,
+        errors: fieldErrors,
       });
       return;
     }

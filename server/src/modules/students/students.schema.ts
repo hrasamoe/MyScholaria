@@ -7,7 +7,13 @@ export const studentSchema = z.object({
   lastName: z.string().min(2, "Please provide the student's last name"),
   gender: z.enum(["male", "female"]).optional(),
   dateOfBirth: z.string().optional(),
-  email: z.string().email("Invalid email").optional().or(z.literal("")),
+  email: z
+    .string()
+    .optional()
+    .refine(
+      (val) => !val || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val),
+      "Invalid email",
+    ),
   phone: z
     .string()
     .regex(phoneRegex, "Invalid phone number")
