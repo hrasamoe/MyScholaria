@@ -200,16 +200,16 @@ const EditStudent = () => {
       const body = {
         firstName: form.firstName,
         lastName: form.lastName,
-        gender: form.gender || null,
+        gender: form.gender,
         dateOfBirth: form.dateOfBirth || null,
-        email: form.email || null,
-        phone: form.phone || null,
-        address: form.address || null,
+        email: form.email || undefined,
+        phone: form.phone || undefined,
+        address: form.address || undefined,
         student_number: form.student_number,
         enrollment_date: form.enrollment_date,
-        class_id: form.class_id || null,
+        class_id: form.class_id || undefined,
         status: form.status || "active",
-        medical_notes: form.medical_notes || null,
+        medical_notes: form.medical_notes || undefined,
         parent_ids: form.parent_ids || [],
       };
 

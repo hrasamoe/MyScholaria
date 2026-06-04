@@ -78,16 +78,11 @@ establishementRouter.post(
           adminCode: establishement.admin_code,
         },
       });
-    } catch (err: any) {
-      if (err.errors) {
-        return res.status(400).json({
-          message: err.errors[0].message,
-        });
+    } catch (error: any) {
+      if (error.errors) {
+        return res.status(400).json({ message: error.errors[0].message });
       }
-
-      res.status(400).json({
-        message: err.message,
-      });
+      res.status(400).json({ message: error.message });
     } finally {
     }
   },
@@ -201,18 +196,9 @@ establishementRouter.post(
       });
     } catch (error: any) {
       if (error.errors) {
-        console.log(
-          "An error was occured while creating the class:",
-          error.errors[0].message,
-        );
-        return res.status(400).json({
-          message: error.errors[0].message,
-        });
+        return res.status(400).json({ message: error.errors[0].message });
       }
-
-      res
-        .status(500)
-        .json({ message: "An error occurred while creating the class" });
+      res.status(400).json({ message: error.message });
     }
   },
 );

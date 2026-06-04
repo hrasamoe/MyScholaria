@@ -404,6 +404,13 @@ export async function createClasses(
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
+    const { rows: existingClass } = await client.query(
+      "SELECT * FROM classes WHERE room_id = $1",
+      [classData.classRoomID],
+    );
+    if (existingClass.length > 0) {
+      throw new Error(`${existingClass[0].name} class already use this room`);
+    }
     const queryText = `
       INSERT INTO classes (name, level, academic_year, establishment_id, main_teacher_id, room_id, created_at, updated_at)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
@@ -423,6 +430,7 @@ export async function createClasses(
   } catch (error: any) {
     if (client) {
       await client.query("ROLLBACK");
+      throw error;
     }
     console.log(error);
     throw error;
