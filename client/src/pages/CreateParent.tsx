@@ -111,7 +111,7 @@ const CreateParent = () => {
       });
       handleCancel();
     } catch (error: any) {
-      enqueueSnackbar(`${error.message || error}`, { variant: "error" });
+      enqueueSnackbar(`${error.message || error}`, { variant: "error", autoHideDuration: 5000 });
     } finally {
       setLoading(false);
     }

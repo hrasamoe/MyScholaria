@@ -27,7 +27,11 @@ export const teacherSchema = z.object({
   gender: z.enum(["male", "female"]).optional(),
   contractType: z.enum(["permanent", "contract", "vacation"]).optional(),
   hpw: z.number().int().nonnegative().optional(),
-  qualification: z.string().min(0, "Please provide a qualification"),
+  qualification: z
+    .string()
+    .min(0, "Please provide a qualification")
+    .optional()
+    .or(z.literal("")),
 });
 
 export type TeacherInfo = z.infer<typeof teacherSchema>;
