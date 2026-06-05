@@ -20,9 +20,13 @@ Built with a **mobile-first**, accessibility-aware design and a strong focus on 
 - **Students** — enrollment files, profiles, academic history
 - **Teachers & Staff** — faculty and administrative personnel management
 - **Classes & Classrooms** — group classes and physical room allocation
+- **Coursebook** — lesson logs and pedagogical progression
+
+![MyScholaria Banner](./screenshot2.png)
 - **Subjects & Programs** — course catalog and curriculum tracks
 - **Timetable & School Calendar** — schedules, holidays, school year planning
-- **Coursebook** — lesson logs and pedagogical progression
+
+![MyScholaria Banner](./screenshot3.png)
 
 ### 📊 Evaluation & Tracking
 - **Grades** — grading sheets and report cards
@@ -31,6 +35,8 @@ Built with a **mobile-first**, accessibility-aware design and a strong focus on 
 - **Reports** — analytics and institutional statistics
 - **Diplomas & Theses** — certificates and dissertation tracking
 - **Internships** — internship management and follow-up
+
+![MyScholaria Banner](./screenshot4.png)
 
 ### 💰 Finance
 - **Facturation** — tuition fee invoicing
@@ -45,7 +51,7 @@ Built with a **mobile-first**, accessibility-aware design and a strong focus on 
 - **Student Portal** — dedicated student dashboard
 - **Parent Portal** — child progress for parents
 
-![MyScholaria Banner](./screenshot1.png)
+![MyScholaria Banner](./screenshot5.png)
 
 ### 🛠️ Administration
 - **Users & Roles** — RBAC user management
@@ -53,6 +59,8 @@ Built with a **mobile-first**, accessibility-aware design and a strong focus on 
 - **Library** — book catalog and loan tracking
 - **Settings** — institution-wide configuration
 - **Dashboard** — KPIs and quick overview
+
+![MyScholaria Banner](./screenshot1.png)
 
 ### 🔐 Authentication & Security
 - Sign in / Sign up with role selection (Student, Parent, Teacher, Staff, Admin)
