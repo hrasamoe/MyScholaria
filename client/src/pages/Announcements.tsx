@@ -1,6 +1,7 @@
 import PageHeader from "@/components/PageHeader";
 import AddIcon from "@mui/icons-material/Add";
 import CampaignIcon from "@mui/icons-material/Campaign";
+import EventIcon from "@mui/icons-material/Event";
 import {
   Box,
   Button,
@@ -18,7 +19,7 @@ import {
   Stack,
   TextField,
   Typography,
-  OutlinedInput,
+  Autocomplete,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import { useSnackbar } from "notistack";
@@ -32,6 +33,7 @@ interface Ann {
   audience: string;
   target_user_ids?: (string | number)[];
   created_at: string;
+  expires_at?: string | null;
   pinned?: boolean;
 }
 
@@ -56,6 +58,7 @@ const Announcements = () => {
   >({
     audience: "All",
     target_user_ids: [],
+    expires_at: "",
   });
   const { enqueueSnackbar } = useSnackbar();
 
@@ -114,23 +117,6 @@ const Announcements = () => {
     );
   });
 
-  const handleUserChange = (event: any) => {
-    const {
-      target: { value },
-    } = event;
-    setForm({
-      ...form,
-      target_user_ids: typeof value === "string" ? value.split(",") : value,
-    });
-  };
-
-  const handleRemoveUser = (idToRemove: string | number) => {
-    setForm({
-      ...form,
-      target_user_ids: form.target_user_ids.filter((id) => id !== idToRemove),
-    });
-  };
-
   const handleAdd = async () => {
     if (!form.title || !form.content) {
       enqueueSnackbar("Title and body required", { variant: "error" });
@@ -155,13 +141,16 @@ const Announcements = () => {
             audience: form.audience,
             target_user_ids:
               form.audience !== "All" ? form.target_user_ids : null,
+            expires_at: form.expires_at
+              ? new Date(form.expires_at).toISOString()
+              : null,
           }),
         },
       );
       if (response.ok) {
         const newAnnouncement = await response.json();
         setItems([newAnnouncement, ...items]);
-        setForm({ audience: "All", target_user_ids: [] });
+        setForm({ audience: "All", target_user_ids: [], expires_at: "" });
         setOpen(false);
         enqueueSnackbar("Announcement published", { variant: "success" });
       }
@@ -169,6 +158,10 @@ const Announcements = () => {
       enqueueSnackbar("Failed to publish announcement", { variant: "error" });
     }
   };
+
+  const selectedUsers = filteredUsers.filter((u) =>
+    form.target_user_ids.includes(u.id),
+  );
 
   return (
     <>
@@ -220,13 +213,28 @@ const Announcements = () => {
                   <Typography variant="body2" color="text.secondary" mb={1.5}>
                     {a.content}
                   </Typography>
-                  <Stack direction="row" spacing={1}>
+                  <Stack
+                    direction="row"
+                    spacing={1}
+                    flexWrap="wrap"
+                    useFlexGap
+                    gap={1}
+                  >
                     <Chip size="small" label={a.audience} />
                     <Chip
                       size="small"
                       variant="outlined"
                       label={new Date(a.created_at).toLocaleDateString()}
                     />
+                    {a.expires_at && (
+                      <Chip
+                        icon={<EventIcon fontSize="small" />}
+                        size="small"
+                        color="error"
+                        variant="outlined"
+                        label={`Expires: ${new Date(a.expires_at).toLocaleDateString()}`}
+                      />
+                    )}
                   </Stack>
                 </CardContent>
               </Card>
@@ -285,42 +293,57 @@ const Announcements = () => {
                 </Select>
               </FormControl>
             </Grid>
+          
             {form.audience !== "All" && (
               <Grid size={12}>
-                <Box
-                  sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, mb: 1 }}
-                >
-                  {form.target_user_ids.map((id) => {
-                    const u = usersList.find((user) => user.id === id);
-                    return (
+                <Autocomplete
+                  multiple
+                  options={filteredUsers}
+                  value={selectedUsers}
+                  getOptionLabel={(option) =>
+                    `${option.name} (${option.email})`
+                  }
+                  isOptionEqualToValue={(option, value) =>
+                    option.id === value.id
+                  }
+                  onChange={(_, newValue) => {
+                    setForm({
+                      ...form,
+                      target_user_ids: newValue.map((u) => u.id),
+                    });
+                  }}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      variant="outlined"
+                      label="Target Users *"
+                      placeholder="Search users..."
+                    />
+                  )}
+                  renderTags={(tagValue, getTagProps) =>
+                    tagValue.map((option, index) => (
                       <Chip
-                        key={id}
-                        label={u ? u.name : id}
-                        onDelete={() => handleRemoveUser(id)}
+                        label={option.name}
+                        {...getTagProps({ index })}
                         color="success"
                         size="small"
                       />
-                    );
-                  })}
-                </Box>
-                <FormControl fullWidth>
-                  <InputLabel>Target Users *</InputLabel>
-                  <Select
-                    multiple
-                    value={form.target_user_ids}
-                    onChange={handleUserChange}
-                    input={<OutlinedInput label="Target Users *" />}
-                    renderValue={() => null}
-                  >
-                    {filteredUsers.map((u) => (
-                      <MenuItem key={u.id} value={u.id}>
-                        {u.name} ({u.email})
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
+                    ))
+                  }
+                />
               </Grid>
-            )}
+            )}  <Grid size={12}>
+              <TextField
+                fullWidth
+                type="datetime-local"
+                label="Expiration Date"
+                value={form.expires_at || ""}
+                onChange={(e) =>
+                  setForm({ ...form, expires_at: e.target.value })
+                }
+                InputLabelProps={{ shrink: true }}
+              />
+            </Grid>
           </Grid>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>

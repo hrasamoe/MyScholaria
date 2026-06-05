@@ -1,42 +1,43 @@
-import { useState, useEffect } from "react";
 import PageHeader from "@/components/PageHeader";
-import {
-  Button,
-  TextField,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Card,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemAvatar,
-  Avatar,
-  Chip,
-  IconButton,
-  Box,
-  Typography,
-  MenuItem,
-  Select,
-  FormControl,
-  InputLabel,
-  Tabs,
-  Tab,
-  Divider,
-  Stack,
-  OutlinedInput,
-} from "@mui/material";
-import Grid from "@mui/material/Grid";
+import { useAuth } from "@/hooks/Authcontext";
 import AddIcon from "@mui/icons-material/Add";
-import DoneAllIcon from "@mui/icons-material/DoneAll";
+import CampaignIcon from "@mui/icons-material/Campaign";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import DeleteIcon from "@mui/icons-material/Delete";
+import DoneAllIcon from "@mui/icons-material/DoneAll";
+import EventIcon from "@mui/icons-material/Event";
 import InfoIcon from "@mui/icons-material/Info";
 import WarningIcon from "@mui/icons-material/Warning";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import CampaignIcon from "@mui/icons-material/Campaign";
+import {
+  Autocomplete,
+  Avatar,
+  Box,
+  Button,
+  Card,
+  Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Divider,
+  FormControl,
+  IconButton,
+  InputLabel,
+  List,
+  ListItem,
+  ListItemAvatar,
+  ListItemText,
+  MenuItem,
+  Select,
+  Stack,
+  Tab,
+  Tabs,
+  TextField,
+  Typography,
+} from "@mui/material";
+import Grid from "@mui/material/Grid";
 import { useSnackbar } from "notistack";
-import { useAuth } from "@/hooks/Authcontext";
+import { useEffect, useState } from "react";
 
 interface Notif {
   id: string;
@@ -46,6 +47,7 @@ interface Notif {
   target_user_ids?: (string | number)[];
   type: "info" | "success" | "warning" | "announcement";
   created_at: string;
+  expires_at?: string | null;
   is_read: boolean;
 }
 
@@ -79,6 +81,7 @@ const Notifications = () => {
     type: "info",
     audience: "All",
     target_user_ids: [],
+    expires_at: "",
   });
   const { enqueueSnackbar } = useSnackbar();
 
@@ -200,23 +203,6 @@ const Notifications = () => {
     }
   };
 
-  const handleUserChange = (event: any) => {
-    const {
-      target: { value },
-    } = event;
-    setForm({
-      ...form,
-      target_user_ids: typeof value === "string" ? value.split(",") : value,
-    });
-  };
-
-  const handleRemoveUser = (idToRemove: string | number) => {
-    setForm({
-      ...form,
-      target_user_ids: form.target_user_ids.filter((id) => id !== idToRemove),
-    });
-  };
-
   const send = async () => {
     if (!form.title || !form.message) {
       enqueueSnackbar("Title and message required", { variant: "error" });
@@ -242,13 +228,21 @@ const Notifications = () => {
             target_user_ids:
               form.audience !== "All" ? form.target_user_ids : null,
             type: form.type,
+            expires_at: form.expires_at
+              ? new Date(form.expires_at).toISOString()
+              : null,
           }),
         },
       );
       if (response.ok) {
         const newNotif = await response.json();
         setItems([newNotif, ...items]);
-        setForm({ type: "info", audience: "All", target_user_ids: [] });
+        setForm({
+          type: "info",
+          audience: "All",
+          target_user_ids: [],
+          expires_at: "",
+        });
         setOpen(false);
         enqueueSnackbar("Notification sent", { variant: "success" });
       }
@@ -256,6 +250,10 @@ const Notifications = () => {
       enqueueSnackbar("Failed to send notification", { variant: "error" });
     }
   };
+
+  const selectedUsers = filteredUsers.filter((u) =>
+    form.target_user_ids.includes(u.id),
+  );
 
   return (
     <>
@@ -355,6 +353,15 @@ const Notifications = () => {
                           size="small"
                           variant="outlined"
                         />
+                        {n.expires_at && (
+                          <Chip
+                            icon={<EventIcon fontSize="small" />}
+                            label={`Expires: ${new Date(n.expires_at).toLocaleDateString()}`}
+                            size="small"
+                            color="error"
+                            variant="outlined"
+                          />
+                        )}
                       </Box>
                     }
                     secondary={
@@ -454,40 +461,55 @@ const Notifications = () => {
             </Grid>
             {form.audience !== "All" && (
               <Grid size={12}>
-                <Box
-                  sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, mb: 1 }}
-                >
-                  {form.target_user_ids.map((id) => {
-                    const u = usersList.find((user) => user.id === id);
-                    return (
+                <Autocomplete
+                  multiple
+                  options={filteredUsers}
+                  value={selectedUsers}
+                  getOptionLabel={(option) =>
+                    `${option.name} (${option.email})`
+                  }
+                  isOptionEqualToValue={(option, value) =>
+                    option.id === value.id
+                  }
+                  onChange={(_, newValue) => {
+                    setForm({
+                      ...form,
+                      target_user_ids: newValue.map((u) => u.id),
+                    });
+                  }}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      variant="outlined"
+                      label="Target Users *"
+                      placeholder="Search users..."
+                    />
+                  )}
+                  renderTags={(tagValue, getTagProps) =>
+                    tagValue.map((option, index) => (
                       <Chip
-                        key={id}
-                        label={u ? u.name : id}
-                        onDelete={() => handleRemoveUser(id)}
+                        label={option.name}
+                        {...getTagProps({ index })}
                         color="primary"
                         size="small"
                       />
-                    );
-                  })}
-                </Box>
-                <FormControl fullWidth>
-                  <InputLabel>Target Users *</InputLabel>
-                  <Select
-                    multiple
-                    value={form.target_user_ids}
-                    onChange={handleUserChange}
-                    input={<OutlinedInput label="Target Users *" />}
-                    renderValue={() => null}
-                  >
-                    {filteredUsers.map((u) => (
-                      <MenuItem key={u.id} value={u.id}>
-                        {u.name} ({u.email})
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
+                    ))
+                  }
+                />
               </Grid>
-            )}
+            )}{" "}
+            <Grid size={12}>
+              <TextField
+                fullWidth
+                type="datetime-local"
+                label="Expiration Date"
+                value={form.expires_at || ""}
+                onChange={(e) =>
+                  setForm({ ...form, expires_at: e.target.value })
+                }
+                InputLabelProps={{ shrink: true }}
+              />
+            </Grid>
           </Grid>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
