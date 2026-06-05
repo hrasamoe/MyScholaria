@@ -25,6 +25,7 @@ import {
   Tab,
   Divider,
   Stack,
+  OutlinedInput,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import AddIcon from "@mui/icons-material/Add";
@@ -35,15 +36,24 @@ import WarningIcon from "@mui/icons-material/Warning";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CampaignIcon from "@mui/icons-material/Campaign";
 import { useSnackbar } from "notistack";
+import { useAuth } from "@/hooks/Authcontext";
 
 interface Notif {
   id: string;
   title: string;
   message: string;
   audience: string;
+  target_user_ids?: (string | number)[];
   type: "info" | "success" | "warning" | "announcement";
   created_at: string;
   is_read: boolean;
+}
+
+interface TargetUser {
+  id: string | number;
+  name: string;
+  email: string;
+  role: string;
 }
 
 const typeMeta: Record<Notif["type"], { color: any; icon: JSX.Element }> = {
@@ -54,12 +64,21 @@ const typeMeta: Record<Notif["type"], { color: any; icon: JSX.Element }> = {
 };
 
 const Notifications = () => {
+  const { user } = useAuth();
+  const establishment_id = user?.establishment_id;
+
   const [items, setItems] = useState<Notif[]>([]);
+  const [usersList, setUsersList] = useState<TargetUser[]>([]);
   const [tab, setTab] = useState(0);
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState<Partial<Notif>>({
+  const [form, setForm] = useState<
+    Partial<Omit<Notif, "target_user_ids">> & {
+      target_user_ids: (string | number)[];
+    }
+  >({
     type: "info",
     audience: "All",
+    target_user_ids: [],
   });
   const { enqueueSnackbar } = useSnackbar();
 
@@ -81,9 +100,42 @@ const Notifications = () => {
     }
   };
 
+  const fetchUsers = async () => {
+    if (!establishment_id) return;
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/establishment/${establishment_id}/all-users`,
+        {
+          method: "GET",
+          credentials: "include",
+        },
+      );
+      if (response.ok) {
+        const data = await response.json();
+        const mapped = (data as any[]).map((m) => ({
+          id: m.user_id,
+          name: m.name,
+          email: m.email,
+          role: m.role,
+        }));
+        setUsersList(mapped);
+      }
+    } catch (error) {
+      enqueueSnackbar("Failed to fetch user list", { variant: "error" });
+    }
+  };
+
   useEffect(() => {
     fetchNotifications();
-  }, []);
+    fetchUsers();
+  }, [establishment_id]);
+
+  const filteredUsers = usersList.filter((u) => {
+    if (form.audience === "All") return true;
+    return (
+      u.role?.toLowerCase() === form.audience?.toLowerCase().replace(/s$/, "")
+    );
+  });
 
   const filtered =
     tab === 0
@@ -148,9 +200,32 @@ const Notifications = () => {
     }
   };
 
+  const handleUserChange = (event: any) => {
+    const {
+      target: { value },
+    } = event;
+    setForm({
+      ...form,
+      target_user_ids: typeof value === "string" ? value.split(",") : value,
+    });
+  };
+
+  const handleRemoveUser = (idToRemove: string | number) => {
+    setForm({
+      ...form,
+      target_user_ids: form.target_user_ids.filter((id) => id !== idToRemove),
+    });
+  };
+
   const send = async () => {
     if (!form.title || !form.message) {
       enqueueSnackbar("Title and message required", { variant: "error" });
+      return;
+    }
+    if (form.audience !== "All" && form.target_user_ids.length === 0) {
+      enqueueSnackbar("Please select at least one target user", {
+        variant: "error",
+      });
       return;
     }
     try {
@@ -164,6 +239,8 @@ const Notifications = () => {
             title: form.title,
             message: form.message,
             audience: form.audience,
+            target_user_ids:
+              form.audience !== "All" ? form.target_user_ids : null,
             type: form.type,
           }),
         },
@@ -171,7 +248,7 @@ const Notifications = () => {
       if (response.ok) {
         const newNotif = await response.json();
         setItems([newNotif, ...items]);
-        setForm({ type: "info", audience: "All" });
+        setForm({ type: "info", audience: "All", target_user_ids: [] });
         setOpen(false);
         enqueueSnackbar("Notification sent", { variant: "success" });
       }
@@ -342,7 +419,11 @@ const Notifications = () => {
                   value={form.audience || "All"}
                   label="Audience"
                   onChange={(e) =>
-                    setForm({ ...form, audience: e.target.value })
+                    setForm({
+                      ...form,
+                      audience: e.target.value,
+                      target_user_ids: [],
+                    })
                   }
                 >
                   <MenuItem value="All">All</MenuItem>
@@ -350,6 +431,7 @@ const Notifications = () => {
                   <MenuItem value="Teachers">Teachers</MenuItem>
                   <MenuItem value="Parents">Parents</MenuItem>
                   <MenuItem value="Staff">Staff</MenuItem>
+                  <MenuItem value="Admins">Admin</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
@@ -370,6 +452,42 @@ const Notifications = () => {
                 </Select>
               </FormControl>
             </Grid>
+            {form.audience !== "All" && (
+              <Grid size={12}>
+                <Box
+                  sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, mb: 1 }}
+                >
+                  {form.target_user_ids.map((id) => {
+                    const u = usersList.find((user) => user.id === id);
+                    return (
+                      <Chip
+                        key={id}
+                        label={u ? u.name : id}
+                        onDelete={() => handleRemoveUser(id)}
+                        color="primary"
+                        size="small"
+                      />
+                    );
+                  })}
+                </Box>
+                <FormControl fullWidth>
+                  <InputLabel>Target Users *</InputLabel>
+                  <Select
+                    multiple
+                    value={form.target_user_ids}
+                    onChange={handleUserChange}
+                    input={<OutlinedInput label="Target Users *" />}
+                    renderValue={() => null}
+                  >
+                    {filteredUsers.map((u) => (
+                      <MenuItem key={u.id} value={u.id}>
+                        {u.name} ({u.email})
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+            )}
           </Grid>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
