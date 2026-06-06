@@ -68,3 +68,49 @@ export async function createAnnouncement(
     client.release();
   }
 }
+
+export async function getAnnouncements(establishmentID: string) {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const { rows: announcements } = await client.query(
+      "SELECT * FROM announcements WHERE establishment_id = $1",
+      [establishmentID],
+    );
+    const result = announcements.length > 0 ? announcements : null;
+    await client.query("COMMIT");
+    return result;
+  } catch (error: any) {
+    console.log(error);
+    client.query("ROLLBACK");
+    throw new Error(error.message);
+  } finally {
+    client.release();
+  }
+}
+
+export async function deleteAnnouncement(announcementID: string) {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const { rows } = await client.query(
+      `DELETE FROM announcements WHERE id = $1 
+       RETURNING *`,
+      [announcementID],
+    );
+    if (rows.length > 0 && rows[0].audience === "all") {
+      await client.query(
+        "DELETE FROM announcement_targets WHERE announcement_id = $1",
+        [rows[0].id],
+      );
+    }
+
+    await client.query("COMMIT");
+  } catch (error: any) {
+    console.log(error);
+    client.query("ROLLBACK");
+    throw new Error(error.message);
+  } finally {
+    client.release();
+  }
+}
