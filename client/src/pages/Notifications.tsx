@@ -18,6 +18,7 @@ import {
   Dialog,
   DialogActions,
   DialogContent,
+  DialogContentText,
   DialogTitle,
   Divider,
   FormControl,
@@ -73,13 +74,15 @@ const Notifications = () => {
   const [usersList, setUsersList] = useState<TargetUser[]>([]);
   const [tab, setTab] = useState(0);
   const [open, setOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedDeleteId, setSelectedDeleteId] = useState<string | null>(null);
   const [form, setForm] = useState<
     Partial<Omit<Notif, "target_user_ids">> & {
       target_user_ids: (string | number)[];
     }
   >({
     type: "info",
-    audience: "All",
+    audience: "all",
     target_user_ids: [],
     expires_at: "",
   });
@@ -134,7 +137,7 @@ const Notifications = () => {
   }, [establishment_id]);
 
   const filteredUsers = usersList.filter((u) => {
-    if (form.audience === "All") return true;
+    if (form.audience === "all") return true;
     return (
       u.role?.toLowerCase() === form.audience?.toLowerCase().replace(/s$/, "")
     );
@@ -185,21 +188,34 @@ const Notifications = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const openDeleteConfirmation = (id: string) => {
+    setSelectedDeleteId(id);
+    setDeleteDialogOpen(true);
+  };
+
+  const closeDeleteConfirmation = () => {
+    setSelectedDeleteId(null);
+    setDeleteDialogOpen(false);
+  };
+
+  const handleDelete = async () => {
+    if (!selectedDeleteId) return;
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/notifications/${id}`,
+        `${import.meta.env.VITE_API_URL}/api/notifications/${selectedDeleteId}`,
         {
           method: "DELETE",
           credentials: "include",
         },
       );
       if (response.ok) {
-        setItems(items.filter((x) => x.id !== id));
+        setItems(items.filter((x) => x.id !== selectedDeleteId));
         enqueueSnackbar("Notification deleted", { variant: "success" });
       }
     } catch (error) {
       enqueueSnackbar("Failed to delete notification", { variant: "error" });
+    } finally {
+      closeDeleteConfirmation();
     }
   };
 
@@ -208,7 +224,7 @@ const Notifications = () => {
       enqueueSnackbar("Title and message required", { variant: "error" });
       return;
     }
-    if (form.audience !== "All" && form.target_user_ids.length === 0) {
+    if (form.audience !== "all" && form.target_user_ids.length === 0) {
       enqueueSnackbar("Please select at least one target user", {
         variant: "error",
       });
@@ -226,7 +242,7 @@ const Notifications = () => {
             message: form.message,
             audience: form.audience,
             target_user_ids:
-              form.audience !== "All" ? form.target_user_ids : null,
+              form.audience !== "all" ? form.target_user_ids : null,
             type: form.type,
             expires_at: form.expires_at
               ? new Date(form.expires_at).toISOString()
@@ -239,7 +255,7 @@ const Notifications = () => {
         setItems([newNotif, ...items]);
         setForm({
           type: "info",
-          audience: "All",
+          audience: "all",
           target_user_ids: [],
           expires_at: "",
         });
@@ -317,7 +333,7 @@ const Notifications = () => {
                       )}
                       <IconButton
                         size="small"
-                        onClick={() => handleDelete(n.id)}
+                        onClick={() => openDeleteConfirmation(n.id)}
                       >
                         <DeleteIcon fontSize="small" />
                       </IconButton>
@@ -349,7 +365,10 @@ const Notifications = () => {
                           {n.title}
                         </Typography>
                         <Chip
-                          label={n.audience}
+                          label={
+                            n.audience.toUpperCase().charAt(0) +
+                            n.audience.slice(1)
+                          }
                           size="small"
                           variant="outlined"
                         />
@@ -423,7 +442,7 @@ const Notifications = () => {
               <FormControl fullWidth>
                 <InputLabel>Audience</InputLabel>
                 <Select
-                  value={form.audience || "All"}
+                  value={form.audience || "all"}
                   label="Audience"
                   onChange={(e) =>
                     setForm({
@@ -433,12 +452,12 @@ const Notifications = () => {
                     })
                   }
                 >
-                  <MenuItem value="All">All</MenuItem>
-                  <MenuItem value="Students">Students</MenuItem>
-                  <MenuItem value="Teachers">Teachers</MenuItem>
-                  <MenuItem value="Parents">Parents</MenuItem>
-                  <MenuItem value="Staff">Staff</MenuItem>
-                  <MenuItem value="Admins">Admin</MenuItem>
+                  <MenuItem value="all">All</MenuItem>
+                  <MenuItem value="student">Students</MenuItem>
+                  <MenuItem value="teacher">Teachers</MenuItem>
+                  <MenuItem value="parent">Parents</MenuItem>
+                  <MenuItem value="staff">Staff</MenuItem>
+                  <MenuItem value="admin">Admin</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
@@ -459,7 +478,7 @@ const Notifications = () => {
                 </Select>
               </FormControl>
             </Grid>
-            {form.audience !== "All" && (
+            {form.audience !== "all" && (
               <Grid size={12}>
                 <Autocomplete
                   multiple
@@ -497,7 +516,7 @@ const Notifications = () => {
                   }
                 />
               </Grid>
-            )}{" "}
+            )}
             <Grid size={12}>
               <TextField
                 fullWidth
@@ -516,6 +535,22 @@ const Notifications = () => {
           <Button onClick={() => setOpen(false)}>Cancel</Button>
           <Button variant="contained" onClick={send}>
             Send
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={deleteDialogOpen} onClose={closeDeleteConfirmation}>
+        <DialogTitle>Confirm Delete</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to delete this notification? This action
+            cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={closeDeleteConfirmation}>Cancel</Button>
+          <Button variant="contained" color="error" onClick={handleDelete}>
+            Delete
           </Button>
         </DialogActions>
       </Dialog>

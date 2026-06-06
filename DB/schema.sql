@@ -74,6 +74,7 @@ CREATE TABLE public.profiles (
   profession text,
   profile_statut USER-DEFINED,
   establishment_id uuid,
+  avatar_url text,
   CONSTRAINT profiles_pkey PRIMARY KEY (id),
   CONSTRAINT profiles_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
   CONSTRAINT profiles_establishment_id_fkey FOREIGN KEY (establishment_id) REFERENCES public.establishments(id)
@@ -605,29 +606,14 @@ CREATE TABLE public.announcements (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   establishment_id uuid NOT NULL,
   title text NOT NULL,
-  body text NOT NULL,
-  audience USER-DEFINED NOT NULL DEFAULT 'all'::announcement_audience_enum,
-  target_class_id uuid,
-  published_at timestamp with time zone NOT NULL DEFAULT now(),
+  message text NOT NULL,
+  audience USER-DEFINED NOT NULL DEFAULT 'all'::user_role,
   expires_at timestamp with time zone,
   author_id uuid,
   created_at timestamp with time zone NOT NULL DEFAULT now(),
   CONSTRAINT announcements_pkey PRIMARY KEY (id),
   CONSTRAINT announcements_establishment_id_fkey FOREIGN KEY (establishment_id) REFERENCES public.establishments(id),
-  CONSTRAINT announcements_target_class_id_fkey FOREIGN KEY (target_class_id) REFERENCES public.classes(id),
-  CONSTRAINT announcements_author_id_fkey FOREIGN KEY (author_id) REFERENCES public.profiles(id)
-);
-CREATE TABLE public.notifications (
-  id uuid NOT NULL DEFAULT gen_random_uuid(),
-  user_id uuid NOT NULL,
-  type text NOT NULL,
-  title text NOT NULL,
-  body text,
-  link text,
-  read_at timestamp with time zone,
-  created_at timestamp with time zone NOT NULL DEFAULT now(),
-  CONSTRAINT notifications_pkey PRIMARY KEY (id),
-  CONSTRAINT notifications_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
+  CONSTRAINT announcements_author_id_fkey FOREIGN KEY (author_id) REFERENCES public.users(id)
 );
 CREATE TABLE public.theses (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -765,4 +751,35 @@ CREATE TABLE public.rooms (
   updated_at timestamp with time zone NOT NULL DEFAULT now(),
   CONSTRAINT rooms_pkey PRIMARY KEY (id),
   CONSTRAINT rooms_establishment_id_fkey FOREIGN KEY (establishment_id) REFERENCES public.establishments(id)
+);
+CREATE TABLE public.announcement_targets (
+  id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
+  announcement_id uuid,
+  user_id uuid,
+  CONSTRAINT announcement_targets_pkey PRIMARY KEY (id),
+  CONSTRAINT announcement_targets_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
+  CONSTRAINT announcement_targets_announcement_id_fkey FOREIGN KEY (announcement_id) REFERENCES public.announcements(id)
+);
+CREATE TABLE public.notifications (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  establishment_id uuid NOT NULL,
+  author_id uuid NOT NULL,
+  title character varying NOT NULL,
+  message text NOT NULL,
+  type character varying NOT NULL,
+  audience USER-DEFINED NOT NULL,
+  created_at timestamp with time zone DEFAULT now(),
+  expires_at timestamp with time zone,
+  CONSTRAINT notifications_pkey PRIMARY KEY (id),
+  CONSTRAINT notifications_establishment_id_fkey FOREIGN KEY (establishment_id) REFERENCES public.establishments(id),
+  CONSTRAINT notifications_author_id_fkey FOREIGN KEY (author_id) REFERENCES public.users(id)
+);
+CREATE TABLE public.notification_receipts (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  notification_id uuid NOT NULL,
+  user_id uuid NOT NULL,
+  is_read boolean NOT NULL DEFAULT false,
+  read_at timestamp with time zone,
+  CONSTRAINT notification_receipts_pkey PRIMARY KEY (id),
+  CONSTRAINT notification_receipts_notification_id_fkey FOREIGN KEY (notification_id) REFERENCES public.notifications(id)
 );
