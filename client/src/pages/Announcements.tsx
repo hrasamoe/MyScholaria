@@ -1,8 +1,11 @@
 import PageHeader from "@/components/PageHeader";
+import { useAuth } from "@/hooks/Authcontext";
 import AddIcon from "@mui/icons-material/Add";
 import CampaignIcon from "@mui/icons-material/Campaign";
+import DeleteIcon from "@mui/icons-material/Delete";
 import EventIcon from "@mui/icons-material/Event";
 import {
+  Autocomplete,
   Box,
   Button,
   Card,
@@ -11,25 +14,26 @@ import {
   Dialog,
   DialogActions,
   DialogContent,
+  DialogContentText,
   DialogTitle,
   FormControl,
+  IconButton,
   InputLabel,
   MenuItem,
   Select,
+  Skeleton,
   Stack,
   TextField,
   Typography,
-  Autocomplete,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import { useSnackbar } from "notistack";
 import { useEffect, useState } from "react";
-import { useAuth } from "@/hooks/Authcontext";
 
 interface Ann {
   id: string;
   title: string;
-  content: string;
+  message: string;
   audience: string;
   target_user_ids?: (string | number)[];
   created_at: string;
@@ -51,12 +55,15 @@ const Announcements = () => {
   const [items, setItems] = useState<Ann[]>([]);
   const [usersList, setUsersList] = useState<TargetUser[]>([]);
   const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedDeleteId, setSelectedDeleteId] = useState<string | null>(null);
   const [form, setForm] = useState<
     Partial<Omit<Ann, "target_user_ids">> & {
       target_user_ids: (string | number)[];
     }
   >({
-    audience: "All",
+    audience: "all",
     target_user_ids: [],
     expires_at: "",
   });
@@ -64,8 +71,9 @@ const Announcements = () => {
 
   const fetchAnnouncements = async () => {
     try {
+      setLoading(true);
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/announcements`,
+        `${import.meta.env.VITE_API_URL}/api/announcement/get-list/${establishment_id}`,
         {
           method: "GET",
           credentials: "include",
@@ -77,6 +85,8 @@ const Announcements = () => {
       }
     } catch (error) {
       enqueueSnackbar("Failed to fetch announcements", { variant: "error" });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -111,36 +121,38 @@ const Announcements = () => {
   }, [establishment_id]);
 
   const filteredUsers = usersList.filter((u) => {
-    if (form.audience === "All") return true;
+    if (form.audience === "all") return true;
     return (
       u.role?.toLowerCase() === form.audience?.toLowerCase().replace(/s$/, "")
     );
   });
 
   const handleAdd = async () => {
-    if (!form.title || !form.content) {
+    const userID = user.id;
+    if (!form.title || !form.message) {
       enqueueSnackbar("Title and body required", { variant: "error" });
       return;
     }
-    if (form.audience !== "All" && form.target_user_ids.length === 0) {
+    if (form.audience !== "all" && form.target_user_ids.length === 0) {
       enqueueSnackbar("Please select at least one target user", {
         variant: "error",
       });
       return;
     }
     try {
+      setLoading(true);
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/announcements`,
+        `${import.meta.env.VITE_API_URL}/api/announcement/create/${userID}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
           body: JSON.stringify({
             title: form.title,
-            content: form.content,
-            audience: form.audience,
+            content: form.message,
+            audience: form.audience?.toLowerCase(),
             target_user_ids:
-              form.audience !== "All" ? form.target_user_ids : null,
+              form.audience !== "all" ? form.target_user_ids : [],
             expires_at: form.expires_at
               ? new Date(form.expires_at).toISOString()
               : null,
@@ -150,12 +162,51 @@ const Announcements = () => {
       if (response.ok) {
         const newAnnouncement = await response.json();
         setItems([newAnnouncement, ...items]);
-        setForm({ audience: "All", target_user_ids: [], expires_at: "" });
+        setForm({ audience: "all", target_user_ids: [], expires_at: "" });
         setOpen(false);
         enqueueSnackbar("Announcement published", { variant: "success" });
       }
     } catch (error) {
       enqueueSnackbar("Failed to publish announcement", { variant: "error" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const openDeleteConfirmation = (id: string) => {
+    setSelectedDeleteId(id);
+    setDeleteDialogOpen(true);
+  };
+
+  const closeDeleteConfirmation = () => {
+    setSelectedDeleteId(null);
+    setDeleteDialogOpen(false);
+  };
+
+  const handleDelete = async () => {
+    if (!selectedDeleteId) return;
+    try {
+      setLoading(true);
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/announcement/delete/${selectedDeleteId}`,
+        {
+          method: "DELETE",
+          credentials: "include",
+        },
+      );
+      if (response.ok) {
+        setItems(items.filter((item) => item.id !== selectedDeleteId));
+        enqueueSnackbar("Announcement deleted successfully", {
+          variant: "success",
+        });
+      } else {
+        enqueueSnackbar("Failed to delete announcement", { variant: "error" });
+      }
+    } catch (error) {
+      enqueueSnackbar("Failed to delete announcement", { variant: "error" });
+    } finally {
+      setLoading(false);
+      closeDeleteConfirmation();
     }
   };
 
@@ -181,7 +232,31 @@ const Announcements = () => {
       />
 
       <Grid container spacing={2}>
-        {items.length === 0 ? (
+        {loading ? (
+          Array.from(new Array(4)).map((_, index) => (
+            <Grid size={{ xs: 12, md: 6 }} key={index}>
+              <Card variant="outlined">
+                <CardContent>
+                  <Stack
+                    direction="row"
+                    justifyContent="space-between"
+                    alignItems="center"
+                    mb={2}
+                  >
+                    <Skeleton variant="text" width="60%" height={24} />
+                    <Skeleton variant="circular" width={24} height={24} />
+                  </Stack>
+                  <Skeleton variant="text" width="90%" height={16} />
+                  <Skeleton variant="text" width="80%" height={16} />
+                  <Stack direction="row" spacing={1}>
+                    <Skeleton variant="rounded" width={60} height={24} />
+                    <Skeleton variant="rounded" width={80} height={24} />
+                  </Stack>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))
+        ) : items.length === 0 ? (
           <Grid size={12}>
             <Box sx={{ p: 4, textAlign: "center" }}>
               <Typography variant="body2" color="text.secondary">
@@ -206,12 +281,21 @@ const Announcements = () => {
                         {a.title}
                       </Typography>
                     </Stack>
-                    {a.pinned && (
-                      <Chip size="small" color="warning" label="Pinned" />
-                    )}
+                    <Stack direction="row" alignItems="center" spacing={0.5}>
+                      {a.pinned && (
+                        <Chip size="small" color="warning" label="Pinned" />
+                      )}
+                      <IconButton
+                        size="small"
+                        color="error"
+                        onClick={() => openDeleteConfirmation(a.id)}
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </Stack>
                   </Stack>
                   <Typography variant="body2" color="text.secondary" mb={1.5}>
-                    {a.content}
+                    {a.message}
                   </Typography>
                   <Stack
                     direction="row"
@@ -220,7 +304,12 @@ const Announcements = () => {
                     useFlexGap
                     gap={1}
                   >
-                    <Chip size="small" label={a.audience} />
+                    <Chip
+                      size="small"
+                      label={
+                        a.audience.toUpperCase().charAt(0) + a.audience.slice(1)
+                      }
+                    />
                     <Chip
                       size="small"
                       variant="outlined"
@@ -266,15 +355,15 @@ const Announcements = () => {
                 multiline
                 rows={3}
                 label="Body *"
-                value={form.content || ""}
-                onChange={(e) => setForm({ ...form, content: e.target.value })}
+                value={form.message || ""}
+                onChange={(e) => setForm({ ...form, message: e.target.value })}
               />
             </Grid>
             <Grid size={12}>
               <FormControl fullWidth>
                 <InputLabel>Audience</InputLabel>
                 <Select
-                  value={form.audience || "All"}
+                  value={form.audience || "all"}
                   label="Audience"
                   onChange={(e) =>
                     setForm({
@@ -284,17 +373,16 @@ const Announcements = () => {
                     })
                   }
                 >
-                  <MenuItem value="All">All</MenuItem>
-                  <MenuItem value="Students">Students</MenuItem>
-                  <MenuItem value="Teachers">Teachers</MenuItem>
-                  <MenuItem value="Parents">Parents</MenuItem>
-                  <MenuItem value="Staff">Staff</MenuItem>
-                  <MenuItem value="Admins">Admin</MenuItem>
+                  <MenuItem value="all">All</MenuItem>
+                  <MenuItem value="student">Students</MenuItem>
+                  <MenuItem value="teacher">Teachers</MenuItem>
+                  <MenuItem value="parent">Parents</MenuItem>
+                  <MenuItem value="staff">Staff</MenuItem>
+                  <MenuItem value="admin">Admin</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
-          
-            {form.audience !== "All" && (
+            {form.audience !== "all" && (
               <Grid size={12}>
                 <Autocomplete
                   multiple
@@ -332,7 +420,8 @@ const Announcements = () => {
                   }
                 />
               </Grid>
-            )}  <Grid size={12}>
+            )}
+            <Grid size={12}>
               <TextField
                 fullWidth
                 type="datetime-local"
@@ -347,9 +436,34 @@ const Announcements = () => {
           </Grid>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setOpen(false)}>Cancel</Button>
-          <Button variant="contained" onClick={handleAdd}>
+          <Button disabled={loading} onClick={() => setOpen(false)}>
+            Cancel
+          </Button>
+          <Button disabled={loading} variant="contained" onClick={handleAdd}>
             Publish
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={deleteDialogOpen} onClose={closeDeleteConfirmation}>
+        <DialogTitle>Confirm Delete</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to delete this announcement? This action
+            cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button disabled={loading} onClick={closeDeleteConfirmation}>
+            Cancel
+          </Button>
+          <Button
+            disabled={loading}
+            variant="contained"
+            color="error"
+            onClick={handleDelete}
+          >
+            Delete
           </Button>
         </DialogActions>
       </Dialog>
