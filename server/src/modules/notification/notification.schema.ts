@@ -1,14 +1,16 @@
 import { z } from "zod";
 
-export const notificationSchema = z.object({
+export const announcementSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
-  message: z.string().min(5, "Message must be at least 5 characters"),
-  target: z
-    .array(z.string().uuid("Invalid user ID"))
-    .min(1, "At least one target user is required"),
-  expiration_date: z
-    .string()
-    .min(6, "Expiration date must be in YYYY-MM-DD format"),
+  content: z.string().min(5, "Message must be at least 5 characters"),
+  audience: z.enum(
+    ["students", "teachers", "parents", "all", "admin", "staff"],
+    {
+      message: "Invalid audience",
+    },
+  ),
+  target_user_ids: z.array(z.string()).nullable().optional().default([]),
+  expires_at: z.string().nullable().optional(),
 });
 
-export type NotifInfo = z.infer<typeof notificationSchema>;
+export type AnnouncementInfo = z.infer<typeof announcementSchema>;
