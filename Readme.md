@@ -17,18 +17,21 @@ Built with a **mobile-first**, accessibility-aware design and a strong focus on 
 ## 🚀 Features
 
 ### 🎓 Academic Management
+
 - **Students** — enrollment files, profiles, academic history
 - **Teachers & Staff** — faculty and administrative personnel management
 - **Classes & Classrooms** — group classes and physical room allocation
 - **Coursebook** — lesson logs and pedagogical progression
 
 ![MyScholaria Banner](./screenshot2.png)
+
 - **Subjects & Programs** — course catalog and curriculum tracks
 - **Timetable & School Calendar** — schedules, holidays, school year planning
 
 ![MyScholaria Banner](./screenshot3.png)
 
 ### 📊 Evaluation & Tracking
+
 - **Grades** — grading sheets and report cards
 - **Exams** — exam sessions and results
 - **Attendance** — presence, absences, lateness tracking
@@ -39,12 +42,14 @@ Built with a **mobile-first**, accessibility-aware design and a strong focus on 
 ![MyScholaria Banner](./screenshot4.png)
 
 ### 💰 Finance
+
 - **Facturation** — tuition fee invoicing
 - **Payments** — payment tracking and history
 - **Budget** — institutional budget management
 - **Scholarships** — scholarship awards and tracking
 
 ### 👥 Communication & Portals
+
 - **Messages** — internal messaging
 - **Announcements & Notifications** — institution-wide updates
 - **Events** — calendar of school events
@@ -54,6 +59,7 @@ Built with a **mobile-first**, accessibility-aware design and a strong focus on 
 ![MyScholaria Banner](./screenshot5.png)
 
 ### 🛠️ Administration
+
 - **Users & Roles** — RBAC user management
 - **Duty** — supervision and on-call rotation
 - **Library** — book catalog and loan tracking
@@ -63,6 +69,7 @@ Built with a **mobile-first**, accessibility-aware design and a strong focus on 
 ![MyScholaria Banner](./screenshot1.png)
 
 ### 🔐 Authentication & Security
+
 - Sign in / Sign up with role selection (Student, Parent, Teacher, Staff, Admin)
 - Email verification
 - Forgot password / Reset password / Change password
@@ -71,6 +78,7 @@ Built with a **mobile-first**, accessibility-aware design and a strong focus on 
 - JWT authentication with refresh tokens (httpOnly cookies)
 
 ### 📄 Legal
+
 - GDPR-compliant **Privacy Policy**
 - Detailed **Terms of Service**
 
@@ -79,6 +87,7 @@ Built with a **mobile-first**, accessibility-aware design and a strong focus on 
 ## 🧱 Tech Stack
 
 ### Frontend (`/client`)
+
 - ⚛️ **React 18** + **TypeScript**
 - ⚡ **Vite** (build tool)
 - 🎨 **Material UI (MUI v7)** — primary UI framework
@@ -89,6 +98,7 @@ Built with a **mobile-first**, accessibility-aware design and a strong focus on 
 - 📊 **recharts** (charts & analytics)
 
 ### Backend (`/server`)
+
 - 🟢 **Node.js** + **Express 5**
 - 📘 **TypeScript**
 - 🐘 **PostgreSQL** (via `pg` / `postgres`)
@@ -134,11 +144,13 @@ myscholaria/
 ## 🏁 Getting Started
 
 ### Prerequisites
+
 - **Node.js** ≥ 18 (or **Bun** ≥ 1.0)
 - **PostgreSQL** ≥ 14
 - A modern browser
 
 ### 1. Clone the repository
+
 ```bash
 git clone https://github.com/hrasamoe/myscholaria.git
 cd myscholaria
@@ -147,6 +159,7 @@ cd myscholaria
 ### 2. Configure environment variables
 
 **`server/.env`**
+
 ```env
 PORT=3434
 CLIENT_URL=http://localhost:8080
@@ -160,6 +173,7 @@ EMAIL_FROM=no-reply@myscholaria.app
 ```
 
 **`client/.env`**
+
 ```env
 VITE_API_URL=http://localhost:3434
 ```
@@ -167,6 +181,7 @@ VITE_API_URL=http://localhost:3434
 ### 3. Install dependencies & run
 
 **Backend**
+
 ```bash
 cd server
 npm install
@@ -174,6 +189,7 @@ npm run dev          # → http://localhost:3434
 ```
 
 **Frontend**
+
 ```bash
 cd client
 npm install          # or: bun install
@@ -206,19 +222,20 @@ cd server && npm run build && npm start
 
 ## 🔐 Roles & Permissions
 
-| Role        | Access                                                                 |
-|-------------|------------------------------------------------------------------------|
-| **Admin**   | Full access — users, roles, finance, academic, reports                 |
-| **Staff**   | Users, finance, classrooms, reports                                    |
-| **Teacher** | Students, classes, grades, exams, attendance, coursebook               |
-| **Student** | Student Portal — grades, attendance, schedule, messages                |
-| **Parent**  | Parent Portal — children's grades, attendance, messages                |
+| Role        | Access                                                   |
+| ----------- | -------------------------------------------------------- |
+| **Admin**   | Full access — users, roles, finance, academic, reports   |
+| **Staff**   | Users, finance, classrooms, reports                      |
+| **Teacher** | Students, classes, grades, exams, attendance, coursebook |
+| **Student** | Student Portal — grades, attendance, schedule, messages  |
+| **Parent**  | Parent Portal — children's grades, attendance, messages  |
 
 ---
 
 ## 🛡️ Data Protection & Compliance
 
 MyScholaria is designed with **GDPR** at its core:
+
 - 🔐 TLS 1.3 in transit, AES-256 at rest
 - 🧒 Special safeguards for minors (no behavioral advertising, parental consent flows)
 - ⏱️ Configurable retention policies
@@ -240,18 +257,50 @@ MyScholaria is designed with **GDPR** at its core:
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please open an issue first to discuss any major change.
+Contributions are **warmly welcome** and genuinely appreciated! MyScholaria grows stronger with every person who helps improve it.
+
+If you'd like to contribute:
 
 1. Fork the repo
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
 3. Commit your changes (`git commit -m 'Add amazing feature'`)
 4. Push to the branch and open a Pull Request
 
+Please open an issue first to discuss any major change before diving in.
+
+> 💡 Whether it's a bug fix, a new feature, improved documentation, or a translation — every contribution matters. Thank you for being part of this project!
+
+---
+
+## 💖 Sponsorship
+
+If MyScholaria has been useful to you or your institution, consider **sponsoring the project** to help sustain its development and keep it free and open-source.
+
+[![Sponsor](https://img.shields.io/badge/Sponsor-%E2%9D%A4-pink?style=for-the-badge)](mailto:herysamuelpljv@gmail.com)
+
+Your support — no matter the size — helps fund new features, infrastructure, and maintenance. It also motivates continued work on making MyScholaria the best open-source school management system available.
+
+---
+
+## 🎨 Inspiration & Usage
+
+Feel free to use **MyScholaria as inspiration** for your own projects — that's what open source is about!
+
+However, please note:
+
+- 🚫 **Do not copy** the design, logo, branding, or visual identity of MyScholaria
+- ✅ You are welcome to be inspired by the architecture, features, or approach
+- ✅ Contributions and sponsorships are preferred over direct design replication
+
+> The logo, UI design, and visual assets are original creative work and are **not covered** by the MIT License. All rights reserved on branding and design.
+
 ---
 
 ## 📄 License
 
 This project is licensed under the **MIT License** — see the `LICENSE` file for details.
+
+> ⚠️ The MIT License applies to the **source code only**. The logo, design, and branding are **not** open-licensed and may not be reproduced or reused without permission.
 
 ---
 
@@ -265,5 +314,6 @@ This project is licensed under the **MIT License** — see the `LICENSE` file fo
 
 <p align="center">
   Made with ❤️ for educators, by educators.<br/>
-  <b>MyScholaria</b> — Empowering schools, one click at a time.
+  <b>MyScholaria</b> — Empowering schools, one click at a time.<br/><br/>
+  ⭐ If you find this project useful, consider giving it a star — it helps a lot!
 </p>
