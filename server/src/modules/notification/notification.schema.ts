@@ -16,7 +16,7 @@ export const NotificationSchema = z.object({
   audience: z.enum(["student", "teacher", "parent", "all", "admin", "staff"], {
     message: "Invalid audience",
   }),
-  type: z.enum(["announcement", "reminder"], {
+  type: z.enum(["info", "success", "warning", "announcement"], {
     message: "Invalid notification type",
   }),
   target_user_ids: z.array(z.string()).nullable().optional().default([]),
