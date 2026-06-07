@@ -69,7 +69,7 @@ const typeMeta: Record<Notif["type"], { color: any; icon: JSX.Element }> = {
 const Notifications = () => {
   const { user } = useAuth();
   const establishment_id = user?.establishment_id;
-
+  const userID = user.id;
   const [items, setItems] = useState<Notif[]>([]);
   const [usersList, setUsersList] = useState<TargetUser[]>([]);
   const [tab, setTab] = useState(0);
@@ -91,7 +91,7 @@ const Notifications = () => {
   const fetchNotifications = async () => {
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/notifications`,
+        `${import.meta.env.VITE_API_URL}/api/notification/get-list${establishment_id}`,
         {
           method: "GET",
           credentials: "include",
@@ -154,7 +154,7 @@ const Notifications = () => {
   const handleMarkAllRead = async () => {
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/notifications/mark-all-read`,
+        `${import.meta.env.VITE_API_URL}/api/notification/mark-all-read`,
         {
           method: "PUT",
           credentials: "include",
@@ -174,7 +174,7 @@ const Notifications = () => {
   const handleMarkAsRead = async (id: string) => {
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/notifications/mark-read/${id}`,
+        `${import.meta.env.VITE_API_URL}/api/notification/mark-read/${id}`,
         {
           method: "PUT",
           credentials: "include",
@@ -202,7 +202,7 @@ const Notifications = () => {
     if (!selectedDeleteId) return;
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/notifications/${selectedDeleteId}`,
+        `${import.meta.env.VITE_API_URL}/api/notification/delete/${selectedDeleteId}`,
         {
           method: "DELETE",
           credentials: "include",
@@ -232,7 +232,7 @@ const Notifications = () => {
     }
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/notifications`,
+        `${import.meta.env.VITE_API_URL}/api/notification/create/${userID}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -263,7 +263,7 @@ const Notifications = () => {
         enqueueSnackbar("Notification sent", { variant: "success" });
       }
     } catch (error) {
-      enqueueSnackbar("Failed to send notification", { variant: "error" });
+      enqueueSnackbar( error || "Failed to send notification", { variant: "error" });
     }
   };
 

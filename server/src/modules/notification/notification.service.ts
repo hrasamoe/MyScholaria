@@ -1,5 +1,5 @@
 import { pool } from "../../db/pool";
-import { AnnouncementInfo } from "./notification.schema";
+import { AnnouncementInfo, NotificationInfo } from "./notification.schema";
 
 export async function createAnnouncement(
   userID: string,
@@ -110,6 +110,61 @@ export async function deleteAnnouncement(announcementID: string) {
     console.log(error);
     client.query("ROLLBACK");
     throw new Error(error.message);
+  } finally {
+    client.release();
+  }
+}
+
+export async function createNotification(
+  userID: string,
+  NotificationData: NotificationInfo,
+) {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const findEstablishment = await client.query(
+      "SELECT establishment_id FROM establishment_members WHERE user_id = $1",
+      [userID],
+    );
+    const establishmentID = findEstablishment.rows[0]?.establishment_id;
+
+    if (!establishmentID) {
+      throw new Error("User establishment not found");
+    }
+    const queryText = 
+    `INSERT INTO notifications (establishment_id, author_id, title, message, type, audience, created_at, expires_at)
+      VALUES ($1, $2, $3, $4, $5, $6, NOW(), $7) RETURNING id`;
+    const values = [
+      establishmentID,
+      userID,
+      NotificationData.title,
+      NotificationData.message,
+      NotificationData.type,
+      NotificationData.audience,
+      NotificationData.expires_at,
+    ];
+    const notificationResult = await client.query(queryText, values);
+    if (
+      NotificationData.audience !== "all" &&
+      NotificationData.target_user_ids
+    ) {
+      for (const targetID of NotificationData.target_user_ids) {
+        await client.query(
+          "INSERT INTO notification_receipts (notification_id, user_id) VALUES ($1, $2)",
+          [notificationResult.rows[0].id, targetID],
+        );
+      }
+    }
+    await client.query("COMMIT");
+    return {
+      id: notificationResult.rows[0].id,
+      ...NotificationData,
+      created_at: new Date().toISOString(),
+    };
+  } catch (error: any) {
+    console.log(error);
+    client.query("ROLLBACK");
+    throw error;
   } finally {
     client.release();
   }
