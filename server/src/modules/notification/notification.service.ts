@@ -153,6 +153,18 @@ export async function createNotification(
           [notificationResult.rows[0].id, targetID],
         );
       }
+    } else {
+      const { rows: targetUsers } = await client.query(
+        "SELECT user_id FROM establishment_members WHERE establishment_id = $1",
+        [establishmentID],
+      );
+      const userIDs = targetUsers.map((u) => u.user_id);
+      for (const user_id of userIDs) {
+        await client.query(
+          "INSERT INTO notification_receipts (notification_id, user_id) VALUES ($1, $2)",
+          [notificationResult.rows[0].id, user_id],
+        );
+      }
     }
     await client.query("COMMIT");
     return {
@@ -205,7 +217,7 @@ export async function deleteNotification(NotificationId: string) {
       RETURNING *`,
       [NotificationId],
     );
-    if (rows.length > 0 && rows[0].audience === "all") {
+    if (rows.length > 0) {
       await client.query(
         "DELETE FROM notification_receipts WHERE notification_id = $1",
         [NotificationId],
