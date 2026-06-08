@@ -160,7 +160,7 @@ const Notifications = () => {
   const handleMarkAllRead = async () => {
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/notification/mark-all-read`,
+        `${import.meta.env.VITE_API_URL}/api/notification/mark-all-read/${userID}`,
         {
           method: "PUT",
           credentials: "include",
@@ -180,7 +180,7 @@ const Notifications = () => {
   const handleMarkAsRead = async (id: string) => {
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/notification/mark-read/${id}`,
+        `${import.meta.env.VITE_API_URL}/api/notification/mark-read/${id}/${userID}`,
         {
           method: "PUT",
           credentials: "include",
