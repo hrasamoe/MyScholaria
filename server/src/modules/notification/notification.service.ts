@@ -187,11 +187,11 @@ export async function getNotification(establishmentID: string, userID: string) {
     const queryText = `
       SELECT 
         n.*, 
-        COALESCE(nr.is_read, false) AS is_read
-      FROM notifications n
+       nr.is_read
+       FROM notifications n
       LEFT JOIN notification_receipts nr 
         ON n.id = nr.notification_id AND nr.user_id = $2
-      WHERE n.establishment_id = $1
+      WHERE n.establishment_id = $1 AND nr.user_id = $2
     `;
 
     const { rows: notifications } = await client.query(queryText, [
@@ -271,5 +271,21 @@ export async function markAllNotificationAsRead(userID: string) {
     throw new Error(error.message);
   } finally {
     client.release();
+  }
+}
+
+export async function getAllAlerts(establishmentID: string, userID: string) {
+  try {
+    const [announcements, notifications] = await Promise.all([
+      getAnnouncements(establishmentID),
+      getNotification(establishmentID, userID),
+    ]);
+    return {
+      announcements,
+      notifications,
+    };
+  } catch (error: any) {
+    console.error(error);
+    throw new Error(error.message);
   }
 }
