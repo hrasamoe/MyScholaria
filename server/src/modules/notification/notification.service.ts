@@ -232,3 +232,44 @@ export async function deleteNotification(NotificationId: string) {
     client.release();
   }
 }
+
+export async function markNotificationAsRead(
+  NotificationID: string,
+  userID: string,
+) {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    await client.query(
+      `UPDATE notification_receipts SET is_read = True, read_at = NOW()
+      WHERE notification_id = $1 AND user_id = $2`,
+      [NotificationID, userID],
+    );
+    await client.query("COMMIT");
+  } catch (error: any) {
+    console.log(error);
+    await client.query("ROLLBACK");
+    throw new Error(error.message);
+  } finally {
+    client.release();
+  }
+}
+
+export async function markAllNotificationAsRead(userID: string) {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    await client.query(
+      `UPDATE notification_receipts SET is_read = True, read_at = NOW()
+      WHERE user_id = $1`,
+      [userID],
+    );
+    await client.query("COMMIT");
+  } catch (error: any) {
+    console.log(error);
+    await client.query("ROLLBACK");
+    throw new Error(error.message);
+  } finally {
+    client.release();
+  }
+}

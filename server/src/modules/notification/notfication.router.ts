@@ -8,6 +8,8 @@ import {
   deleteNotification,
   getAnnouncements,
   getNotification,
+  markAllNotificationAsRead,
+  markNotificationAsRead,
 } from "./notification.service";
 export const announcementRouter = Router();
 export const notificationROuter = Router();
@@ -124,6 +126,43 @@ notificationROuter.get(
     } catch (error: any) {
       res.status(500).json({
         message: error.message,
+      });
+    }
+  },
+);
+
+notificationROuter.put(
+  "/mark-all-read/:userID",
+  RequireAuthOnly,
+  async (req: Request, res: Response) => {
+    const userID = req.params.userID as string;
+    try {
+      await markAllNotificationAsRead(userID);
+      res.status(201).json({
+        message: "Change made successfully",
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        message: error.message,
+      });
+    }
+  },
+);
+
+notificationROuter.put(
+  "/mark-read/:id/:userID",
+  RequireAuthOnly,
+  async (req: Request, res: Response) => {
+    const notificationID = req.params.id as string;
+    const userID = req.params.userID as string;
+    try {
+      await markNotificationAsRead(notificationID, userID);
+      res.status(201).json({
+        message: "Change made successfully",
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        error: error.message,
       });
     }
   },
