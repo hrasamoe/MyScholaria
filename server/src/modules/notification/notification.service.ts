@@ -28,7 +28,7 @@ export async function createAnnouncement(
     const announcementValue = [
       establishmentID,
       announcementInfo.title,
-      announcementInfo.content,
+      announcementInfo.message,
       announcementInfo.audience,
       announcementInfo.expires_at || null,
       userID,
