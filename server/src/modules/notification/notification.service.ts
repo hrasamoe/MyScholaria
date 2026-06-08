@@ -131,8 +131,7 @@ export async function createNotification(
     if (!establishmentID) {
       throw new Error("User establishment not found");
     }
-    const queryText = 
-    `INSERT INTO notifications (establishment_id, author_id, title, message, type, audience, created_at, expires_at)
+    const queryText = `INSERT INTO notifications (establishment_id, author_id, title, message, type, audience, created_at, expires_at)
       VALUES ($1, $2, $3, $4, $5, $6, NOW(), $7) RETURNING id`;
     const values = [
       establishmentID,
@@ -165,6 +164,58 @@ export async function createNotification(
     console.log(error);
     client.query("ROLLBACK");
     throw error;
+  } finally {
+    client.release();
+  }
+}
+
+export async function getNotification(establishmentID: string, userID: string) {
+  const client = await pool.connect();
+  try {
+    const queryText = `
+      SELECT 
+        n.*, 
+        COALESCE(nr.is_read, false) AS is_read
+      FROM notifications n
+      LEFT JOIN notification_receipts nr 
+        ON n.id = nr.notification_id AND nr.user_id = $2
+      WHERE n.establishment_id = $1
+    `;
+
+    const { rows: notifications } = await client.query(queryText, [
+      establishmentID,
+      userID,
+    ]);
+
+    return notifications.length > 0 ? notifications : null;
+  } catch (error: any) {
+    console.error("Error fetching notifications:", error);
+    throw new Error(error.message);
+  } finally {
+    client.release();
+  }
+}
+
+export async function deleteNotification(NotificationId: string) {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const { rows } = await client.query(
+      `DELETE FROM notifications WHERE id = $1
+      RETURNING *`,
+      [NotificationId],
+    );
+    if (rows.length > 0 && rows[0].audience === "all") {
+      await client.query(
+        "DELETE FROM notification_receipts WHERE notification_id = $1",
+        [NotificationId],
+      );
+    }
+    await client.query("COMMIT");
+  } catch (error: any) {
+    console.log(error);
+    client.query("ROLLBACK");
+    throw new Error(error.message);
   } finally {
     client.release();
   }
