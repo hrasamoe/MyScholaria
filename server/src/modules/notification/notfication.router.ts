@@ -7,6 +7,7 @@ import {
   deleteAnnouncement,
   deleteNotification,
   getAnnouncements,
+  getAllAlerts,
   getNotification,
   markAllNotificationAsRead,
   markNotificationAsRead,
@@ -162,6 +163,24 @@ notificationROuter.put(
       });
     } catch (error: any) {
       res.status(500).json({
+        error: error.message,
+      });
+    }
+  },
+);
+
+notificationROuter.get(
+  "/alerts/:establishmentID/:userID",
+  RequireAuthOnly,
+  async (req: Request, res: Response) => {
+    const establishmentID = req.params.establishmentID as string;
+    const userID = req.params.userID as string;
+    try {
+      const result = await getAllAlerts(establishmentID, userID);
+      res.status(200).json(result);
+    } catch (error: any) {
+      res.status(400).json({
+        message: error.message,
         error: error.message,
       });
     }
