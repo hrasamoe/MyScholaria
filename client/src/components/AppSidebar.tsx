@@ -55,7 +55,7 @@ import ScienceIcon from "@mui/icons-material/Science";
 import VerifiedIcon from "@mui/icons-material/Verified";
 import AssessmentIcon from "@mui/icons-material/Assessment";
 import LockIcon from "@mui/icons-material/Lock";
-import SettingsIcon  from "@mui/icons-material/Settings";
+import SettingsIcon from "@mui/icons-material/Settings";
 import LogoutIcon from "@mui/icons-material/Logout";
 import { useAuth } from "../hooks/Authcontext";
 import { logout } from "@/services/auth.service";
@@ -66,7 +66,7 @@ export const COLLAPSED_WIDTH = 72;
 interface Announcement {
   id: string;
   title: string;
-  content: string;
+  message: string;
   created_at: string;
 }
 
@@ -126,23 +126,43 @@ const navGroups = [
   {
     label: "Portals",
     items: [
-      { label: "Parent Portal", path: "/portal/parent", icon: <FamilyRestroomIcon /> },
-      { label: "Student Portal", path: "/portal/student", icon: <PersonIcon /> },
+      {
+        label: "Parent Portal",
+        path: "/portal/parent",
+        icon: <FamilyRestroomIcon />,
+      },
+      {
+        label: "Student Portal",
+        path: "/portal/student",
+        icon: <PersonIcon />,
+      },
     ],
   },
   {
     label: "Communication",
     items: [
       { label: "Messages", path: "/messages", icon: <ChatIcon /> },
-      { label: "Announcements", path: "/announcements", icon: <CampaignIcon /> },
+      {
+        label: "Announcements",
+        path: "/announcements",
+        icon: <CampaignIcon />,
+      },
       { label: "Events", path: "/events", icon: <EventIcon /> },
-      { label: "Notifications", path: "/notifications", icon: <NotificationsIcon /> },
+      {
+        label: "Notifications",
+        path: "/notifications",
+        icon: <NotificationsIcon />,
+      },
     ],
   },
   {
     label: "University",
     items: [
-      { label: "Programs (LMD)", path: "/programs", icon: <WorkspacePremiumIcon /> },
+      {
+        label: "Programs (LMD)",
+        path: "/programs",
+        icon: <WorkspacePremiumIcon />,
+      },
       { label: "Theses", path: "/theses", icon: <ScienceIcon /> },
       { label: "Diplomas", path: "/diplomas", icon: <VerifiedIcon /> },
     ],
@@ -165,10 +185,12 @@ interface AppSidebarProps {
 
 const AppSidebar = ({ collapsed, onToggleCollapsed }: AppSidebarProps) => {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { user } = useAuth();
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-
+  const userID = user.id;
+  const establishmentID = user.establishment_id;
   const location = useLocation();
   const theme = useTheme();
   const navigate = useNavigate();
@@ -177,10 +199,13 @@ const AppSidebar = ({ collapsed, onToggleCollapsed }: AppSidebarProps) => {
 
   const fetchAlerts = async () => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/dashboard/alerts`, {
-        method: "GET",
-        credentials: "include",
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/notification/alerts/${establishmentID}/${userID}`,
+        {
+          method: "GET",
+          credentials: "include",
+        },
+      );
       const data = await response.json();
       if (response.ok) {
         setAnnouncements(data.announcements || []);
@@ -200,13 +225,16 @@ const AppSidebar = ({ collapsed, onToggleCollapsed }: AppSidebarProps) => {
   const handleMarkAsRead = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/notifications/mark-read/${id}`, {
-        method: "PUT",
-        credentials: "include",
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/notification/mark-read/${id}/${userID}`,
+        {
+          method: "PUT",
+          credentials: "include",
+        },
+      );
       if (response.ok) {
         setNotifications((prev) =>
-          prev.map((n) => (n.id === id ? { ...n, is_read: true } : n))
+          prev.map((n) => (n.id === id ? { ...n, is_read: true } : n)),
         );
       }
     } catch (error) {
@@ -243,29 +271,94 @@ const AppSidebar = ({ collapsed, onToggleCollapsed }: AppSidebarProps) => {
           borderColor: "divider",
         }}
       >
-        <Box sx={{ display: "flex", flexDirection: mini ? "column" : "row", alignItems: "center", gap: 1, minWidth: 0, width: mini ? "100%" : "auto" }}>
-          <Tooltip title={mini && isDesktop ? "Expand menu" : ""} placement="right" arrow>
-            <Box component="img" src="/logo.png" width={44} onClick={mini && isDesktop ? onToggleCollapsed : undefined} sx={{ cursor: mini && isDesktop ? "pointer" : "default" }} alt="Logo" />
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: mini ? "column" : "row",
+            alignItems: "center",
+            gap: 1,
+            minWidth: 0,
+            width: mini ? "100%" : "auto",
+          }}
+        >
+          <Tooltip
+            title={mini && isDesktop ? "Expand menu" : ""}
+            placement="right"
+            arrow
+          >
+            <Box
+              component="img"
+              src="/logo.png"
+              width={44}
+              onClick={mini && isDesktop ? onToggleCollapsed : undefined}
+              sx={{ cursor: mini && isDesktop ? "pointer" : "default" }}
+              alt="Logo"
+            />
           </Tooltip>
-          
+
           {!mini ? (
-            <Stack direction="row" alignItems="center" spacing={1} sx={{ minWidth: 0, flexGrow: 1, justifyContent: "space-between" }}>
-              <Typography variant="h6" fontWeight={700} color="text.primary" noWrap sx={{ mr: 1 }}>
+            <Stack
+              direction="row"
+              alignItems="center"
+              spacing={1}
+              sx={{ minWidth: 0, flexGrow: 1, justifyContent: "space-between" }}
+            >
+              <Typography
+                variant="h6"
+                fontWeight={700}
+                color="text.primary"
+                noWrap
+                sx={{ mr: 1 }}
+              >
                 MyScholaria
               </Typography>
               <Tooltip title="Notifications & Announcements">
-                <IconButton size="small" onClick={(e) => setAnchorEl(e.currentTarget)}>
-                  <Badge badgeContent={unreadCount} color="error" variant={unreadCount === 0 && announcements.length > 0 ? "dot" : "standard"}>
-                    {hasAlerts ? <NotificationsIcon fontSize="small" color="primary" /> : <NotificationsNoneIcon fontSize="small" />}
+                <IconButton
+                  size="small"
+                  onClick={(e) => setAnchorEl(e.currentTarget)}
+                >
+                  <Badge
+                    badgeContent={unreadCount}
+                    color="error"
+                    variant={
+                      unreadCount === 0 && announcements.length > 0
+                        ? "dot"
+                        : "standard"
+                    }
+                  >
+                    {hasAlerts ? (
+                      <NotificationsIcon fontSize="small" color="primary" />
+                    ) : (
+                      <NotificationsNoneIcon fontSize="small" />
+                    )}
                   </Badge>
                 </IconButton>
               </Tooltip>
             </Stack>
           ) : (
-            <Tooltip title="Notifications & Announcements" placement="right" arrow>
-              <IconButton size="small" onClick={(e) => setAnchorEl(e.currentTarget)}>
-                <Badge badgeContent={unreadCount} color="error" variant={unreadCount === 0 && announcements.length > 0 ? "dot" : "standard"}>
-                  {hasAlerts ? <NotificationsIcon fontSize="small" color="primary" /> : <NotificationsNoneIcon fontSize="small" />}
+            <Tooltip
+              title="Notifications & Announcements"
+              placement="right"
+              arrow
+            >
+              <IconButton
+                size="small"
+                onClick={(e) => setAnchorEl(e.currentTarget)}
+              >
+                <Badge
+                  badgeContent={unreadCount}
+                  color="error"
+                  variant={
+                    unreadCount === 0 && announcements.length > 0
+                      ? "dot"
+                      : "standard"
+                  }
+                >
+                  {hasAlerts ? (
+                    <NotificationsIcon fontSize="small" color="primary" />
+                  ) : (
+                    <NotificationsNoneIcon fontSize="small" />
+                  )}
                 </Badge>
               </IconButton>
             </Tooltip>
@@ -304,7 +397,10 @@ const AppSidebar = ({ collapsed, onToggleCollapsed }: AppSidebarProps) => {
           >
             {group.items.map((item) => {
               const active = location.pathname === item.path;
-              const test = item.path === "/" ? false : location.pathname.startsWith(item.path);
+              const test =
+                item.path === "/"
+                  ? false
+                  : location.pathname.startsWith(item.path);
               const button = (
                 <ListItemButton
                   component={Link}
@@ -320,7 +416,9 @@ const AppSidebar = ({ collapsed, onToggleCollapsed }: AppSidebarProps) => {
                       bgcolor: "primary.main",
                       color: "primary.contrastText",
                       "&:hover": { bgcolor: "primary.dark" },
-                      "& .MuiListItemIcon-root": { color: "primary.contrastText" },
+                      "& .MuiListItemIcon-root": {
+                        color: "primary.contrastText",
+                      },
                     },
                   }}
                 >
@@ -336,7 +434,10 @@ const AppSidebar = ({ collapsed, onToggleCollapsed }: AppSidebarProps) => {
                   {!mini && (
                     <ListItemText
                       primary={item.label}
-                      primaryTypographyProps={{ fontSize: "0.875rem", fontWeight: 500 }}
+                      primaryTypographyProps={{
+                        fontSize: "0.875rem",
+                        fontWeight: 500,
+                      }}
                     />
                   )}
                 </ListItemButton>
@@ -373,13 +474,22 @@ const AppSidebar = ({ collapsed, onToggleCollapsed }: AppSidebarProps) => {
               },
             }}
           >
-            <ListItemIcon sx={{ minWidth: mini ? 0 : 36, justifyContent: "center", color: "inherit" }}>
+            <ListItemIcon
+              sx={{
+                minWidth: mini ? 0 : 36,
+                justifyContent: "center",
+                color: "inherit",
+              }}
+            >
               <LogoutIcon />
             </ListItemIcon>
             {!mini && (
               <ListItemText
                 primary="Logout"
-                primaryTypographyProps={{ fontSize: "0.875rem", fontWeight: 600 }}
+                primaryTypographyProps={{
+                  fontSize: "0.875rem",
+                  fontWeight: 600,
+                }}
               />
             )}
           </ListItemButton>
@@ -392,27 +502,102 @@ const AppSidebar = ({ collapsed, onToggleCollapsed }: AppSidebarProps) => {
         onClose={() => setAnchorEl(null)}
         anchorOrigin={{ vertical: "top", horizontal: "right" }}
         transformOrigin={{ vertical: "top", horizontal: "left" }}
-        slotProps={{ paper: { sx: { width: 340, maxHeight: 480, borderRadius: 2, ml: 1, display: "flex", flexDirection: "column", boxShadow: 4 } } }}
+        slotProps={{
+          paper: {
+            sx: {
+              width: 340,
+              maxHeight: 480,
+              borderRadius: 2,
+              ml: 1,
+              display: "flex",
+              flexDirection: "column",
+              boxShadow: 4,
+            },
+          },
+        }}
       >
-        <Box sx={{ p: 2, display: "flex", justifyContent: "space-between", alignItems: "center", bgcolor: "background.paper" }}>
-          <Typography variant="subtitle2" fontWeight={700}>School Bulletins & Alerts</Typography>
-          {unreadCount > 0 && <Typography variant="caption" color="error.main" fontWeight={600}>{unreadCount} unread</Typography>}
+        <Box
+          sx={{
+            p: 2,
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            bgcolor: "background.paper",
+          }}
+        >
+          <Typography variant="subtitle2" fontWeight={700}>
+            School Bulletins & Alerts
+          </Typography>
+          {unreadCount > 0 && (
+            <Typography variant="caption" color="error.main" fontWeight={600}>
+              {unreadCount} unread
+            </Typography>
+          )}
         </Box>
         <Divider />
-        
-        <Box sx={{ p: 1.5, overflowY: "auto", flex: 1, display: "flex", flexDirection: "column", gap: 2 }}>
+
+        <Box
+          sx={{
+            p: 1.5,
+            overflowY: "auto",
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            gap: 2,
+          }}
+        >
           {announcements.length > 0 && (
             <Box>
-              <Stack direction="row" spacing={0.5} alignItems="center" sx={{ mb: 1, color: "error.main" }}>
+              <Stack
+                direction="row"
+                spacing={0.5}
+                alignItems="center"
+                sx={{ mb: 1, color: "error.main" }}
+              >
                 <CampaignIcon sx={{ fontSize: "1.1rem" }} />
-                <Typography variant="caption" fontWeight={700} sx={{ letterSpacing: 0.5, textTransform: "uppercase" }}>Announcements</Typography>
+                <Typography
+                  variant="caption"
+                  fontWeight={700}
+                  sx={{ letterSpacing: 0.5, textTransform: "uppercase" }}
+                >
+                  Announcements
+                </Typography>
               </Stack>
               <Stack spacing={1}>
                 {announcements.map((ann) => (
-                  <Box key={ann.id} sx={{ p: 1.5, bgcolor: "action.hover", borderRadius: 1, borderLeft: "3px solid", borderColor: "error.main" }}>
-                    <Typography variant="caption" fontWeight={600} color="text.primary" display="block">{ann.title}</Typography>
-                    <Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.7rem", display: "block", mb: 0.5 }}>{new Date(ann.created_at).toLocaleDateString()}</Typography>
-                    <Typography variant="caption" color="text.secondary" display="block" sx={{ whiteSpace: "pre-wrap" }}>{ann.content}</Typography>
+                  <Box
+                    key={ann.id}
+                    sx={{
+                      p: 1.5,
+                      bgcolor: "action.hover",
+                      borderRadius: 1,
+                      borderLeft: "3px solid",
+                      borderColor: "error.main",
+                    }}
+                  >
+                    <Typography
+                      variant="caption"
+                      fontWeight={600}
+                      color="text.primary"
+                      display="block"
+                    >
+                      {ann.title}
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ fontSize: "0.7rem", display: "block", mb: 0.5 }}
+                    >
+                      {new Date(ann.created_at).toLocaleDateString()}
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      display="block"
+                      sx={{ whiteSpace: "pre-wrap" }}
+                    >
+                      {ann.message}
+                    </Typography>
                   </Box>
                 ))}
               </Stack>
@@ -420,20 +605,44 @@ const AppSidebar = ({ collapsed, onToggleCollapsed }: AppSidebarProps) => {
           )}
 
           <Box>
-            <Stack direction="row" spacing={0.5} alignItems="center" sx={{ mb: 1, color: "primary.main" }}>
+            <Stack
+              direction="row"
+              spacing={0.5}
+              alignItems="center"
+              sx={{ mb: 1, color: "primary.main" }}
+            >
               <NotificationsIcon sx={{ fontSize: "1.1rem" }} />
-              <Typography variant="caption" fontWeight={700} sx={{ letterSpacing: 0.5, textTransform: "uppercase" }}>Notifications</Typography>
+              <Typography
+                variant="caption"
+                fontWeight={700}
+                sx={{ letterSpacing: 0.5, textTransform: "uppercase" }}
+              >
+                Notifications
+              </Typography>
             </Stack>
             <List disablePadding>
               {notifications.length === 0 ? (
-                <Typography variant="caption" color="text.secondary" sx={{ display: "block", textAlign: "center", py: 2, fontStyle: "italic" }}>No recent notifications</Typography>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{
+                    display: "block",
+                    textAlign: "center",
+                    py: 2,
+                    fontStyle: "italic",
+                  }}
+                >
+                  No recent notifications
+                </Typography>
               ) : (
                 notifications.map((notif) => (
                   <ListItem
                     key={notif.id}
                     dense
                     sx={{
-                      bgcolor: notif.is_read ? "transparent" : "action.selected",
+                      bgcolor: notif.is_read
+                        ? "transparent"
+                        : "action.selected",
                       borderRadius: 1,
                       mb: 0.5,
                       alignItems: "start",
@@ -441,7 +650,11 @@ const AppSidebar = ({ collapsed, onToggleCollapsed }: AppSidebarProps) => {
                     }}
                     secondaryAction={
                       !notif.is_read && (
-                        <IconButton size="small" color="primary" onClick={(e) => handleMarkAsRead(notif.id, e)}>
+                        <IconButton
+                          size="small"
+                          color="primary"
+                          onClick={(e) => handleMarkAsRead(notif.id, e)}
+                        >
                           <DoneAllIcon sx={{ fontSize: "0.9rem" }} />
                         </IconButton>
                       )
@@ -450,8 +663,17 @@ const AppSidebar = ({ collapsed, onToggleCollapsed }: AppSidebarProps) => {
                     <ListItemText
                       primary={notif.title}
                       secondary={notif.message}
-                      primaryTypographyProps={{ variant: "caption", fontWeight: notif.is_read ? 600 : 700, color: "text.primary" }}
-                      secondaryTypographyProps={{ variant: "caption", color: "text.secondary", display: "block", sx: { mt: 0.25, pr: 2 } }}
+                      primaryTypographyProps={{
+                        variant: "caption",
+                        fontWeight: notif.is_read ? 600 : 700,
+                        color: "text.primary",
+                      }}
+                      secondaryTypographyProps={{
+                        variant: "caption",
+                        color: "text.secondary",
+                        display: "block",
+                        sx: { mt: 0.25, pr: 2 },
+                      }}
                     />
                   </ListItem>
                 ))
@@ -488,7 +710,10 @@ const AppSidebar = ({ collapsed, onToggleCollapsed }: AppSidebarProps) => {
         open={mobileOpen}
         onClose={() => setMobileOpen(false)}
         ModalProps={{ keepMounted: true }}
-        sx={{ display: { xs: "block", lg: "none" }, "& .MuiDrawer-paper": { width: DRAWER_WIDTH } }}
+        sx={{
+          display: { xs: "block", lg: "none" },
+          "& .MuiDrawer-paper": { width: DRAWER_WIDTH },
+        }}
       >
         <Box sx={{ display: "flex", justifyContent: "flex-end", p: 1 }}>
           <IconButton onClick={() => setMobileOpen(false)}>
