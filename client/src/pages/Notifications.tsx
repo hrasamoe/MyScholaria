@@ -30,6 +30,7 @@ import {
   ListItemText,
   MenuItem,
   Select,
+  Skeleton,
   Stack,
   Tab,
   Tabs,
@@ -74,6 +75,7 @@ const Notifications = () => {
   const [usersList, setUsersList] = useState<TargetUser[]>([]);
   const [tab, setTab] = useState(0);
   const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedDeleteId, setSelectedDeleteId] = useState<string | null>(null);
   const [form, setForm] = useState<
@@ -91,7 +93,7 @@ const Notifications = () => {
   const fetchNotifications = async () => {
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/notification/get-list${establishment_id}`,
+        `${import.meta.env.VITE_API_URL}/api/notification/get-list/${establishment_id}/${userID}`,
         {
           method: "GET",
           credentials: "include",
@@ -132,8 +134,12 @@ const Notifications = () => {
   };
 
   useEffect(() => {
-    fetchNotifications();
-    fetchUsers();
+    const loadData = async () => {
+      setLoading(true);
+      await Promise.all([fetchNotifications(), fetchUsers()]);
+      setLoading(false);
+    };
+    loadData();
   }, [establishment_id]);
 
   const filteredUsers = usersList.filter((u) => {
@@ -263,7 +269,9 @@ const Notifications = () => {
         enqueueSnackbar("Notification sent", { variant: "success" });
       }
     } catch (error) {
-      enqueueSnackbar( error || "Failed to send notification", { variant: "error" });
+      enqueueSnackbar(error || "Failed to send notification", {
+        variant: "error",
+      });
     }
   };
 
@@ -275,13 +283,14 @@ const Notifications = () => {
     <>
       <PageHeader
         title="Notifications"
-        subtitle={`${unread} unread`}
+        subtitle={loading ? <Skeleton width={60} /> : `${unread} unread`}
         action={
           <Stack direction="row" spacing={1}>
             <Button
               variant="outlined"
               startIcon={<DoneAllIcon />}
               onClick={handleMarkAllRead}
+              disabled={loading}
             >
               Mark all read
             </Button>
@@ -289,6 +298,7 @@ const Notifications = () => {
               variant="contained"
               startIcon={<AddIcon />}
               onClick={() => setOpen(true)}
+              disabled={loading}
             >
               Send
             </Button>
@@ -302,12 +312,50 @@ const Notifications = () => {
           onChange={(_, v) => setTab(v)}
           sx={{ borderBottom: 1, borderColor: "divider", px: 2 }}
         >
-          <Tab label={`All (${items.length})`} />
-          <Tab label={`Unread (${unread})`} />
+          <Tab
+            label={loading ? <Skeleton width={80} /> : `All (${items.length})`}
+          />
+          <Tab
+            label={loading ? <Skeleton width={80} /> : `Unread (${unread})`}
+          />
           <Tab label="Read" />
         </Tabs>
         <List disablePadding>
-          {filtered.length === 0 ? (
+          {loading ? (
+            Array.from(new Array(3)).map((_, index) => (
+              <Box key={index}>
+                <ListItem sx={{ py: 1.5 }}>
+                  <ListItemAvatar>
+                    <Skeleton variant="circular" width={40} height={40} />
+                  </ListItemAvatar>
+                  <ListItemText
+                    primary={
+                      <Stack
+                        direction="row"
+                        spacing={1}
+                        alignItems="center"
+                        sx={{ mb: 1 }}
+                      >
+                        <Skeleton variant="text" width="30%" height={20} />
+                        <Skeleton
+                          variant="rectangular"
+                          width={50}
+                          height={20}
+                        />
+                      </Stack>
+                    }
+                    secondary={
+                      <>
+                        <Skeleton variant="text" width="70%" />
+                        <Skeleton variant="text" width="20%" />
+                      </>
+                    }
+                  />
+                </ListItem>
+                {index < 2 && <Divider />}
+              </Box>
+            ))
+          ) : filtered.length === 0 ? (
             <Box sx={{ p: 4, textAlign: "center" }}>
               <Typography variant="body2" color="text.secondary">
                 Nothing here
