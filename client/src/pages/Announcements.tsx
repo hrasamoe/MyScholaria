@@ -149,13 +149,14 @@ const Announcements = () => {
           credentials: "include",
           body: JSON.stringify({
             title: form.title,
-            content: form.message,
+            message: form.message,
             audience: form.audience?.toLowerCase(),
             target_user_ids:
               form.audience !== "all" ? form.target_user_ids : [],
-            expires_at: form.expires_at
-              ? new Date(form.expires_at).toISOString()
-              : null,
+            expires_at:
+              form.expires_at && form.expires_at.trim() !== ""
+                ? new Date(form.expires_at).toISOString()
+                : null,
           }),
         },
       );
