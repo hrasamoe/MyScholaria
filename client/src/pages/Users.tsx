@@ -25,6 +25,7 @@ import { useSnackbar } from "notistack";
 import { useAuth } from "@/hooks/Authcontext";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import DataTableSkeleton from "@/components/DataSkeleton";
+import { apiRequest } from "@/services/api.service";
 
 interface User {
   id: string | number;
@@ -68,8 +69,7 @@ const Users = () => {
       if (!establishment_id) return;
       try {
         setLoadingUserList(true);
-        const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/api/establishment/${establishment_id}/all-users`,
+        const response = await apiRequest(`/api/establishment/${establishment_id}/all-users`,
           {
             method: "GET",
             credentials: "include",
@@ -100,8 +100,7 @@ const Users = () => {
       if (!establishment_id) return;
       try {
         setLoading(true);
-        const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/api/establishment/${establishment_id}/pending-members`,
+        const response = await apiRequest(`/api/establishment/${establishment_id}/pending-members`,
           {
             method: "GET",
             credentials: "include",
@@ -163,8 +162,7 @@ const Users = () => {
     if (!selectedUser || !establishment_id) return;
 
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/establishment/approved-member`,
+      const response = await apiRequest(`/api/establishment/approved-member`,
         {
           credentials: "include",
           method: "POST",

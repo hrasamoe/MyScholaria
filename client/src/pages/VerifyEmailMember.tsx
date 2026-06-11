@@ -14,6 +14,7 @@ import ErrorIcon from "@mui/icons-material/Error";
 import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";
 import { useAuth } from "@/hooks/Authcontext";
 import { useSnackbar } from "notistack";
+import { apiRequest } from "@/services/api.service";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -39,8 +40,7 @@ export default function VerifyEmailMember() {
       }
 
       try {
-        const res = await fetch(
-          `${API_URL}/api/auth/verify-email-member?token=${token}`,
+        const res = await apiRequest(`/api/auth/verify-email-member?token=${token}`,
           {
             credentials: "include",
           },
@@ -48,7 +48,7 @@ export default function VerifyEmailMember() {
         const data = await res.json();
         if (res.ok) {
           saveAuth(data.user);
-          await fetch(`${API_URL}/api/establishment/join`, {
+          await apiRequest(`/api/establishment/join`, {
             method: "POST",
             credentials: "include",
             headers: { "Content-Type": "application/json" },

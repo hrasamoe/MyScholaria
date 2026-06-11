@@ -24,6 +24,7 @@ import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import { login } from "@/services/auth.service";
 import { useAuth } from "@/hooks/Authcontext";
 import { useSnackbar } from "notistack";
+import { apiRequest } from "@/services/api.service";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -73,7 +74,7 @@ const SignIn = () => {
     setError("");
     setIsLoading(true);
     try {
-      const res = await fetch(`${API_URL}/api/establishment/select`, {
+      const res = await apiRequest(`/api/establishment/select`, {
         method: "POST",
         credentials: "include",
 

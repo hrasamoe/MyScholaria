@@ -4,6 +4,7 @@ import { Box, CircularProgress, Typography, Button } from "@mui/material";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import ErrorIcon from "@mui/icons-material/Error";
 import { useAuth } from "@/hooks/Authcontext";
+import { apiRequest } from "@/services/api.service";
 const API_URL = import.meta.env.VITE_API_URL;
 
 export default function VerifyEmail() {
@@ -20,7 +21,7 @@ export default function VerifyEmail() {
       setStatus("error");
       return;
     }
-    fetch(`${API_URL}/api/auth/verify-email?token=${token}`, {
+    apiRequest(`/api/auth/verify-email?token=${token}`, {
       credentials: "include",
     }).then(async (res) => {
       const data = await res.json();

@@ -1,4 +1,5 @@
 import PageHeader from "@/components/PageHeader";
+import { apiRequest } from "@/services/api.service";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import EditIcon from "@mui/icons-material/Edit";
 import {
@@ -66,7 +67,7 @@ const ParentDetails = () => {
     const fetchParentDetails = async () => {
       try {
         setLoading(true);
-        const res = await fetch(`${API_URL}/api/utils/get-parent-details/${id}`, {
+        const res = await apiRequest(`/api/utils/get-parent-details/${id}`, {
           credentials: "include",
         });
 

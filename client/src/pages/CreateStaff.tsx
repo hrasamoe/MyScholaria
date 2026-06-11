@@ -1,5 +1,6 @@
 import PageHeader from "@/components/PageHeader";
 import { useAuth } from "@/hooks/Authcontext";
+import { apiRequest } from "@/services/api.service";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import SaveIcon from "@mui/icons-material/Save";
 import {
@@ -130,8 +131,7 @@ const CreateStaff = () => {
         status: form.status,
       };
 
-      const response = await fetch(
-        `${API_URL}/api/staff/create/${establishmentID}`,
+      const response = await apiRequest(`/api/staff/create/${establishmentID}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

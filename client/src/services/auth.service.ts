@@ -1,3 +1,5 @@
+import { apiRequest } from "./api.service";
+
 const API_URL = import.meta.env.VITE_API_URL;
 
 export interface AuthResponse {
@@ -60,7 +62,7 @@ export async function login(
 }
 
 export async function logout(): Promise<void> {
-  const res = await fetch(`${API_URL}/api/auth/logout`, {
+  const res = await apiRequest(`/api/auth/logout`, {
     method: "POST",
     credentials: "include",
     headers: { "Content-Type": "application/json" },
@@ -84,7 +86,6 @@ export async function getMe(): Promise<AuthResponse> {
     });
 
     if (!refreshRes.ok) {
-      // window.location.href = "/auth/signup";
       throw new Error("Session expirée");
     }
 

@@ -1,4 +1,5 @@
 import PageHeader from "@/components/PageHeader";
+import { apiRequest } from "@/services/api.service";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import EditIcon from "@mui/icons-material/Edit";
 import SchoolIcon from "@mui/icons-material/School";
@@ -105,7 +106,7 @@ const TeacherDetails = () => {
     const fetchTeacherDetails = async () => {
       try {
         setLoading(true);
-        const res = await fetch(`${API_URL}/api/teachers/details/${id}`, {
+        const res = await apiRequest(`/api/teachers/details/${id}`, {
           credentials: "include",
         });
 

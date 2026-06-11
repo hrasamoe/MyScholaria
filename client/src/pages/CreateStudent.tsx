@@ -4,6 +4,7 @@ import AddIcon from "@mui/icons-material/Add";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import SaveIcon from "@mui/icons-material/Save";
 import SearchIcon from "@mui/icons-material/Search";
+import { apiRequest } from "@/services/api.service";
 import {
   Autocomplete,
   Box,
@@ -87,13 +88,13 @@ const CreateStudent = () => {
       try {
         setLoading(true);
         const [resClasses, resParents] = await Promise.all([
-          fetch(
-            `${API_URL}/api/establishment/classes-list/${establishmentID}`,
+          apiRequest(
+            `/api/establishment/classes-list/${establishmentID}`,
             {
               credentials: "include",
             },
           ),
-          fetch(`${API_URL}/api/utils/get-parent-list/${establishmentID}`, {
+          apiRequest(`/api/utils/get-parent-list/${establishmentID}`, {
             credentials: "include",
           }),
         ]);
@@ -178,8 +179,8 @@ const CreateStudent = () => {
         parent_ids: form.parent_ids || [],
       };
 
-      const response = await fetch(
-        `${API_URL}/api/students/create/${establishmentID}`,
+      const response = await apiRequest(
+        `/api/students/create/${establishmentID}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

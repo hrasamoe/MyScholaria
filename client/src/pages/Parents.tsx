@@ -1,6 +1,7 @@
 import PageHeader from "@/components/PageHeader";
 import { useAuth } from "@/hooks/Authcontext";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+import { apiRequest } from "@/services/api.service";
 import AddIcon from "@mui/icons-material/Add";
 import Delete from "@mui/icons-material/Delete";
 import SearchIcon from "@mui/icons-material/Search";
@@ -46,8 +47,7 @@ const ParentsList = () => {
   const [selectedParent, setSelectedParent] = useState<Parent | null>(null);
 
   const handleDelete = async (id: string) => {
-    const response = await fetch(
-      `${import.meta.env.VITE_API_URL}/api/utils/delete-parent/${id}`,
+    const response = await apiRequest(`/api/utils/delete-parent/${id}`,
       {
         method: "DELETE",
         credentials: "include",
@@ -90,8 +90,7 @@ const ParentsList = () => {
       if (!establishmentID) return;
       try {
         setLoading(true);
-        const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/api/utils/get-parent-list/${establishmentID}`,
+        const response = await apiRequest(`/api/utils/get-parent-list/${establishmentID}`,
           {
             method: "GET",
             credentials: "include",

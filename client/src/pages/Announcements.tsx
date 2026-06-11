@@ -1,5 +1,6 @@
 import PageHeader from "@/components/PageHeader";
 import { useAuth } from "@/hooks/Authcontext";
+import { apiRequest } from "@/services/api.service";
 import AddIcon from "@mui/icons-material/Add";
 import CampaignIcon from "@mui/icons-material/Campaign";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -72,8 +73,7 @@ const Announcements = () => {
   const fetchAnnouncements = async () => {
     try {
       setLoading(true);
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/announcement/get-list/${establishment_id}`,
+      const response = await apiRequest(`/api/announcement/get-list/${establishment_id}`,
         {
           method: "GET",
           credentials: "include",
@@ -93,8 +93,7 @@ const Announcements = () => {
   const fetchUsers = async () => {
     if (!establishment_id) return;
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/establishment/${establishment_id}/all-users`,
+      const response = await apiRequest(`/api/establishment/${establishment_id}/all-users`,
         {
           method: "GET",
           credentials: "include",
@@ -141,8 +140,7 @@ const Announcements = () => {
     }
     try {
       setLoading(true);
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/announcement/create/${userID}`,
+      const response = await apiRequest(`/api/announcement/create/${userID}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -188,8 +186,7 @@ const Announcements = () => {
     if (!selectedDeleteId) return;
     try {
       setLoading(true);
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/announcement/delete/${selectedDeleteId}`,
+      const response = await apiRequest(`/api/announcement/delete/${selectedDeleteId}`,
         {
           method: "DELETE",
           credentials: "include",

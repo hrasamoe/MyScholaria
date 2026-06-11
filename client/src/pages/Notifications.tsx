@@ -1,5 +1,6 @@
 import PageHeader from "@/components/PageHeader";
 import { useAuth } from "@/hooks/Authcontext";
+import { apiRequest } from "@/services/api.service";
 import AddIcon from "@mui/icons-material/Add";
 import CampaignIcon from "@mui/icons-material/Campaign";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
@@ -92,8 +93,7 @@ const Notifications = () => {
 
   const fetchNotifications = async () => {
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/notification/get-list/${establishment_id}/${userID}`,
+      const response = await apiRequest(`/api/notification/get-list/${establishment_id}/${userID}`,
         {
           method: "GET",
           credentials: "include",
@@ -111,8 +111,7 @@ const Notifications = () => {
   const fetchUsers = async () => {
     if (!establishment_id) return;
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/establishment/${establishment_id}/all-users`,
+      const response = await apiRequest(`/api/establishment/${establishment_id}/all-users`,
         {
           method: "GET",
           credentials: "include",
@@ -159,8 +158,7 @@ const Notifications = () => {
 
   const handleMarkAllRead = async () => {
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/notification/mark-all-read/${userID}`,
+      const response = await apiRequest(`/api/notification/mark-all-read/${userID}`,
         {
           method: "PUT",
           credentials: "include",
@@ -179,8 +177,7 @@ const Notifications = () => {
 
   const handleMarkAsRead = async (id: string) => {
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/notification/mark-read/${id}/${userID}`,
+      const response = await apiRequest(`/api/notification/mark-read/${id}/${userID}`,
         {
           method: "PUT",
           credentials: "include",
@@ -207,8 +204,7 @@ const Notifications = () => {
   const handleDelete = async () => {
     if (!selectedDeleteId) return;
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/notification/delete/${selectedDeleteId}`,
+      const response = await apiRequest(`/api/notification/delete/${selectedDeleteId}`,
         {
           method: "DELETE",
           credentials: "include",
@@ -237,8 +233,7 @@ const Notifications = () => {
       return;
     }
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/notification/create/${userID}`,
+      const response = await apiRequest(`/api/notification/create/${userID}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

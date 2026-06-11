@@ -24,6 +24,7 @@ import { useSnackbar } from "notistack";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { TeacherSubject } from "./Teachers";
+import { apiRequest } from "@/services/api.service";
 
 export type ContractType = "permanent" | "contract" | "vacation";
 
@@ -88,8 +89,8 @@ const EditTeacher = () => {
     const fetchTeacherDetails = async () => {
       try {
         setFetching(true);
-        const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/api/teachers/details/${id}`,
+        const response = await apiRequest(
+          `/api/teachers/details/${id}`,
           {
             method: "GET",
             credentials: "include",
@@ -172,8 +173,8 @@ const EditTeacher = () => {
 
     setLoading(true);
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/teachers/update/${id}`,
+      const response = await apiRequest(
+        `/api/teachers/update/${id}`,
         {
           method: "PUT",
           headers: {

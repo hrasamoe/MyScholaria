@@ -1,6 +1,7 @@
 import PageHeader from "@/components/PageHeader";
 import { useAuth } from "@/hooks/Authcontext";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+import { apiRequest } from "@/services/api.service";
 import AddIcon from "@mui/icons-material/Add";
 import Delete from "@mui/icons-material/Delete";
 import SearchIcon from "@mui/icons-material/Search";
@@ -50,8 +51,7 @@ const Staff = () => {
   const [selectedStaff, setSelectedStaff] = useState<StaffMember | null>(null);
 
   const handleDelete = async (id: string) => {
-    const response = await fetch(
-      `${import.meta.env.VITE_API_URL}/api/staff/delete/${id}`,
+    const response = await apiRequest(`/api/staff/delete/${id}`,
       {
         method: "DELETE",
         credentials: "include",
@@ -99,8 +99,7 @@ const Staff = () => {
       if (!establishmentID) return;
       try {
         setLoading(true);
-        const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/api/staff/list/${establishmentID}`,
+        const response = await apiRequest(`/api/staff/list/${establishmentID}`,
           {
             method: "GET",
             credentials: "include",

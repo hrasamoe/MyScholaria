@@ -1,5 +1,6 @@
 import PageHeader from "@/components/PageHeader";
 import { useAuth } from "@/hooks/Authcontext";
+import { apiRequest } from "@/services/api.service";
 import AddIcon from "@mui/icons-material/Add";
 import ApartmentIcon from "@mui/icons-material/Apartment";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -102,13 +103,13 @@ const Classes = () => {
     try {
       setLoading(true);
       const [resClasses, resClassrooms, resTeachers] = await Promise.all([
-        fetch(`${API_URL}/api/establishment/classes-list/${establishmentID}`, {
+        apiRequest(`/api/establishment/classes-list/${establishmentID}`, {
           credentials: "include",
         }),
-        fetch(`${API_URL}/api/utils/get-classrooms/${establishmentID}`, {
+        apiRequest(`/api/utils/get-classrooms/${establishmentID}`, {
           credentials: "include",
         }),
-        fetch(`${API_URL}/api/teachers/get-list/${establishmentID}`, {
+        apiRequest(`/api/teachers/get-list/${establishmentID}`, {
           credentials: "include",
         }),
       ]);
@@ -188,12 +189,12 @@ const Classes = () => {
     try {
       setActionLoading(true);
       const url = selectedClass
-        ? `${API_URL}/api/establishment/edit-classes/${selectedClass.id}`
-        : `${API_URL}/api/establishment/classes/${establishmentID}`;
+        ? `/api/establishment/edit-classes/${selectedClass.id}`
+        : `/api/establishment/classes/${establishmentID}`;
 
       const method = selectedClass ? "PUT" : "POST";
 
-      const response = await fetch(url, {
+      const response = await apiRequest(url, {
         method,
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -224,8 +225,8 @@ const Classes = () => {
     if (!selectedClass) return;
     try {
       setActionLoading(true);
-      const response = await fetch(
-        `${API_URL}/api/establishment/delete-classes/${selectedClass.id}`,
+      const response = await apiRequest(
+        `/api/establishment/delete-classes/${selectedClass.id}`,
         { method: "DELETE", credentials: "include" },
       );
 

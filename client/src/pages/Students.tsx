@@ -1,6 +1,7 @@
 import PageHeader from "@/components/PageHeader";
 import { useAuth } from "@/hooks/Authcontext";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+import { apiRequest } from "@/services/api.service";
 import AddIcon from "@mui/icons-material/Add";
 import Delete from "@mui/icons-material/Delete";
 import SearchIcon from "@mui/icons-material/Search";
@@ -49,8 +50,7 @@ const Students = () => {
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
 
   const handleDelete = async (id: string) => {
-    const response = await fetch(
-      `${import.meta.env.VITE_API_URL}/api/students/delete/${id}`,
+    const response = await apiRequest(`/api/students/delete/${id}`,
       {
         method: "DELETE",
         credentials: "include",
@@ -95,8 +95,7 @@ const Students = () => {
       if (!establishmentID) return;
       try {
         setLoading(true);
-        const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/api/students/list/${establishmentID}`,
+        const response = await apiRequest(`/api/students/list/${establishmentID}`,
           {
             method: "GET",
             credentials: "include",

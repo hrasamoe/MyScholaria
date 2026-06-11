@@ -1,4 +1,5 @@
 import { useAuth } from "@/hooks/Authcontext";
+import { apiRequest } from "@/services/api.service";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import ErrorIcon from "@mui/icons-material/Error";
 import LockResetIcon from "@mui/icons-material/LockReset";
@@ -87,8 +88,7 @@ const ResetPassword = () => {
       setTokenValid(true);
       return;
     }
-    fetch(
-      `${API_URL}/api/auth/verify-reset-token?token=${encodeURIComponent(token!)}`,
+    apiRequest(`/api/auth/verify-reset-token?token=${encodeURIComponent(token!)}`,
       {
         credentials: "include",
       },
@@ -110,7 +110,7 @@ const ResetPassword = () => {
     setError("");
     setIsLoading(true);
     try {
-      const res = await fetch(`${API_URL}/api/auth/reset-password`, {
+      const res = await apiRequest(`/api/auth/reset-password`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },

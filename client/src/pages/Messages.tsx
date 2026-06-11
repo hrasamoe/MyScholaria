@@ -23,6 +23,7 @@ import Grid from "@mui/material/Grid";
 import SendIcon from "@mui/icons-material/Send";
 import SearchIcon from "@mui/icons-material/Search";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import { apiRequest } from "@/services/api.service";
 
 const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL,
@@ -82,8 +83,7 @@ const Messages = () => {
           setChatHistoryUserIds(interactedUserIds);
         }
 
-        const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/api/establishment/${establishmentId}/all-users`,
+        const response = await apiRequest(`/api/establishment/${establishmentId}/all-users`,
           { method: "GET", credentials: "include" },
         );
 
@@ -199,8 +199,8 @@ const Messages = () => {
     if (!text.trim() || !currentUserId || !activeMemberId) return;
 
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/messages/create`,
+      const response = await apiRequest(
+        `/api/messages/create`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

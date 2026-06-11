@@ -1,3 +1,5 @@
+import { apiRequest } from "./api.service";
+
 const API_URL = import.meta.env.VITE_API_URL;
 
 export interface EstablishmentResponse {
@@ -45,7 +47,7 @@ export async function createEstablishment(
 }
 
 export async function getMyEstablishments(userID: string): Promise<any[]> {
-  const res = await fetch(`${API_URL}/api/establishment/my`, {
+  const res = await apiRequest(`/api/establishment/my`, {
     method: "POST",
     credentials: "include",
     headers: {
@@ -60,13 +62,13 @@ export async function getMyEstablishments(userID: string): Promise<any[]> {
 }
 
 export async function approvedMember(email: string, establishmentId: string) {
-  const res = await fetch(`${API_URL}/api/establishment/approve-member`, {
+  const res = await apiRequest(`/api/establishment/approve-member`, {
     method: "POST",
     credentials: "include",
     headers: {
       "Content-Type": "application/json",
     },
-  body: JSON.stringify({ email, establishmentId }),
+    body: JSON.stringify({ email, establishmentId }),
   });
 
   const result = await res.json();

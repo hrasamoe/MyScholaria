@@ -1,5 +1,6 @@
 import PageHeader from "@/components/PageHeader";
 import { useAuth } from "@/hooks/Authcontext";
+import { apiRequest } from "@/services/api.service";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import SaveIcon from "@mui/icons-material/Save";
 import {
@@ -79,8 +80,7 @@ const CreateParent = () => {
 
     setLoading(true);
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/utils/create-parent/${establishmentID}`,
+      const response = await apiRequest(`/api/utils/create-parent/${establishmentID}`,
         {
           method: "POST",
           headers: {

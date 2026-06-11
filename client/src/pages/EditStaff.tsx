@@ -1,4 +1,5 @@
 import PageHeader from "@/components/PageHeader";
+import { apiRequest } from "@/services/api.service";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import SaveIcon from "@mui/icons-material/Save";
 import {
@@ -77,7 +78,7 @@ const EditStaff = () => {
     const fetchStaffDetails = async () => {
       try {
         setFetching(true);
-        const response = await fetch(`${API_URL}/api/staff/details/${id}`, {
+        const response = await apiRequest(`/api/staff/details/${id}`, {
           method: "GET",
           credentials: "include",
         });
@@ -160,7 +161,7 @@ const EditStaff = () => {
 
     setLoading(true);
     try {
-      const response = await fetch(`${API_URL}/api/staff/update/${id}`, {
+      const response = await apiRequest(`/api/staff/update/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

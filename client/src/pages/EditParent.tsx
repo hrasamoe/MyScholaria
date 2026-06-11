@@ -5,7 +5,8 @@ import {
   TextField,
   Box,
   Paper,
-  Typography,Container,
+  Typography,
+  Container,
   FormControl,
   FormLabel,
   RadioGroup,
@@ -20,6 +21,7 @@ import SaveIcon from "@mui/icons-material/Save";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useSnackbar } from "notistack";
 import { useNavigate, useParams } from "react-router-dom";
+import { apiRequest } from "@/services/api.service";
 
 interface ParentForm {
   firstName: string;
@@ -54,8 +56,8 @@ const EditParent = () => {
     const fetchParentDetails = async () => {
       try {
         setFetching(true);
-        const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/api/utils/get-parent-details/${id}`,
+        const response = await apiRequest(
+          `/api/utils/get-parent-details/${id}`,
           {
             method: "GET",
             credentials: "include",
@@ -110,26 +112,23 @@ const EditParent = () => {
 
     setLoading(true);
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/utils/update-parent/${id}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({
-            firstName: form.firstName,
-            lastName: form.lastName,
-            email: form.email,
-            gender: form.gender,
-            profession: form.profession,
-            phone: form.phone,
-            address: form.address,
-            fullname: form.firstName + " " + form.lastName,
-          }),
+      const response = await apiRequest(`/api/utils/update-parent/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
         },
-      );
+        credentials: "include",
+        body: JSON.stringify({
+          firstName: form.firstName,
+          lastName: form.lastName,
+          email: form.email,
+          gender: form.gender,
+          profession: form.profession,
+          phone: form.phone,
+          address: form.address,
+          fullname: form.firstName + " " + form.lastName,
+        }),
+      });
 
       const result = await response.json();
 

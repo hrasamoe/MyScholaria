@@ -1,5 +1,6 @@
 import PageHeader from "@/components/PageHeader";
 import { useAuth } from "@/hooks/Authcontext";
+import { apiRequest } from "@/services/api.service";
 import AddIcon from "@mui/icons-material/Add";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import SaveIcon from "@mui/icons-material/Save";
@@ -91,11 +92,11 @@ const EditStudent = () => {
       try {
         setLoading(true);
         const [resClasses, resParents] = await Promise.all([
-          fetch(
-            `${API_URL}/api/establishment/classes-list/${establishmentID}`,
+          apiRequest(
+            `/api/establishment/classes-list/${establishmentID}`,
             { credentials: "include" },
           ),
-          fetch(`${API_URL}/api/utils/get-parent-list/${establishmentID}`, {
+          apiRequest(`/api/utils/get-parent-list/${establishmentID}`, {
             credentials: "include",
           }),
         ]);
@@ -117,7 +118,7 @@ const EditStudent = () => {
     const fetchStudent = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`${API_URL}/api/students/details/${id}`, {
+        const response = await apiRequest(`/api/students/details/${id}`, {
           credentials: "include",
         });
         if (!response.ok) throw new Error();
@@ -213,7 +214,7 @@ const EditStudent = () => {
         parent_ids: form.parent_ids || [],
       };
 
-      const response = await fetch(`${API_URL}/api/students/update/${id}`, {
+      const response = await apiRequest(`/api/students/update/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

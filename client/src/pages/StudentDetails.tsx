@@ -1,4 +1,5 @@
 import PageHeader from "@/components/PageHeader";
+import { apiRequest } from "@/services/api.service";
 import AddIcon from "@mui/icons-material/Add";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import EditIcon from "@mui/icons-material/Edit";
@@ -141,7 +142,7 @@ const StudentDetails = () => {
     const fetchAll = async () => {
       try {
         setLoading(true);
-        const res = await fetch(`${API_URL}/api/students/details/${id}`, {
+        const res = await apiRequest(`/api/students/details/${id}`, {
           credentials: "include",
         });
 

@@ -28,6 +28,7 @@ import PhoneIcon from "@mui/icons-material/Phone";
 import EmailIcon from "@mui/icons-material/Email";
 import { useSnackbar } from "notistack";
 import { useAuth } from "../hooks/Authcontext";
+import { apiRequest } from "@/services/api.service";
 
 const CreateEstablishment = () => {
   const [form, setForm] = useState({
@@ -155,8 +156,7 @@ const CreateEstablishment = () => {
     setIsLoading(true);
     try {
       const token = localStorage.getItem("accessToken");
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/establishment/create`,
+      const response = await apiRequest(`/api/establishment/create`,
         {
           method: "POST",
           credentials: "include",

@@ -1,6 +1,7 @@
 import PageHeader from "@/components/PageHeader";
 import { useAuth } from "@/hooks/Authcontext";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+import { apiRequest } from "@/services/api.service";
 import AddIcon from "@mui/icons-material/Add";
 import BusinessIcon from "@mui/icons-material/Business";
 import CategoryIcon from "@mui/icons-material/Category";
@@ -84,8 +85,7 @@ const Classrooms = () => {
     if (!establishmentID) return;
     try {
       setLoading(true);
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/utils/get-classrooms/${establishmentID}`,
+      const response = await apiRequest(`/api/utils/get-classrooms/${establishmentID}`,
         {
           method: "GET",
           credentials: "include",
@@ -165,12 +165,12 @@ const Classrooms = () => {
     try {
       setActionLoading(true);
       const url = selectedRoom
-        ? `${import.meta.env.VITE_API_URL}/api/utils/update-classroom/${selectedRoom.id}`
-        : `${import.meta.env.VITE_API_URL}/api/utils/create-classroom/${establishmentID}`;
+        ? `/api/utils/update-classroom/${selectedRoom.id}`
+        : `/api/utils/create-classroom/${establishmentID}`;
 
       const method = selectedRoom ? "PUT" : "POST";
 
-      const response = await fetch(url, {
+      const response = await apiRequest(url, {
         method,
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -201,8 +201,8 @@ const Classrooms = () => {
     if (!selectedRoom) return;
     try {
       setActionLoading(true);
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/utils/delete-classroom/${selectedRoom.id}`,
+      const response = await apiRequest(
+        `/api/utils/delete-classroom/${selectedRoom.id}`,
         {
           method: "DELETE",
           credentials: "include",

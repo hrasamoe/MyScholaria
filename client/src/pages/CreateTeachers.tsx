@@ -23,6 +23,7 @@ import { useSnackbar } from "notistack";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { TeacherSubject } from "./Teachers";
+import { apiRequest } from "@/services/api.service";
 
 export type ContractType = "permanent" | "contract" | "vacation";
 
@@ -128,8 +129,7 @@ const CreateTeacher = () => {
 
     setLoading(true);
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/teachers/create-teacher/${establishmentID}`,
+      const response = await apiRequest(`/api/teachers/create-teacher/${establishmentID}`,
         {
           method: "POST",
           headers: {
