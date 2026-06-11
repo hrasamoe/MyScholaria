@@ -17,6 +17,7 @@ import { studentRouter } from "./modules/students/students.router";
 import { teacherRouter } from "./modules/teacher/teacher.router";
 import { staffRouter } from "./modules/staff/staff.router";
 import { announcementRouter, notificationROuter } from "./modules/notification/notfication.router";
+import { messageRouter } from "./modules/communications/message.router";
 
 setDefaultResultOrder("ipv4first");
 
@@ -50,6 +51,7 @@ app.use(
 
 app.use(cookieParser());
 app.use(express.json());
+app.use("/api/messages", messageRouter);
 app.use("/api/teachers", teacherRouter);
 app.use("/api/utils", utilschemaRouter);
 app.use("/api/auth", authRouter);
