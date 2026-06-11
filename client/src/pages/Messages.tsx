@@ -39,8 +39,8 @@ interface Member {
 interface Message {
   id: string;
   sender_id: string;
-  receiver_id: string;
-  content: string;
+  recipient_id: string;
+  body: string;
   created_at: string;
 }
 
@@ -69,21 +69,22 @@ const Messages = () => {
       try {
         const { data: userMessages, error } = await supabase
           .from("messages")
-          .select("sender_id, receiver_id")
-          .or(`sender_id.eq.${currentUserId},receiver_id.eq.${currentUserId}`);
+          .select("sender_id, recipient_id")
+          .or(`sender_id.eq.${currentUserId},recipient_id.eq.${currentUserId}`);
 
         const interactedUserIds = new Set<string>();
         if (!error && userMessages) {
           userMessages.forEach((msg) => {
             if (msg.sender_id !== currentUserId)
               interactedUserIds.add(msg.sender_id);
-            if (msg.receiver_id !== currentUserId)
-              interactedUserIds.add(msg.receiver_id);
+            if (msg.recipient_id !== currentUserId)
+              interactedUserIds.add(msg.recipient_id);
           });
           setChatHistoryUserIds(interactedUserIds);
         }
 
-        const response = await apiRequest(`/api/establishment/${establishmentId}/all-users`,
+        const response = await apiRequest(
+          `/api/establishment/${establishmentId}/all-users`,
           { method: "GET", credentials: "include" },
         );
 
@@ -129,67 +130,68 @@ const Messages = () => {
     }
   }, [searchQuery, allMembers, chatHistoryUserIds]);
 
-  useEffect(() => {
-    if (!currentUserId || !activeMemberId) return;
+useEffect(() => {
+  if (!currentUserId || !activeMemberId) return;
 
-    const fetchMessages = async () => {
-      const { data, error } = await supabase
-        .from("messages")
-        .select("*")
-        .or(
-          `and(sender_id.eq.${currentUserId},receiver_id.eq.${activeMemberId}),and(sender_id.eq.${activeMemberId},receiver_id.eq.${currentUserId})`,
-        )
-        .order("created_at", { ascending: true });
-
-      if (!error && data) {
-        setMessages(data);
-      }
-    };
-
-    fetchMessages();
-
-    const channel = supabase
-      .channel(`chat-${currentUserId}-${activeMemberId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "messages",
-        },
-        (payload) => {
-          const newMsg = payload.new as Message;
-          if (
-            (newMsg.sender_id === currentUserId &&
-              newMsg.receiver_id === activeMemberId) ||
-            (newMsg.sender_id === activeMemberId &&
-              newMsg.receiver_id === currentUserId)
-          ) {
-            setMessages((prev) => [...prev, newMsg]);
-          }
-
-          if (
-            newMsg.sender_id === currentUserId ||
-            newMsg.receiver_id === currentUserId
-          ) {
-            const otherId =
-              newMsg.sender_id === currentUserId
-                ? newMsg.receiver_id
-                : newMsg.sender_id;
-            setChatHistoryUserIds((prev) => {
-              const updated = new Set(prev);
-              updated.add(otherId);
-              return updated;
-            });
-          }
-        },
+  const fetchMessages = async () => {
+    const { data, error } = await supabase
+      .from("messages")
+      .select("*")
+      .or(
+        `and(sender_id.eq.${currentUserId},recipient_id.eq.${activeMemberId}),and(sender_id.eq.${activeMemberId},recipient_id.eq.${currentUserId})`,
       )
-      .subscribe();
+      .order("send_at", { ascending: true }); 
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [activeMemberId, currentUserId]);
+    if (!error && data) {
+      setMessages(data);
+    }
+  };
+
+  fetchMessages();
+
+  const channel = supabase
+    .channel(`chat-${currentUserId}-${activeMemberId}`)
+    .on(
+      "postgres_changes",
+      {
+        event: "INSERT",
+        schema: "public",
+        table: "messages",
+      },
+      (payload) => {
+        const newMsg = payload.new as Message;
+
+        if (
+          (newMsg.sender_id === currentUserId &&
+            newMsg.recipient_id === activeMemberId) ||
+          (newMsg.sender_id === activeMemberId &&
+            newMsg.recipient_id === currentUserId)
+        ) {
+          setMessages((prev) => [...prev, newMsg]);
+        }
+
+        if (
+          newMsg.sender_id === currentUserId ||
+          newMsg.recipient_id === currentUserId
+        ) {
+          const otherId =
+            newMsg.sender_id === currentUserId
+              ? newMsg.recipient_id
+              : newMsg.sender_id;
+          setChatHistoryUserIds((prev) => {
+            const updated = new Set(prev);
+            updated.add(otherId);
+            return updated;
+          });
+        }
+      },
+    )
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
+}, [activeMemberId, currentUserId]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -199,18 +201,15 @@ const Messages = () => {
     if (!text.trim() || !currentUserId || !activeMemberId) return;
 
     try {
-      const response = await apiRequest(
-        `/api/messages/create`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({
-            receiver_id: activeMemberId,
-            content: text.trim(),
-          }),
-        },
-      );
+      const response = await apiRequest(`/api/messages/send/${currentUserId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          recipient_id: activeMemberId,
+          content: text.trim(),
+        }),
+      });
 
       if (response.ok) {
         setText("");
@@ -355,7 +354,7 @@ const Messages = () => {
                             borderRadius: 2,
                           }}
                         >
-                          <Typography variant="body2">{msg.content}</Typography>
+                          <Typography variant="body2">{msg.body}</Typography>
                         </Box>
                       );
                     })}
@@ -414,4 +413,3 @@ const Messages = () => {
 };
 
 export default Messages;
-
