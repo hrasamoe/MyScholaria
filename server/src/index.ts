@@ -30,13 +30,7 @@ const app = express();
 const PORT = process.env.PORT || 3434;
 const isProd = process.env.NODE_ENV === "production";
 
-app.use((req, res, next) => {
-  res.setHeader(
-    "Content-Security-Policy",
-    "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://*.supabase.co; connect-src 'self' https://www.google.com https://myscholaria.onrender.com http://localhost:3434 ws://localhost:3430 https://*.supabase.co;;",
-  );
-  next();
-});
+
 app.use(helmet({ contentSecurityPolicy: false }));
 
 app.use(
@@ -75,13 +69,13 @@ cron.schedule("0 0 * * *", async () => {
   console.log("Cleaned unverified accounts");
 });
 
+
 initPool()
   .then(() => {
-    const httpServer = createServer(app);
-    initWebSocketServer(httpServer);
-    httpServer.listen(PORT, () => {
+    app.listen(PORT, () => {
       console.log(`MyScholaria API → http://localhost:${PORT}`);
     });
+    initWebSocketServer(3430);
   })
   .catch((err) => {
     console.error("[!!CRASH] Erreur démarrage:", err.message);

@@ -38,24 +38,24 @@ export const initWebSocketServer = (port: number | Server) => {
       console.log(`Error WS user ${userId}:`, error);
     });
   });
-   if (typeof port === "number") {
-     console.log(`Websocket server start on ws://localhost:${port}`);
-   } else {
-     console.log(`Websocket server attaché au serveur HTTP`);
-   }
+  if (typeof port === "number") {
+    console.log(`Websocket server start on ws://localhost:${port}`);
+  } else {
+    console.log(`Websocket server attaché au serveur HTTP`);
+  }
   return wss;
 };
 
 export const sendToUser = (recipient_id: string, message: object): boolean => {
-  console.log("📋 Clients connectés:", [...client.keys()]);
-  console.log("🎯 Envoi à:", recipient_id);
+  console.log("📋 Connected Client:", [...client.keys()]);
+  console.log("🎯 Sent to:", recipient_id);
 
   const socket = client.get(recipient_id);
   if (socket && socket.readyState === WebSocket.OPEN) {
     socket.send(JSON.stringify(message));
-    console.log("✅ Message WS envoyé à", recipient_id);
+    console.log("✅ Message sent to", recipient_id);
     return true;
   }
-  console.log("⚠️ Destinataire introuvable ou hors ligne");
+  console.log("⚠️ Recipient not online");
   return false;
 };
