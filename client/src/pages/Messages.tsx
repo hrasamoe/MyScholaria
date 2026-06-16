@@ -24,6 +24,7 @@ import SendIcon from "@mui/icons-material/Send";
 import SearchIcon from "@mui/icons-material/Search";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { apiRequest } from "@/services/api.service";
+import ReconnectingWebSocket from "reconnecting-websocket";
 
 const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL,
@@ -56,19 +57,66 @@ const Messages = () => {
     new Set(),
   );
   const [searchQuery, setSearchQuery] = useState("");
-
   const [activeMemberId, setActiveMemberId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState("");
+  const [wsStatus, setWsStatus] = useState<
+    "connecting" | "connected" | "disconnected"
+  >("connecting");
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const wsRef = useRef<ReconnectingWebSocket | null>(null);
+
+  useEffect(() => {
+    if (!currentUserId) return;
+
+    const ws = new ReconnectingWebSocket(
+      `${import.meta.env.VITE_WS_URL}?userId=${currentUserId}`,
+    );
+    wsRef.current = ws;
+
+    ws.onopen = () => {
+      console.log("WebSocket connecté");
+      setWsStatus("connected");
+    };
+
+    ws.onmessage = (event) => {
+      const newMsg: Message = JSON.parse(event.data);
+
+      setActiveMemberId((activeId) => {
+        if (newMsg.sender_id === activeId) {
+          setMessages((prev) => {
+            const exists = prev.some((m) => m.id === newMsg.id);
+            if (exists) return prev;
+            return [...prev, newMsg];
+          });
+        }
+        return activeId;
+      });
+
+      setChatHistoryUserIds((prev) => new Set([...prev, newMsg.sender_id]));
+    };
+
+    ws.onclose = () => {
+      console.log("❌ WebSocket déconnecté");
+      setWsStatus("disconnected");
+    };
+
+    ws.onerror = (err) => {
+      console.error("WS error:", err);
+      setWsStatus("disconnected");
+    };
+
+    return () => {
+      ws.close();
+    };
+  }, [currentUserId]);
 
   useEffect(() => {
     if (!establishmentId || !currentUserId) return;
 
     const initData = async () => {
       try {
-        // Fetch all message pairs involving the current user
         const { data: userMessages, error } = await supabase
           .from("messages")
           .select("sender_id, recipient_id")
@@ -101,7 +149,6 @@ const Messages = () => {
             .filter((m: Member) => m.id !== currentUserId);
 
           setAllMembers(formatted);
-
           const defaultList = formatted.filter((m) =>
             interactedUserIds.has(m.id),
           );
@@ -131,41 +178,6 @@ const Messages = () => {
       setDisplayedMembers(filtered);
     }
   }, [searchQuery, allMembers, chatHistoryUserIds]);
-
-  useEffect(() => {
-    if (!currentUserId) return;
-
-    const channel = supabase
-      .channel(`messages-${currentUserId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "messages",
-          filter: `recipient_id=eq.${currentUserId}`,
-        },
-        (payload) => {
-          const newMsg = payload.new as Message;
-
-          setActiveMemberId((activeId) => {
-            if (newMsg.sender_id === activeId) {
-              setMessages((prev) => [...prev, newMsg]);
-            }
-            return activeId;
-          });
-
-          setChatHistoryUserIds((prev) => new Set([...prev, newMsg.sender_id]));
-        },
-      )
-      .subscribe((status) => {
-        console.log("Realtime status:", status);
-      });
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [currentUserId]);
 
   useEffect(() => {
     if (!currentUserId || !activeMemberId) {
@@ -198,7 +210,6 @@ const Messages = () => {
     if (!text.trim() || !currentUserId || !activeMemberId) return;
 
     const now = new Date().toISOString();
-
     const optimisticMsg: Message = {
       id: crypto.randomUUID(),
       sender_id: currentUserId,
@@ -226,6 +237,10 @@ const Messages = () => {
         setMessages((prev) => prev.filter((m) => m.id !== optimisticMsg.id));
         setText(optimisticMsg.body);
       } else {
+        const { message: realMsg } = await response.json();
+        setMessages((prev) =>
+          prev.map((m) => (m.id === optimisticMsg.id ? realMsg : m)),
+        );
         setChatHistoryUserIds((prev) => new Set([...prev, activeMemberId]));
       }
     } catch (error) {
@@ -240,6 +255,20 @@ const Messages = () => {
   return (
     <>
       <PageHeader title="Messages" subtitle="Internal messaging" />
+
+      {wsStatus !== "connected" && (
+        <Box sx={{ mb: 1, px: 1 }}>
+          <Typography
+            variant="caption"
+            color={wsStatus === "connecting" ? "warning.main" : "error.main"}
+          >
+            {wsStatus === "connecting"
+              ? "⏳ Connexion en cours..."
+              : "❌ Déconnecté — tentative de reconnexion..."}
+          </Typography>
+        </Box>
+      )}
+
       <Grid container spacing={2} sx={{ height: "calc(110vh - 200px)" }}>
         <Grid
           size={{ xs: 12, md: 4 }}
