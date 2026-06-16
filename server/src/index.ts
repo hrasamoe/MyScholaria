@@ -9,6 +9,7 @@ import express from "express";
 import helmet from "helmet";
 import cron from "node-cron";
 import { initPool } from "./db/pool";
+import { initWebSocketServer } from "./services/websocket/ws-server";
 import { authRouter } from "./modules/auth/auth.router";
 import { cleanUnverifiedAccounts } from "./modules/auth/auth.service";
 import { establishementRouter } from "./modules/establishments/establishments.router";
@@ -16,8 +17,12 @@ import { utilschemaRouter } from "./modules/other/other.router";
 import { studentRouter } from "./modules/students/students.router";
 import { teacherRouter } from "./modules/teacher/teacher.router";
 import { staffRouter } from "./modules/staff/staff.router";
-import { announcementRouter, notificationROuter } from "./modules/notification/notfication.router";
+import {
+  announcementRouter,
+  notificationROuter,
+} from "./modules/notification/notfication.router";
 import { messageRouter } from "./modules/communications/message.router";
+import { createServer } from "http";
 
 setDefaultResultOrder("ipv4first");
 
@@ -28,7 +33,7 @@ const isProd = process.env.NODE_ENV === "production";
 app.use((req, res, next) => {
   res.setHeader(
     "Content-Security-Policy",
-    "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://*.supabase.co; connect-src 'self' https://www.google.com https://myscholaria.onrender.com http://localhost:3434 https://*.supabase.co;;",
+    "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://*.supabase.co; connect-src 'self' https://www.google.com https://myscholaria.onrender.com http://localhost:3434 ws://localhost:3430 https://*.supabase.co;;",
   );
   next();
 });
@@ -58,7 +63,7 @@ app.use("/api/auth", authRouter);
 app.use("/api/establishment", establishementRouter);
 app.use("/api/students", studentRouter);
 app.use("/api/staff", staffRouter);
-app.use("/api/announcement", announcementRouter)
+app.use("/api/announcement", announcementRouter);
 app.use("/api/notification", notificationROuter);
 
 app.get("/api/health", (_, res) => {
@@ -72,7 +77,9 @@ cron.schedule("0 0 * * *", async () => {
 
 initPool()
   .then(() => {
-    app.listen(PORT, () => {
+    const httpServer = createServer(app);
+    initWebSocketServer(httpServer);
+    httpServer.listen(PORT, () => {
       console.log(`MyScholaria API → http://localhost:${PORT}`);
     });
   })
