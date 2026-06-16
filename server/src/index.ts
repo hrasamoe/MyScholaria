@@ -30,7 +30,6 @@ const app = express();
 const PORT = process.env.PORT || 3434;
 const isProd = process.env.NODE_ENV === "production";
 
-
 app.use(helmet({ contentSecurityPolicy: false }));
 
 app.use(
@@ -69,13 +68,20 @@ cron.schedule("0 0 * * *", async () => {
   console.log("Cleaned unverified accounts");
 });
 
-
 initPool()
   .then(() => {
-    app.listen(PORT, () => {
-      console.log(`MyScholaria API → http://localhost:${PORT}`);
-    });
-    initWebSocketServer(3430);
+    if (isProd) {
+      const httpServer = createServer(app);
+      initWebSocketServer(httpServer);
+      httpServer.listen(PORT, () => {
+        console.log(`MyScholaria API -> http://localhost:${PORT}`);
+      });
+    } else {
+      app.listen(PORT, () => {
+        console.log(`MyScholaria API → http://localhost:${PORT}`);
+      });
+      initWebSocketServer(3430);
+    }
   })
   .catch((err) => {
     console.error("[!!CRASH] Erreur démarrage:", err.message);
