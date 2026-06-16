@@ -61,8 +61,8 @@ const Messages = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState("");
   const [wsStatus, setWsStatus] = useState<
-    "connecting" | "connected" | "disconnected"
-  >("connecting");
+    "connecting" | "connected" | "disconnected" | "idle"
+  >("idle");
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const wsRef = useRef<ReconnectingWebSocket | null>(null);
@@ -256,19 +256,13 @@ const Messages = () => {
     <>
       <PageHeader title="Messages" subtitle="Internal messaging" />
 
-      {wsStatus !== "connected" && (
+      {wsStatus === "disconnected" && (
         <Box sx={{ mb: 1, px: 1 }}>
-          <Typography
-            variant="caption"
-            color={wsStatus === "connecting" ? "warning.main" : "error.main"}
-          >
-            {wsStatus === "connecting"
-              ? "⏳ Connexion en cours..."
-              : "❌ Déconnecté — tentative de reconnexion..."}
+          <Typography variant="caption" color="error.main">
+            Messagerie hors ligne — tentative de reconnexion...
           </Typography>
         </Box>
       )}
-
       <Grid container spacing={2} sx={{ height: "calc(110vh - 200px)" }}>
         <Grid
           size={{ xs: 12, md: 4 }}
