@@ -4,6 +4,13 @@
 
 ![MyScholaria Banner](./screenshot.png)
 
+<p align="center">
+  <a href="https://myscholariaa.web.app"><img src="https://img.shields.io/badge/Live-Demo-blue?style=for-the-badge" alt="Live Demo"/></a>
+  <a href="mailto:herysamuelpljv@gmail.com"><img src="https://img.shields.io/badge/Sponsor-%E2%9D%A4-pink?style=for-the-badge" alt="Sponsor"/></a>
+  <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="MIT License"/>
+  <img src="https://img.shields.io/badge/GDPR-Compliant-purple?style=for-the-badge" alt="GDPR"/>
+</p>
+
 ---
 
 ## ✨ Overview
@@ -23,12 +30,12 @@ Built with a **mobile-first**, accessibility-aware design and a strong focus on 
 - **Classes & Classrooms** — group classes and physical room allocation
 - **Coursebook** — lesson logs and pedagogical progression
 
-![MyScholaria Banner](./screenshot2.png)
+![Academic Management](./screenshot2.png)
 
 - **Subjects & Programs** — course catalog and curriculum tracks
 - **Timetable & School Calendar** — schedules, holidays, school year planning
 
-![MyScholaria Banner](./screenshot3.png)
+![Timetable](./screenshot3.png)
 
 ### 📊 Evaluation & Tracking
 
@@ -39,7 +46,7 @@ Built with a **mobile-first**, accessibility-aware design and a strong focus on 
 - **Diplomas & Theses** — certificates and dissertation tracking
 - **Internships** — internship management and follow-up
 
-![MyScholaria Banner](./screenshot4.png)
+![Evaluation](./screenshot4.png)
 
 ### 💰 Finance
 
@@ -48,15 +55,21 @@ Built with a **mobile-first**, accessibility-aware design and a strong focus on 
 - **Budget** — institutional budget management
 - **Scholarships** — scholarship awards and tracking
 
-### 👥 Communication & Portals
+### 💬 Communication & Portals
 
+- **Direct Messages (DM)** *(New in v1.1.0)* — private messaging between users and between users and admins
 - **Messages** — internal messaging
 - **Announcements & Notifications** — institution-wide updates
 - **Events** — calendar of school events
 - **Student Portal** — dedicated student dashboard
 - **Parent Portal** — child progress for parents
 
-![MyScholaria Banner](./screenshot5.png)
+#### 💬 Direct Messages — Preview
+
+> Users and admins can now exchange private messages in real time, directly from their dashboard.
+
+![DM Preview](./screenshot6.png)
+
 
 ### 🛠️ Administration
 
@@ -66,7 +79,7 @@ Built with a **mobile-first**, accessibility-aware design and a strong focus on 
 - **Settings** — institution-wide configuration
 - **Dashboard** — KPIs and quick overview
 
-![MyScholaria Banner](./screenshot1.png)
+![Dashboard](./screenshot1.png)
 
 ### 🔐 Authentication & Security
 
@@ -88,25 +101,29 @@ Built with a **mobile-first**, accessibility-aware design and a strong focus on 
 
 ### Frontend (`/client`)
 
-- ⚛️ **React 18** + **TypeScript**
-- ⚡ **Vite** (build tool)
-- 🎨 **Material UI (MUI v7)** — primary UI framework
-- 🛣️ **react-router-dom v6**
-- 🔄 **TanStack Query** (server state)
-- 📝 **react-hook-form** + **zod** (forms & validation)
-- 🔔 **notistack** (snackbars)
-- 📊 **recharts** (charts & analytics)
+| Library | Role |
+|---|---|
+| ⚛️ React 18 + TypeScript | UI framework |
+| ⚡ Vite | Build tool |
+| 🎨 Material UI (MUI v7) | Component library |
+| 🛣️ react-router-dom v6 | Routing |
+| 🔄 TanStack Query | Server state management |
+| 📝 react-hook-form + zod | Forms & validation |
+| 🔔 notistack | Snackbars / toasts |
+| 📊 recharts | Charts & analytics |
 
 ### Backend (`/server`)
 
-- 🟢 **Node.js** + **Express 5**
-- 📘 **TypeScript**
-- 🐘 **PostgreSQL** (via `pg` / `postgres`)
-- 🔐 **JWT** + **bcryptjs**
-- 🛡️ **Helmet**, **CORS**, **cookie-parser**
-- ✉️ **Nodemailer** / **Resend** (transactional emails)
-- ⏰ **node-cron** (scheduled jobs, e.g. cleanup of unverified accounts)
-- ✅ **zod** (request validation)
+| Library | Role |
+|---|---|
+| 🟢 Node.js + Express 5 | Server framework |
+| 📘 TypeScript | Type safety |
+| 🐘 PostgreSQL (pg / postgres) | Database |
+| 🔐 JWT + bcryptjs | Auth & encryption |
+| 🛡️ Helmet, CORS, cookie-parser | Security middleware |
+| ✉️ Nodemailer / Resend | Transactional emails |
+| ⏰ node-cron | Scheduled jobs |
+| ✅ zod | Request validation |
 
 ---
 
@@ -119,8 +136,8 @@ myscholaria/
 │   ├── src/
 │   │   ├── components/      # Shared UI components (AppLayout, Sidebar, DataTable…)
 │   │   ├── hooks/           # Auth, theme, route guards
-│   │   ├── pages/           # All app pages (Dashboard, Students, …)
-│   │   ├── services/        # API service layer (auth, establishment…)
+│   │   ├── pages/           # All app pages (Dashboard, Students, Messages…)
+│   │   ├── services/        # API service layer (auth, establishment, messages…)
 │   │   ├── theme.ts         # Centralized MUI theme
 │   │   └── App.tsx          # Routes & providers
 │   ├── index.html
@@ -132,6 +149,7 @@ myscholaria/
 │   │   ├── middleware/      # Auth, error handlers
 │   │   ├── modules/
 │   │   │   ├── auth/        # Auth router, service, schema
+│   │   │   ├── messages/    # DM router, service, schema
 │   │   │   └── establishments/
 │   │   └── index.ts         # App entry
 │   └── package.json
@@ -222,13 +240,13 @@ cd server && npm run build && npm start
 
 ## 🔐 Roles & Permissions
 
-| Role        | Access                                                   |
-| ----------- | -------------------------------------------------------- |
-| **Admin**   | Full access — users, roles, finance, academic, reports   |
-| **Staff**   | Users, finance, classrooms, reports                      |
-| **Teacher** | Students, classes, grades, exams, attendance, coursebook |
-| **Student** | Student Portal — grades, attendance, schedule, messages  |
-| **Parent**  | Parent Portal — children's grades, attendance, messages  |
+| Role | Access |
+|---|---|
+| **Admin** | Full access — users, roles, finance, academic, reports, DMs |
+| **Staff** | Users, finance, classrooms, reports, DMs |
+| **Teacher** | Students, classes, grades, exams, attendance, coursebook, DMs |
+| **Student** | Student Portal — grades, attendance, schedule, DMs |
+| **Parent** | Parent Portal — children's grades, attendance, DMs |
 
 ---
 
@@ -246,12 +264,23 @@ MyScholaria is designed with **GDPR** at its core:
 
 ## 🗺️ Roadmap
 
+### ✅ Released
+
+- [x] Role-based authentication (RBAC) with JWT
+- [x] Student, Teacher, Staff & Admin portals
+- [x] **Direct Messages (DM)** — user ↔ user & user ↔ admin *(v1.1.0)*
+
+### 🔜 Coming Soon
+
 - [ ] Real-time notifications (WebSockets)
 - [ ] Mobile companion app (React Native)
 - [ ] Stripe / Paddle payment integration
+- [ ] Finance & Scholarships management
 - [ ] AI-powered analytics (at-risk student detection)
 - [ ] Multi-language i18n (FR / EN / ES / AR)
 - [ ] SecNumCloud-certified hosting option
+- [ ] Group messaging & channels
+- [ ] File attachments in DMs
 
 ---
 
@@ -314,6 +343,6 @@ This project is licensed under the **MIT License** — see the `LICENSE` file fo
 
 <p align="center">
   Made with ❤️ for educators, by educators.<br/>
-  <b>MyScholaria</b> — Empowering schools, one click at a time.<br/><br/>
+  <b>MyScholaria</b> — Empowering schools, one click at a a time.<br/><br/>
   ⭐ If you find this project useful, consider giving it a star — it helps a lot!
 </p>
