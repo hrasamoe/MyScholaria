@@ -1,20 +1,19 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 
 async function checkRealInternet(): Promise<boolean> {
   try {
-    await fetch("https://www.google.com", {
-      mode: "no-cors",
-      method: "HEAD",
+    const res = await fetch("https://myscholaria.onrender.com/api/health", {
+      method: "GET",
       cache: "no-store",
     });
-    return true;
+    return res.ok;
   } catch {
     return false;
   }
 }
 
 export function useOnlineStatus() {
-  const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
+  const [isOnline, setIsOnline] = useState<boolean>(true);
   useEffect(() => {
     const handleOnline = () => {
       checkRealInternet().then(setIsOnline);
@@ -29,7 +28,7 @@ export function useOnlineStatus() {
       } else {
         setIsOnline(false);
       }
-    }, 5000);
+    }, 10000);
 
     return () => {
       window.removeEventListener("online", handleOnline);
