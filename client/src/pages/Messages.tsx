@@ -36,7 +36,6 @@ interface Member {
   role: string;
 }
 
-// ✅ Fixed: matches your actual DB schema (send_at, not created_at)
 interface Message {
   id: string;
   sender_id: string;
@@ -64,7 +63,6 @@ const Messages = () => {
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
-  // ─── 1. Init: fetch chat history + all members ───────────────────────────
   useEffect(() => {
     if (!establishmentId || !currentUserId) return;
 
@@ -104,7 +102,6 @@ const Messages = () => {
 
           setAllMembers(formatted);
 
-          // Default list: only people we've already chatted with
           const defaultList = formatted.filter((m) =>
             interactedUserIds.has(m.id),
           );
@@ -118,7 +115,6 @@ const Messages = () => {
     initData();
   }, [establishmentId, currentUserId]);
 
-  // ─── 2. Search filter ────────────────────────────────────────────────────
   useEffect(() => {
     const query = searchQuery.trim().toLowerCase();
     if (!query) {
@@ -136,7 +132,6 @@ const Messages = () => {
     }
   }, [searchQuery, allMembers, chatHistoryUserIds]);
 
-  // ─── 3. Realtime subscription (inbound messages only) ───────────────────
   useEffect(() => {
     if (!currentUserId) return;
 
@@ -148,23 +143,18 @@ const Messages = () => {
           event: "INSERT",
           schema: "public",
           table: "messages",
-          // ✅ Only receive messages sent TO the current user
-          // (sent messages are handled optimistically in handleSendMessage)
           filter: `recipient_id=eq.${currentUserId}`,
         },
         (payload) => {
           const newMsg = payload.new as Message;
 
-          // ✅ Use functional updater so we always read the latest activeMemberId
           setActiveMemberId((activeId) => {
             if (newMsg.sender_id === activeId) {
-              // The message belongs to the currently open conversation
               setMessages((prev) => [...prev, newMsg]);
             }
             return activeId;
           });
 
-          // Keep chat history sidebar up to date
           setChatHistoryUserIds((prev) => new Set([...prev, newMsg.sender_id]));
         },
       )
@@ -177,7 +167,6 @@ const Messages = () => {
     };
   }, [currentUserId]);
 
-  // ─── 4. Load conversation when active member changes ────────────────────
   useEffect(() => {
     if (!currentUserId || !activeMemberId) {
       setMessages([]);
@@ -191,7 +180,6 @@ const Messages = () => {
         .or(
           `and(sender_id.eq.${currentUserId},recipient_id.eq.${activeMemberId}),and(sender_id.eq.${activeMemberId},recipient_id.eq.${currentUserId})`,
         )
-        // ✅ Fixed: order by send_at (matches your DB schema)
         .order("send_at", { ascending: true });
 
       if (!error && data) {
@@ -202,18 +190,15 @@ const Messages = () => {
     fetchMessages();
   }, [activeMemberId, currentUserId]);
 
-  // ─── 5. Auto-scroll to latest message ───────────────────────────────────
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // ─── 6. Send message (with optimistic update + rollback on failure) ──────
   const handleSendMessage = async () => {
     if (!text.trim() || !currentUserId || !activeMemberId) return;
 
     const now = new Date().toISOString();
 
-    // ✅ Optimistic message matches your DB schema
     const optimisticMsg: Message = {
       id: crypto.randomUUID(),
       sender_id: currentUserId,
@@ -223,7 +208,6 @@ const Messages = () => {
       send_at: now,
     };
 
-    // Show immediately in the UI
     setMessages((prev) => [...prev, optimisticMsg]);
     setText("");
 
@@ -239,7 +223,6 @@ const Messages = () => {
       });
 
       if (!response.ok) {
-        // ✅ Roll back optimistic message if API fails
         setMessages((prev) => prev.filter((m) => m.id !== optimisticMsg.id));
         setText(optimisticMsg.body);
       } else {
@@ -247,7 +230,6 @@ const Messages = () => {
       }
     } catch (error) {
       console.error(error);
-      // ✅ Roll back on network error too
       setMessages((prev) => prev.filter((m) => m.id !== optimisticMsg.id));
       setText(optimisticMsg.body);
     }
@@ -255,12 +237,10 @@ const Messages = () => {
 
   const currentMember = allMembers.find((m) => m.id === activeMemberId);
 
-  // ─── Render ──────────────────────────────────────────────────────────────
   return (
     <>
       <PageHeader title="Messages" subtitle="Internal messaging" />
       <Grid container spacing={2} sx={{ height: "calc(110vh - 200px)" }}>
-        {/* ── Left panel: member list ── */}
         <Grid
           size={{ xs: 12, md: 4 }}
           sx={{
@@ -325,7 +305,6 @@ const Messages = () => {
           </Card>
         </Grid>
 
-        {/* ── Right panel: chat window ── */}
         <Grid
           size={{ xs: 12, md: 8 }}
           sx={{
@@ -339,7 +318,6 @@ const Messages = () => {
           >
             {currentMember ? (
               <>
-                {/* Header */}
                 <Box
                   sx={{
                     p: 2,
@@ -370,7 +348,6 @@ const Messages = () => {
                   </Box>
                 </Box>
 
-                {/* Messages */}
                 <CardContent sx={{ flex: 1, overflowY: "auto", p: 2 }}>
                   <Stack spacing={1.5}>
                     {messages.map((msg) => {
@@ -389,7 +366,6 @@ const Messages = () => {
                             borderRadius: 2,
                           }}
                         >
-                          {/* ✅ msg.body matches your DB schema */}
                           <Typography variant="body2">{msg.body}</Typography>
                           <Typography
                             variant="caption"
@@ -412,7 +388,6 @@ const Messages = () => {
                   </Stack>
                 </CardContent>
 
-                {/* Input */}
                 <Box
                   sx={{
                     p: 2,
