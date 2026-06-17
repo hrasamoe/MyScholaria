@@ -1,3 +1,4 @@
+import GavelIcon from "@mui/icons-material/Gavel";
 import { Link as RouterLink } from "react-router-dom";
 import {
   Box,
@@ -10,8 +11,13 @@ import {
   Link,
   Breadcrumbs,
   Chip,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
 } from "@mui/material";
-import GavelIcon from "@mui/icons-material/Gavel";
+import PrivacyTipIcon from "@mui/icons-material/PrivacyTip";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 
 const Section = ({
   n,
@@ -44,7 +50,7 @@ const Terms = () => (
       py: { xs: 3, md: 6 },
     }}
   >
-    <Container maxWidth="md">
+    <Container maxWidth="lg">
       <Breadcrumbs sx={{ mb: 2 }}>
         <Link component={RouterLink} to="/" underline="hover" color="inherit">
           Home
@@ -74,10 +80,10 @@ const Terms = () => (
                 Terms of Service
               </Typography>
               <Stack direction="row" spacing={1} mt={0.5}>
-                <Chip size="small" label="Version 1.1" />
+                <Chip size="small" label="Version 2.1.0" />
                 <Chip
                   size="small"
-                  label="Effective: May 2026"
+                  label="Effective: June 2026"
                   color="primary"
                   variant="outlined"
                 />
@@ -89,11 +95,11 @@ const Terms = () => (
             Welcome to <b>MyScholaria</b> (the "Service", "Platform", "we",
             "us", or "our"). These Terms of Service ("Terms") govern your access
             to and use of our school management platform, including its
-            websites, dashboards, mobile views, APIs and related services. By
-            creating an account, accessing, browsing or otherwise using the
-            Service, you ("you", "User", "Institution") agree to be legally
-            bound by these Terms. If you do not agree, please do not use the
-            Service.
+            websites, dashboards, mobile views, APIs, messaging features and
+            related services. By creating an account, accessing, browsing or
+            otherwise using the Service, you ("you", "User", "Institution")
+            agree to be legally bound by these Terms. If you do not agree,
+            please do not use the Service.
           </P>
 
           <Divider sx={{ my: 3 }} />
@@ -110,8 +116,8 @@ const Terms = () => (
             </P>
             <P>
               <b>Content</b> — any data, text, files, images, grades, attendance
-              records, communications, or other materials uploaded, transmitted
-              or generated through the Service.
+              records, instant messages, direct communications, or other
+              materials uploaded, transmitted or generated through the Service.
             </P>
             <P>
               <b>Subscription</b> — the paid or trial plan under which the
@@ -172,8 +178,18 @@ const Terms = () => (
               session tokens;
             </P>
             <P>
-              • Harass, bully, threaten, or abuse other users — particularly
-              minors — through messages, comments or any communication tool;
+              • Harass, bully, threaten, stalk, or abuse other users —
+              particularly minors — through internal messages, comments or any
+              communication tool;
+            </P>
+            <P>
+              • Use the messaging features to distribute unsolicited commercial
+              content, mass marketing, or chain letters (spam);
+            </P>
+            <P>
+              • Share, transmit, or request private contact information or
+              sensitive personal data unnecessarily through the messaging
+              system;
             </P>
             <P>
               • Use the Service to send unsolicited bulk messages (spam) or to
@@ -232,7 +248,27 @@ const Terms = () => (
             </P>
           </Section>
 
-          <Section n="7" title="Session Management & Cookie Policy">
+          <Section n="7" title="In-App Messaging & Communications">
+            <P>
+              The Platform provides messaging features to facilitate educational
+              collaboration between End Users. MyScholaria acts merely as a
+              technical provider for these communications. The Institution is
+              fully responsible for monitoring and moderating the communications
+              exchanged within its network.
+            </P>
+            <P>
+              We do not routinely screen or monitor private messages, but we
+              reserve the right to access, read, preserve, and disclose any
+              messaging data if we reasonably believe it is necessary to (a)
+              satisfy any applicable law or legal request, (b) enforce these
+              Terms, or (c) protect the safety and rights of our users or the
+              public. The messaging system must NOT be used as a primary tool
+              for reporting critical emergencies or time-sensitive life safety
+              events.
+            </P>
+          </Section>
+
+          <Section n="8" title="Session Management & Cookie Policy">
             <P>
               MyScholaria uses two types of authentication cookies to manage
               your session securely:
@@ -258,7 +294,7 @@ const Terms = () => (
             </P>
           </Section>
 
-          <Section n="8" title="Data Protection & Privacy">
+          <Section n="9" title="Data Protection & Privacy">
             <P>
               Our handling of personal data is described in detail in our{" "}
               <Link component={RouterLink} to="/policy">
@@ -266,12 +302,13 @@ const Terms = () => (
               </Link>
               , which forms an integral part of these Terms. We act as a data
               processor on behalf of Institutions for student, parent and staff
-              data, and we comply with applicable data protection laws including
-              the GDPR, FERPA (where relevant), and local equivalents.
+              data, including chat histories, and we comply with applicable data
+              protection laws including the GDPR, FERPA (where relevant), and
+              local equivalents.
             </P>
           </Section>
 
-          <Section n="9" title="Service Availability & Support">
+          <Section n="10" title="Service Availability & Support">
             <P>
               We aim for 99.5% monthly uptime, excluding scheduled maintenance
               windows announced at least 48 hours in advance. While we make
@@ -283,7 +320,7 @@ const Terms = () => (
             </P>
           </Section>
 
-          <Section n="10" title="Suspension & Termination">
+          <Section n="11" title="Suspension & Termination">
             <P>
               We may suspend or terminate your access immediately and without
               prior notice if you breach these Terms, if your use endangers the
@@ -295,7 +332,7 @@ const Terms = () => (
             </P>
           </Section>
 
-          <Section n="11" title="Disclaimers">
+          <Section n="12" title="Disclaimers">
             <P>
               THE SERVICE IS PROVIDED "AS IS" AND "AS AVAILABLE", WITHOUT
               WARRANTIES OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
@@ -306,7 +343,7 @@ const Terms = () => (
             </P>
           </Section>
 
-          <Section n="12" title="Limitation of Liability">
+          <Section n="13" title="Limitation of Liability">
             <P>
               To the maximum extent permitted by applicable law, MyScholaria
               shall not be liable for any indirect, incidental, special,
@@ -319,7 +356,7 @@ const Terms = () => (
             </P>
           </Section>
 
-          <Section n="13" title="Indemnification">
+          <Section n="14" title="Indemnification">
             <P>
               You agree to indemnify and hold harmless MyScholaria, its
               officers, directors, employees and affiliates from and against any
@@ -330,7 +367,7 @@ const Terms = () => (
             </P>
           </Section>
 
-          <Section n="14" title="Modifications">
+          <Section n="15" title="Modifications">
             <P>
               We may revise these Terms from time to time. Material changes will
               be communicated by email or through an in-app notice at least 30
@@ -340,7 +377,7 @@ const Terms = () => (
             </P>
           </Section>
 
-          <Section n="15" title="Governing Law & Jurisdiction">
+          <Section n="16" title="Governing Law & Jurisdiction">
             <P>
               These Terms are governed by the laws of the jurisdiction in which
               MyScholaria is headquartered, without regard to its
@@ -351,7 +388,7 @@ const Terms = () => (
             </P>
           </Section>
 
-          <Section n="16" title="Contact">
+          <Section n="17" title="Contact">
             <P>
               For any question regarding these Terms, please contact us at:
               <br />
@@ -363,7 +400,7 @@ const Terms = () => (
 
           <Divider sx={{ my: 3 }} />
           <Typography variant="caption" color="text.secondary">
-            Last updated: May 28, 2026 — By using MyScholaria, you acknowledge
+            Last updated: June 17, 2026 — By using MyScholaria, you acknowledge
             that you have read, understood and agreed to these Terms of Service.
           </Typography>
         </CardContent>

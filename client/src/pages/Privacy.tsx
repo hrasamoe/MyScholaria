@@ -1,22 +1,22 @@
-import { Link as RouterLink } from "react-router-dom";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import PrivacyTipIcon from "@mui/icons-material/PrivacyTip";
 import {
   Box,
+  Breadcrumbs,
   Card,
   CardContent,
+  Chip,
   Container,
-  Typography,
-  Stack,
   Divider,
   Link,
-  Breadcrumbs,
-  Chip,
   List,
   ListItem,
   ListItemIcon,
   ListItemText,
+  Stack,
+  Typography,
 } from "@mui/material";
-import PrivacyTipIcon from "@mui/icons-material/PrivacyTip";
-import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import { Link as RouterLink } from "react-router-dom";
 
 const Section = ({
   n,
@@ -49,7 +49,7 @@ const Privacy = () => (
       py: { xs: 3, md: 6 },
     }}
   >
-    <Container maxWidth="md">
+    <Container maxWidth="lg">
       <Breadcrumbs sx={{ mb: 2 }}>
         <Link component={RouterLink} to="/" underline="hover" color="inherit">
           Home
@@ -85,7 +85,8 @@ const Privacy = () => (
                   color="success"
                   variant="outlined"
                 />
-                <Chip size="small" label="Effective: May 2026" />
+                <Chip size="small" label="Version 2.1.0" />
+                <Chip size="small" label="Effective: June 2026" />
               </Stack>
             </Box>
           </Stack>
@@ -140,8 +141,9 @@ const Privacy = () => (
               payment processing is handled by certified PCI-DSS providers).
             </P>
             <P>
-              <b>e) Communication data:</b> messages, announcements,
-              notifications, parent-teacher conversations.
+              <b>e) Communication data:</b> instant messages, chat history,
+              transmitted files or attachments, announcements, notifications,
+              and parent-teacher conversations.
             </P>
             <P>
               <b>f) Technical data:</b> IP address, device type, browser,
@@ -157,6 +159,7 @@ const Privacy = () => (
             <List dense>
               {[
                 "Provide and operate the school management Service (core functionality).",
+                "Facilitate and deliver secure in-app messaging and communications between authorized users.",
                 "Authenticate users and maintain secure sessions via HttpOnly cookies.",
                 "Verify approval status server-side on every request — never trusting client-side data.",
                 "Manage academic records, grades, attendance, scheduling and reporting.",
@@ -164,7 +167,7 @@ const Privacy = () => (
                 "Communicate operational information (updates, security alerts, service changes).",
                 "Improve the Service through aggregated, anonymized usage analytics.",
                 "Comply with legal obligations (educational regulations, accounting, tax law).",
-                "Detect, prevent and address fraud, abuse or security incidents.",
+                "Detect, prevent and address fraud, abuse, harassment, or security incidents.",
               ].map((t) => (
                 <ListItem
                   key={t}
@@ -198,7 +201,8 @@ const Privacy = () => (
             <P>
               <b>Legitimate interest:</b> ensuring the security, performance and
               continuous improvement of the Service — including the use of
-              strictly necessary authentication cookies.
+              strictly necessary authentication cookies and moderation tools to
+              prevent abuse.
             </P>
             <P>
               <b>Consent:</b> for optional features such as marketing emails or
@@ -213,7 +217,7 @@ const Privacy = () => (
               controls, reduced data retention windows, prohibition of
               behavioral advertising, mandatory parental consent for under-16
               users where required by local law, and additional encryption for
-              sensitive academic and disciplinary records.
+              sensitive academic, communication logs, and disciplinary records.
             </P>
           </Section>
 
@@ -265,6 +269,12 @@ const Privacy = () => (
             <P>
               • Active student records — duration of enrollment + 5 years (or as
               required by national education law);
+            </P>
+            <P>
+              • Chat histories and direct messages — maintained for the duration
+              of the current academic year, or until deleted by the school
+              administrator, up to a maximum of 30 days post account
+              deactivation;
             </P>
             <P>
               • Diplomas and final transcripts — long-term archival, often 30
@@ -424,9 +434,9 @@ const Privacy = () => (
 
           <Divider sx={{ my: 3 }} />
           <Typography variant="caption" color="text.secondary">
-            Last updated: May 28, 2026 — Your trust matters. We are committed to
-            transparency and to protecting the personal data of every member of
-            the MyScholaria community.
+            Last updated: June 17, 2026 — Your trust matters. We are committed
+            to transparency and to protecting the personal data of every member
+            of the MyScholaria community.
           </Typography>
         </CardContent>
       </Card>
