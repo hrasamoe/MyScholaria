@@ -38,12 +38,34 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   const wsRef = useRef<ReconnectingWebSocket | null>(null);
   const listenersRef = useRef<Set<(msg: any) => void>>(new Set());
   const audioCache = useRef<Map<SoundType, HTMLAudioElement>>(new Map());
+
   const playSound = (type: SoundType) => {
     if (!audioCache.current.has(type)) {
       audioCache.current.set(type, new Audio(SOUNDS[type]));
     }
-    audioCache.current.get(type)?.play();
+    const audio = audioCache.current.get(type);
+    if (audio) {
+      audio.currentTime = 0;
+      audio.play().catch(() => {});
+    }
   };
+
+  useEffect(() => {
+    const unlockAudio = () => {
+      Object.keys(SOUNDS).forEach((key) => {
+        const type = key as SoundType;
+        if (!audioCache.current.has(type)) {
+          const audio = new Audio(SOUNDS[type]);
+          audio.load();
+          audioCache.current.set(type, audio);
+        }
+      });
+      window.removeEventListener("click", unlockAudio);
+    };
+
+    window.addEventListener("click", unlockAudio);
+    return () => window.removeEventListener("click", unlockAudio);
+  }, []);
 
   useEffect(() => {
     if (!currentUserID) return;
