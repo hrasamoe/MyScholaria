@@ -17,6 +17,7 @@ import {
   ListItemAvatar,
   ListItemButton,
   ListItemText,
+  Skeleton,
   Stack,
   TextField,
   Typography,
@@ -57,6 +58,8 @@ const Messages = () => {
   const [wsStatus, setWsStatus] = useState<
     "connecting" | "connected" | "disconnected" | "idle"
   >("idle");
+  const [isChannelsLoading, setIsChannelsLoading] = useState(true);
+  const [isMessagesLoading, setIsMessagesLoading] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const wsRef = useRef<ReconnectingWebSocket | null>(null);
@@ -110,6 +113,7 @@ const Messages = () => {
     if (!establishmentId || !currentUserId) return;
 
     const initData = async () => {
+      setIsChannelsLoading(true);
       try {
         const channelsResponse = await apiRequest(
           "/api/messages/history-channels",
@@ -149,6 +153,8 @@ const Messages = () => {
         }
       } catch (error) {
         console.error(error);
+      } finally {
+        setIsChannelsLoading(false);
       }
     };
 
@@ -179,6 +185,7 @@ const Messages = () => {
     }
 
     const fetchMessages = async () => {
+      setIsMessagesLoading(true);
       try {
         const response = await apiRequest(
           `/api/messages/history/${activeMemberId}`,
@@ -194,6 +201,8 @@ const Messages = () => {
         }
       } catch (error) {
         console.error(error);
+      } finally {
+        setIsMessagesLoading(false);
       }
     };
 
@@ -261,7 +270,7 @@ const Messages = () => {
           </Typography>
         </Box>
       )}
-      <Grid container spacing={2} sx={{ height: "calc(110vh - 200px)" }}>
+      <Grid container spacing={2} sx={{ height: "calc(105vh - 200px)" }}>
         <Grid
           size={{ xs: 12, md: 4 }}
           sx={{
@@ -288,39 +297,65 @@ const Messages = () => {
           </Box>
           <Card sx={{ flex: 1, overflowY: "auto" }}>
             <List sx={{ p: 0 }}>
-              {displayedMembers.map((m, i) => (
-                <Box key={m.id}>
-                  <ListItemButton
-                    selected={m.id === activeMemberId}
-                    onClick={() => setActiveMemberId(m.id)}
-                  >
-                    <ListItemAvatar>
-                      <Avatar sx={{ bgcolor: "primary.main" }}>
-                        {m.name[0]}
-                      </Avatar>
-                    </ListItemAvatar>
-                    <ListItemText
-                      primary={
-                        <Typography variant="body1" fontWeight={500}>
-                          {m.name}
-                        </Typography>
-                      }
-                      secondary={
-                        <Typography variant="caption" color="text.secondary">
-                          {m.role}
-                        </Typography>
-                      }
-                    />
-                  </ListItemButton>
-                  {i < displayedMembers.length - 1 && <Divider />}
-                </Box>
-              ))}
-              {displayedMembers.length === 0 && (
-                <Box sx={{ p: 2, textAlign: "center" }}>
-                  <Typography variant="body2" color="text.secondary">
-                    No users found
-                  </Typography>
-                </Box>
+              {isChannelsLoading ? (
+                Array.from(new Array(4)).map((_, index) => (
+                  <Box key={index}>
+                    <ListItemButton disabled>
+                      <ListItemAvatar>
+                        <Skeleton variant="circular" width={40} height={40} />
+                      </ListItemAvatar>
+                      <ListItemText
+                        primary={
+                          <Skeleton variant="text" width="60%" height={20} />
+                        }
+                        secondary={
+                          <Skeleton variant="text" width="40%" height={15} />
+                        }
+                      />
+                    </ListItemButton>
+                    {index < 3 && <Divider />}
+                  </Box>
+                ))
+              ) : (
+                <>
+                  {displayedMembers.map((m, i) => (
+                    <Box key={m.id}>
+                      <ListItemButton
+                        selected={m.id === activeMemberId}
+                        onClick={() => setActiveMemberId(m.id)}
+                      >
+                        <ListItemAvatar>
+                          <Avatar sx={{ bgcolor: "primary.main" }}>
+                            {m.name[0]}
+                          </Avatar>
+                        </ListItemAvatar>
+                        <ListItemText
+                          primary={
+                            <Typography variant="body1" fontWeight={500}>
+                              {m.name}
+                            </Typography>
+                          }
+                          secondary={
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                            >
+                              {m.role}
+                            </Typography>
+                          }
+                        />
+                      </ListItemButton>
+                      {i < displayedMembers.length - 1 && <Divider />}
+                    </Box>
+                  ))}
+                  {displayedMembers.length === 0 && (
+                    <Box sx={{ p: 2, textAlign: "center" }}>
+                      <Typography variant="body2" color="text.secondary">
+                        No users found
+                      </Typography>
+                    </Box>
+                  )}
+                </>
               )}
             </List>
           </Card>
@@ -371,41 +406,66 @@ const Messages = () => {
 
                 <CardContent sx={{ flex: 1, overflowY: "auto", p: 2 }}>
                   <Stack spacing={1.5}>
-                    {messages.map((msg) => {
-                      const isMe = msg.sender_id === currentUserId;
-                      return (
-                        <Box
-                          key={msg.id}
-                          sx={{
-                            alignSelf: isMe ? "flex-end" : "flex-start",
-                            maxWidth: "75%",
-                            bgcolor: isMe ? "primary.main" : "action.hover",
-                            color: isMe
-                              ? "primary.contrastText"
-                              : "text.primary",
-                            p: 1.2,
-                            borderRadius: 2,
-                          }}
-                        >
-                          <Typography variant="body2">{msg.body}</Typography>
-                          <Typography
-                            variant="caption"
+                    {isMessagesLoading ? (
+                      Array.from(new Array(3)).map((_, index) => {
+                        const isEven = index % 2 === 0;
+                        return (
+                          <Box
+                            key={index}
                             sx={{
-                              alignSelf: isMe ? "flex-end" : "flex-start",
-                              display: "flex",
-                              mt: 0.5,
-                              opacity: 0.65,
-                              fontSize: "0.65rem",
+                              alignSelf: isEven ? "flex-end" : "flex-start",
+                              width: "50%",
                             }}
                           >
-                            {new Date(msg.send_at).toLocaleTimeString([], {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
-                          </Typography>
-                        </Box>
-                      );
-                    })}
+                            <Skeleton
+                              variant="rounded"
+                              height={45}
+                              sx={{ borderRadius: 2 }}
+                            />
+                          </Box>
+                        );
+                      })
+                    ) : (
+                      <>
+                        {messages.map((msg) => {
+                          const isMe = msg.sender_id === currentUserId;
+                          return (
+                            <Box
+                              key={msg.id}
+                              sx={{
+                                alignSelf: isMe ? "flex-end" : "flex-start",
+                                maxWidth: "75%",
+                                bgcolor: isMe ? "primary.main" : "action.hover",
+                                color: isMe
+                                  ? "primary.contrastText"
+                                  : "text.primary",
+                                p: 1.2,
+                                borderRadius: 2,
+                              }}
+                            >
+                              <Typography variant="body2">
+                                {msg.body}
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                sx={{
+                                  alignSelf: isMe ? "flex-end" : "flex-start",
+                                  display: "flex",
+                                  mt: 0.5,
+                                  opacity: 0.65,
+                                  fontSize: "0.65rem",
+                                }}
+                              >
+                                {new Date(msg.send_at).toLocaleTimeString([], {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })}
+                              </Typography>
+                            </Box>
+                          );
+                        })}
+                      </>
+                    )}
                     <div ref={messagesEndRef} />
                   </Stack>
                 </CardContent>
@@ -457,7 +517,7 @@ const Messages = () => {
                     variant="contained"
                     endIcon={<SendIcon />}
                     onClick={handleSendMessage}
-                    disabled={!text.trim()}
+                    disabled={!text.trim() || isMessagesLoading}
                   >
                     Send
                   </Button>
