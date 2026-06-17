@@ -48,8 +48,8 @@ const Messages = () => {
 
   const [allMembers, setAllMembers] = useState<Member[]>([]);
   const [displayedMembers, setDisplayedMembers] = useState<Member[]>([]);
-  const [chatHistoryUserIds, setChatHistoryUserIds] = useState<Set<string>>(
-    new Set(),
+  const [chatHistory, setChatHistory] = useState<Map<string, string>>(
+    new Map(),
   );
   const [searchQuery, setSearchQuery] = useState("");
   const [activeMemberId, setActiveMemberId] = useState<string | null>(null);
@@ -73,7 +73,6 @@ const Messages = () => {
     wsRef.current = ws;
 
     ws.onopen = () => {
-      console.log("WebSocket connecté");
       setWsStatus("connected");
     };
 
@@ -91,16 +90,18 @@ const Messages = () => {
         return activeId;
       });
 
-      setChatHistoryUserIds((prev) => new Set([...prev, newMsg.sender_id]));
+      setChatHistory((prev) => {
+        const next = new Map(prev);
+        next.set(newMsg.sender_id, newMsg.send_at);
+        return next;
+      });
     };
 
     ws.onclose = () => {
-      console.log("❌ WebSocket déconnecté");
       setWsStatus("disconnected");
     };
 
-    ws.onerror = (err) => {
-      console.error("WS error:", err);
+    ws.onerror = () => {
       setWsStatus("disconnected");
     };
 
@@ -123,11 +124,17 @@ const Messages = () => {
           },
         );
 
-        let interactedUserIds = new Set<string>();
+        let historyMap = new Map<string, string>();
         if (channelsResponse.ok) {
-          const channelsData: string[] = await channelsResponse.json();
-          interactedUserIds = new Set(channelsData);
-          setChatHistoryUserIds(interactedUserIds);
+          const channelsData: { member_id: string; last_message_at: string }[] =
+            await channelsResponse.json();
+          historyMap = new Map(
+            channelsData.map(({ member_id, last_message_at }) => [
+              member_id,
+              last_message_at,
+            ]),
+          );
+          setChatHistory(historyMap);
         }
 
         const response = await apiRequest(
@@ -138,17 +145,19 @@ const Messages = () => {
         if (response.ok) {
           const data = await response.json();
           const formatted: Member[] = data
-            .map((m: any) => ({
-              id: m.user_id,
-              name: m.name,
-              role: m.role,
-            }))
+            .map((m: any) => ({ id: m.user_id, name: m.name, role: m.role }))
             .filter((m: Member) => m.id !== currentUserId);
 
           setAllMembers(formatted);
-          const defaultList = formatted.filter((m) =>
-            interactedUserIds.has(m.id),
-          );
+
+          const defaultList = formatted
+            .filter((m) => historyMap.has(m.id))
+            .sort((a, b) => {
+              const dateA = historyMap.get(a.id) ?? "0";
+              const dateB = historyMap.get(b.id) ?? "0";
+              return dateB.localeCompare(dateA);
+            });
+
           setDisplayedMembers(defaultList);
         }
       } catch (error) {
@@ -163,20 +172,26 @@ const Messages = () => {
 
   useEffect(() => {
     const query = searchQuery.trim().toLowerCase();
+
+    let filtered: Member[];
     if (!query) {
-      const defaultList = allMembers.filter((m) =>
-        chatHistoryUserIds.has(m.id),
-      );
-      setDisplayedMembers(defaultList);
+      filtered = allMembers.filter((m) => chatHistory.has(m.id));
     } else {
-      const filtered = allMembers.filter(
+      filtered = allMembers.filter(
         (m) =>
           m.name.toLowerCase().includes(query) ||
           m.role.toLowerCase().includes(query),
       );
-      setDisplayedMembers(filtered);
     }
-  }, [searchQuery, allMembers, chatHistoryUserIds]);
+
+    filtered.sort((a, b) => {
+      const dateA = chatHistory.get(a.id) ?? "0";
+      const dateB = chatHistory.get(b.id) ?? "0";
+      return dateB.localeCompare(dateA);
+    });
+
+    setDisplayedMembers(filtered);
+  }, [searchQuery, allMembers, chatHistory]);
 
   useEffect(() => {
     if (!currentUserId || !activeMemberId) {
@@ -249,7 +264,11 @@ const Messages = () => {
         setMessages((prev) =>
           prev.map((m) => (m.id === optimisticMsg.id ? realMsg : m)),
         );
-        setChatHistoryUserIds((prev) => new Set([...prev, activeMemberId]));
+        setChatHistory((prev) => {
+          const next = new Map(prev);
+          next.set(activeMemberId, realMsg.send_at);
+          return next;
+        });
       }
     } catch (error) {
       console.error(error);
@@ -500,9 +519,7 @@ const Messages = () => {
                         const end = target.selectionEnd;
                         const newValue =
                           text.substring(0, start) + "\n" + text.substring(end);
-
                         setText(newValue);
-
                         setTimeout(() => {
                           target.selectionStart = target.selectionEnd =
                             start + 1;

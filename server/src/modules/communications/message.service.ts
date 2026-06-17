@@ -16,7 +16,6 @@ export async function sendMessage(Message: MessageInfo) {
     await client.query("COMMIT");
     return result.rows[0];
   } catch (error: any) {
-    console.log(error.message);
     await client.query("ROLLBACK");
     throw error;
   } finally {
@@ -27,27 +26,31 @@ export async function sendMessage(Message: MessageInfo) {
 export async function getHistory(userID: string) {
   const client = await pool.connect();
   try {
-    await client.query("BEGIN");
-    const queryText = `SELECT DISTINCT 
+    const queryText = `
+      SELECT 
         CASE 
           WHEN sender_id = $1 THEN recipient_id 
           ELSE sender_id 
-        END as member_id
+        END as member_id,
+        MAX(send_at) as last_message_at
       FROM messages
-      WHERE sender_id = $1 OR recipient_id = $1`;
+      WHERE sender_id = $1 OR recipient_id = $1
+      GROUP BY member_id
+      ORDER BY last_message_at DESC
+    `;
     const result = await client.query(queryText, [userID]);
-    await client.query("COMMIT");
-    return result.rows.map((row) => row.member_id);
+    return result.rows;
   } catch (error: any) {
-    console.log(error.message);
-    await client.query("ROLLBACK");
     throw error;
   } finally {
     client.release();
   }
 }
 
-export async function getMessages(currentUserId: string, activeMemberId: string) {
+export async function getMessages(
+  currentUserId: string,
+  activeMemberId: string,
+) {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
@@ -62,7 +65,6 @@ export async function getMessages(currentUserId: string, activeMemberId: string)
     await client.query("COMMIT");
     return result.rows;
   } catch (error: any) {
-    console.log(error.message);
     await client.query("ROLLBACK");
     throw error;
   } finally {
