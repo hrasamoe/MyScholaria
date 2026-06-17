@@ -1,7 +1,8 @@
 import { Request, Response, Router } from "express";
-import { MessageSchema } from "./message.schema";
-import { sendMessage } from "./message.service";
+import { AuthRequest, RequireAuth } from "../../middleware/auth.middleware";
 import { sendToUser } from "../../services/websocket/ws-server";
+import { MessageSchema } from "./message.schema";
+import { getHistory, getMessages, sendMessage } from "./message.service";
 
 export const messageRouter = Router();
 
@@ -24,3 +25,36 @@ messageRouter.post("/send/:senderID", async (req: Request, res: Response) => {
     res.status(500).json({ message: error.message, error: error.message });
   }
 });
+
+messageRouter.get(
+  "/history-channels",
+  RequireAuth,
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const currentUser = req.userId as string;
+      const channels = await getHistory(currentUser);
+      return res.json(channels);
+    } catch (error: any) {
+      return res
+        .status(500)
+        .json({ message: error.message, error: error.message });
+    }
+  },
+);
+
+messageRouter.get(
+  "/history/:userID",
+  RequireAuth,
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const currentUserID = req.userId as string;
+      const activeMemberID = req.params.userID as string;
+      const messages = await getMessages(currentUserID, activeMemberID);
+      return res.json(messages);
+    } catch (error: any) {
+      return res
+        .status(500)
+        .json({ message: error.message, error: error.message });
+    }
+  },
+);

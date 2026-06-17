@@ -6,7 +6,7 @@ export async function sendMessage(Message: MessageInfo) {
   try {
     await client.query("BEGIN");
     const queryText = `INSERT INTO messages (sender_id, recipient_id, body, read_at)
-      VALUES ($1, $2, $3, NOW())
+      VALUES ($1, $2, $3, NULL)
       RETURNING id, sender_id, recipient_id, body, send_at, read_at`;
     const result = await client.query(queryText, [
       Message.sender_id,
@@ -15,6 +15,52 @@ export async function sendMessage(Message: MessageInfo) {
     ]);
     await client.query("COMMIT");
     return result.rows[0];
+  } catch (error: any) {
+    console.log(error.message);
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+export async function getHistory(userID: string) {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const queryText = `SELECT DISTINCT 
+        CASE 
+          WHEN sender_id = $1 THEN recipient_id 
+          ELSE sender_id 
+        END as member_id
+      FROM messages
+      WHERE sender_id = $1 OR recipient_id = $1`;
+    const result = await client.query(queryText, [userID]);
+    await client.query("COMMIT");
+    return result.rows.map((row) => row.member_id);
+  } catch (error: any) {
+    console.log(error.message);
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+export async function getMessages(currentUserId: string, activeMemberId: string) {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const queryText = `SELECT * FROM messages 
+      WHERE (sender_id = $1 AND recipient_id = $2) 
+         OR (sender_id = $2 AND recipient_id = $1)
+      ORDER BY send_at ASC`;
+    const result = await client.query(queryText, [
+      currentUserId,
+      activeMemberId,
+    ]);
+    await client.query("COMMIT");
+    return result.rows;
   } catch (error: any) {
     console.log(error.message);
     await client.query("ROLLBACK");
