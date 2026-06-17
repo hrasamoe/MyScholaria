@@ -31,7 +31,7 @@ const NotificationContext = createContext<NotificationContextType | undefined>(
 
 export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth();
-  const currentUserID = user.id;
+  const currentUserID = user?.id;
   const [unreadCounts, setUnreadCounts] = useState<Map<string, number>>(
     new Map(),
   );
