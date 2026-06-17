@@ -3,6 +3,7 @@ import { SnackbarProvider } from "notistack";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import AppLayout from "./components/AppLayout";
 import { AuthProvider } from "./hooks/Authcontext";
+import { NotificationProvider } from "./hooks/NotificationContext";
 import {
   GuestGuard,
   PendinRoute,
@@ -72,140 +73,151 @@ import VerifyEmailMember from "./pages/VerifyEmailMember";
 const App = () => (
   <AppThemeProvider>
     <AuthProvider>
-      <CssBaseline />
-      <SnackbarProvider
-        maxSnack={3}
-        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-      >
-        <BrowserRouter>
-          <Routes>
-            <Route
-              path="/auth/signin"
-              element={
-                <GuestGuard>
-                  {" "}
-                  <SignIn />
-                </GuestGuard>
-              }
-            />
-            <Route
-              path="/auth/signup"
-              element={
-                <GuestGuard>
-                  <SignUp />
-                </GuestGuard>
-              }
-            />
-            <Route path="/auth/forgot-password" element={<ForgotPassword />} />
-            <Route path="/terms" element={<Terms />} />
-            <Route path="/policy" element={<Privacy />} />
-            <Route path="/auth/verify-email" element={<VerifyEmail />} />
-            <Route path="/auth/reset-password" element={<ResetPassword />} />
-            <Route path="/auth/change-password" element={<ChangePassword />} />
-            <Route
-              path="/auth/verify-email-member"
-              element={<VerifyEmailMember />}
-            />
-            <Route element={<ProtectedRoute></ProtectedRoute>}>
+      <NotificationProvider>
+        <CssBaseline />
+        <SnackbarProvider
+          maxSnack={3}
+          anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        >
+          <BrowserRouter>
+            <Routes>
               <Route
-                path="/auth/etablissement"
-                element={<CreateEstablishment />}
+                path="/auth/signin"
+                element={
+                  <GuestGuard>
+                    {" "}
+                    <SignIn />
+                  </GuestGuard>
+                }
               />
+              <Route
+                path="/auth/signup"
+                element={
+                  <GuestGuard>
+                    <SignUp />
+                  </GuestGuard>
+                }
+              />
+              <Route
+                path="/auth/forgot-password"
+                element={<ForgotPassword />}
+              />
+              <Route path="/terms" element={<Terms />} />
+              <Route path="/policy" element={<Privacy />} />
               <Route path="/auth/verify-email" element={<VerifyEmail />} />
-            </Route>
-            <Route
-              path="/pending-aproval"
-              element={
-                <ProtectedRoute>
-                  <PendingApproval />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              element={
-                <PendinRoute>
-                  <AppLayout />
-                </PendinRoute>
-              }
-            >
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/calendar" element={<SchoolCalendar />} />
-              <Route path="/timetable" element={<Timetable />} />
-              <Route path="/messages" element={<Messages />} />
-              <Route path="/notifications" element={<Notifications />} />
-              <Route path="/announcements" element={<Announcements />} />
-              <Route path="/events" element={<Events />} />
-              <Route path="/settings" element={<Settings />} />
-
-              <Route element={<RoleRoute roles={["admin", "staff"]} />}>
-                <Route path="/parents" element={<ParentsList />} />
-                <Route path="/parents/create" element={<CreateParent />} />
-                <Route path="/parents/edit/:id" element={<EditParent />} />
-                <Route path="/users" element={<Users />} />
-                <Route path="/roles" element={<Roles />} />
-                <Route path="/staff" element={<Staff />} />
-                <Route path="/staff/edit/:id" element={<EditStaff />} />
-                <Route path="/staff/create" element={<CreateStaff />} />
-                <Route path="/staff/details/:id" element={<StaffDetails />} />
-                <Route path="/budget" element={<Budget />} />
-                <Route path="/payments" element={<Payments />} />
-                <Route path="/facturation" element={<Facturation />} />
-                <Route path="/scholarships" element={<Scholarships />} />
-                <Route path="/reports" element={<Reports />} />
-                <Route path="/classrooms" element={<Classrooms />} />
-              </Route>
-
-              <Route element={<RoleRoute roles={["admin", "teacher"]} />}>
-                <Route path="/students/create" element={<CreateStudent />} />
-                <Route path="/students" element={<Students />} />
-                <Route
-                  path="/students/details/:id"
-                  element={<StudentDetails />}
-                />
-                <Route path="/students/edit/:id" element={<EditStudent />} />
-                <Route path="/teachers" element={<Teachers />} />
-                <Route path="/teachers/create" element={<CreateTeacher />} />
-                <Route path="/teachers/edit/:id" element={<EditTeacher />} />
-                <Route
-                  path="/teachers/details/:id"
-                  element={<TeacherDetails />}
-                />
-                <Route path="/classes" element={<Classes />} />
-                <Route path="/subjects" element={<Subjects />} />
-                <Route path="/grades" element={<Grades />} />
-                <Route path="/exams" element={<Exams />} />
-                <Route path="/parents/details/:id" element={<ParentDetails/>} />
-                <Route path="/attendance" element={<Attendance />} />
-                <Route path="/duty" element={<Duty />} />
-                <Route path="/coursebook" element={<Coursebook />} />
-                <Route path="/internships" element={<Internships />} />
-                <Route path="/programs" element={<Programs />} />
-                <Route path="/theses" element={<Theses />} />
-                <Route path="/diplomas" element={<Diplomas />} />
-              </Route>
-
-              <Route path="/library" element={<Library />} />
+              <Route path="/auth/reset-password" element={<ResetPassword />} />
               <Route
-                path="/portal/student"
+                path="/auth/change-password"
+                element={<ChangePassword />}
+              />
+              <Route
+                path="/auth/verify-email-member"
+                element={<VerifyEmailMember />}
+              />
+              <Route element={<ProtectedRoute></ProtectedRoute>}>
+                <Route
+                  path="/auth/etablissement"
+                  element={<CreateEstablishment />}
+                />
+                <Route path="/auth/verify-email" element={<VerifyEmail />} />
+              </Route>
+              <Route
+                path="/pending-aproval"
                 element={
-                  <RoleRoute roles={["student", "admin"]}>
-                    <StudentPortal />
-                  </RoleRoute>
+                  <ProtectedRoute>
+                    <PendingApproval />
+                  </ProtectedRoute>
                 }
               />
               <Route
-                path="/portal/parent"
                 element={
-                  <RoleRoute roles={["parent", "admin"]}>
-                    <ParentPortal />
-                  </RoleRoute>
+                  <PendinRoute>
+                    <AppLayout />
+                  </PendinRoute>
                 }
-              />
-            </Route>
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </SnackbarProvider>
+              >
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/calendar" element={<SchoolCalendar />} />
+                <Route path="/timetable" element={<Timetable />} />
+                <Route path="/messages" element={<Messages />} />
+                <Route path="/notifications" element={<Notifications />} />
+                <Route path="/announcements" element={<Announcements />} />
+                <Route path="/events" element={<Events />} />
+                <Route path="/settings" element={<Settings />} />
+
+                <Route element={<RoleRoute roles={["admin", "staff"]} />}>
+                  <Route path="/parents" element={<ParentsList />} />
+                  <Route path="/parents/create" element={<CreateParent />} />
+                  <Route path="/parents/edit/:id" element={<EditParent />} />
+                  <Route path="/users" element={<Users />} />
+                  <Route path="/roles" element={<Roles />} />
+                  <Route path="/staff" element={<Staff />} />
+                  <Route path="/staff/edit/:id" element={<EditStaff />} />
+                  <Route path="/staff/create" element={<CreateStaff />} />
+                  <Route path="/staff/details/:id" element={<StaffDetails />} />
+                  <Route path="/budget" element={<Budget />} />
+                  <Route path="/payments" element={<Payments />} />
+                  <Route path="/facturation" element={<Facturation />} />
+                  <Route path="/scholarships" element={<Scholarships />} />
+                  <Route path="/reports" element={<Reports />} />
+                  <Route path="/classrooms" element={<Classrooms />} />
+                </Route>
+
+                <Route element={<RoleRoute roles={["admin", "teacher"]} />}>
+                  <Route path="/students/create" element={<CreateStudent />} />
+                  <Route path="/students" element={<Students />} />
+                  <Route
+                    path="/students/details/:id"
+                    element={<StudentDetails />}
+                  />
+                  <Route path="/students/edit/:id" element={<EditStudent />} />
+                  <Route path="/teachers" element={<Teachers />} />
+                  <Route path="/teachers/create" element={<CreateTeacher />} />
+                  <Route path="/teachers/edit/:id" element={<EditTeacher />} />
+                  <Route
+                    path="/teachers/details/:id"
+                    element={<TeacherDetails />}
+                  />
+                  <Route path="/classes" element={<Classes />} />
+                  <Route path="/subjects" element={<Subjects />} />
+                  <Route path="/grades" element={<Grades />} />
+                  <Route path="/exams" element={<Exams />} />
+                  <Route
+                    path="/parents/details/:id"
+                    element={<ParentDetails />}
+                  />
+                  <Route path="/attendance" element={<Attendance />} />
+                  <Route path="/duty" element={<Duty />} />
+                  <Route path="/coursebook" element={<Coursebook />} />
+                  <Route path="/internships" element={<Internships />} />
+                  <Route path="/programs" element={<Programs />} />
+                  <Route path="/theses" element={<Theses />} />
+                  <Route path="/diplomas" element={<Diplomas />} />
+                </Route>
+
+                <Route path="/library" element={<Library />} />
+                <Route
+                  path="/portal/student"
+                  element={
+                    <RoleRoute roles={["student", "admin"]}>
+                      <StudentPortal />
+                    </RoleRoute>
+                  }
+                />
+                <Route
+                  path="/portal/parent"
+                  element={
+                    <RoleRoute roles={["parent", "admin"]}>
+                      <ParentPortal />
+                    </RoleRoute>
+                  }
+                />
+              </Route>
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </SnackbarProvider>
+      </NotificationProvider>
     </AuthProvider>
   </AppThemeProvider>
 );
