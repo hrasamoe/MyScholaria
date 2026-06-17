@@ -5,8 +5,6 @@ lg: st
 mmdh: st
 	git switch main
 	git merge dev
-	git switch hrasamoe
-	git merge dev
 	git switch dev
 
 po: mmdh

@@ -1,4 +1,5 @@
 import PageHeader from "@/components/PageHeader";
+import { useNotification } from "@/hooks/NotificationContext";
 import { useAuth } from "@/hooks/Authcontext";
 import { apiRequest } from "@/services/api.service";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -24,7 +25,6 @@ import {
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import { useEffect, useRef, useState } from "react";
-import ReconnectingWebSocket from "reconnecting-websocket";
 
 interface Member {
   id: string;
@@ -45,6 +45,7 @@ const Messages = () => {
   const { user } = useAuth();
   const establishmentId = user?.establishment_id;
   const currentUserId = user?.id;
+  const { unreadCounts, clearUnread, onNewMessage } = useNotification();
 
   const [allMembers, setAllMembers] = useState<Member[]>([]);
   const [displayedMembers, setDisplayedMembers] = useState<Member[]>([]);
@@ -55,33 +56,18 @@ const Messages = () => {
   const [activeMemberId, setActiveMemberId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState("");
-  const [wsStatus, setWsStatus] = useState<
-    "connecting" | "connected" | "disconnected" | "idle"
-  >("idle");
-  const [unreadCounts, setUnreadCounts] = useState<Map<string, number>>(
-    new Map(),
-  );
   const [isChannelsLoading, setIsChannelsLoading] = useState(true);
   const [isMessagesLoading, setIsMessagesLoading] = useState(false);
 
-  const notifSoundRef = useRef<HTMLAudioElement>(
-    new Audio("/sound/notification.mp3"),
-  );
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
-  const wsRef = useRef<ReconnectingWebSocket | null>(null);
 
   useEffect(() => {
-    if (!currentUserId) return;
-
-    const ws = new ReconnectingWebSocket(
-      `${import.meta.env.VITE_WS_URL}?userId=${currentUserId}`,
-    );
-    wsRef.current = ws;
-
-    ws.onopen = () => setWsStatus("connected");
-
-    ws.onmessage = (event) => {
-      const newMsg: Message = JSON.parse(event.data);
+    const unsubscribe = onNewMessage((newMsg) => {
+      setChatHistory((prev) => {
+        const next = new Map(prev);
+        next.set(newMsg.sender_id, newMsg.send_at);
+        return next;
+      });
 
       setActiveMemberId((activeId) => {
         if (newMsg.sender_id === activeId) {
@@ -90,29 +76,14 @@ const Messages = () => {
             if (exists) return prev;
             return [...prev, newMsg];
           });
-        } else {
-          notifSoundRef.current.play().catch(() => {});
-          setUnreadCounts((prev) => {
-            const next = new Map(prev);
-            next.set(newMsg.sender_id, (next.get(newMsg.sender_id) ?? 0) + 1);
-            return next;
-          });
+          clearUnread(newMsg.sender_id);
         }
         return activeId;
       });
+    });
 
-      setChatHistory((prev) => {
-        const next = new Map(prev);
-        next.set(newMsg.sender_id, newMsg.send_at);
-        return next;
-      });
-    };
-
-    ws.onclose = () => setWsStatus("disconnected");
-    ws.onerror = () => setWsStatus("disconnected");
-
-    return () => ws.close();
-  }, [currentUserId]);
+    return unsubscribe;
+  }, []);
 
   useEffect(() => {
     if (!establishmentId || !currentUserId) return;
@@ -234,11 +205,7 @@ const Messages = () => {
 
   const handleSelectMember = (id: string) => {
     setActiveMemberId(id);
-    setUnreadCounts((prev) => {
-      const next = new Map(prev);
-      next.delete(id);
-      return next;
-    });
+    clearUnread(id);
   };
 
   const handleSendMessage = async () => {
@@ -295,14 +262,6 @@ const Messages = () => {
   return (
     <>
       <PageHeader title="Messages" subtitle="Internal messaging" />
-
-      {wsStatus === "disconnected" && (
-        <Box sx={{ mb: 1, px: 1 }}>
-          <Typography variant="caption" color="error.main">
-            Messagerie hors ligne — tentative de reconnexion...
-          </Typography>
-        </Box>
-      )}
 
       <Grid container spacing={2} sx={{ height: "calc(105vh - 200px)" }}>
         <Grid
@@ -404,7 +363,8 @@ const Messages = () => {
                               variant="caption"
                               color="text.secondary"
                             >
-                              {m.role.toUpperCase().charAt(0)}{m.role.slice(1).toLowerCase()}
+                              {m.role.charAt(0).toUpperCase() +
+                                m.role.slice(1).toLowerCase()}
                             </Typography>
                           }
                         />
