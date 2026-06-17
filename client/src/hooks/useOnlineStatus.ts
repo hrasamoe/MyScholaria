@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 
 async function checkRealInternet(): Promise<boolean> {
   try {
-    const res = await fetch("https://myscholaria.onrender.com/api/health", {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/health`, {
       method: "GET",
       cache: "no-store",
     });
