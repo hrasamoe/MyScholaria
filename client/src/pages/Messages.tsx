@@ -58,9 +58,15 @@ const Messages = () => {
   const [wsStatus, setWsStatus] = useState<
     "connecting" | "connected" | "disconnected" | "idle"
   >("idle");
+  const [unreadCounts, setUnreadCounts] = useState<Map<string, number>>(
+    new Map(),
+  );
   const [isChannelsLoading, setIsChannelsLoading] = useState(true);
   const [isMessagesLoading, setIsMessagesLoading] = useState(false);
 
+  const notifSoundRef = useRef<HTMLAudioElement>(
+    new Audio("/sound/notification.mp3"),
+  );
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const wsRef = useRef<ReconnectingWebSocket | null>(null);
 
@@ -72,9 +78,7 @@ const Messages = () => {
     );
     wsRef.current = ws;
 
-    ws.onopen = () => {
-      setWsStatus("connected");
-    };
+    ws.onopen = () => setWsStatus("connected");
 
     ws.onmessage = (event) => {
       const newMsg: Message = JSON.parse(event.data);
@@ -85,6 +89,13 @@ const Messages = () => {
             const exists = prev.some((m) => m.id === newMsg.id);
             if (exists) return prev;
             return [...prev, newMsg];
+          });
+        } else {
+          notifSoundRef.current.play().catch(() => {});
+          setUnreadCounts((prev) => {
+            const next = new Map(prev);
+            next.set(newMsg.sender_id, (next.get(newMsg.sender_id) ?? 0) + 1);
+            return next;
           });
         }
         return activeId;
@@ -97,17 +108,10 @@ const Messages = () => {
       });
     };
 
-    ws.onclose = () => {
-      setWsStatus("disconnected");
-    };
+    ws.onclose = () => setWsStatus("disconnected");
+    ws.onerror = () => setWsStatus("disconnected");
 
-    ws.onerror = () => {
-      setWsStatus("disconnected");
-    };
-
-    return () => {
-      ws.close();
-    };
+    return () => ws.close();
   }, [currentUserId]);
 
   useEffect(() => {
@@ -228,6 +232,15 @@ const Messages = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  const handleSelectMember = (id: string) => {
+    setActiveMemberId(id);
+    setUnreadCounts((prev) => {
+      const next = new Map(prev);
+      next.delete(id);
+      return next;
+    });
+  };
+
   const handleSendMessage = async () => {
     const cleanedText = text.trim();
     if (!cleanedText || !currentUserId || !activeMemberId) return;
@@ -290,6 +303,7 @@ const Messages = () => {
           </Typography>
         </Box>
       )}
+
       <Grid container spacing={2} sx={{ height: "calc(105vh - 200px)" }}>
         <Grid
           size={{ xs: 12, md: 4 }}
@@ -342,7 +356,7 @@ const Messages = () => {
                     <Box key={m.id}>
                       <ListItemButton
                         selected={m.id === activeMemberId}
-                        onClick={() => setActiveMemberId(m.id)}
+                        onClick={() => handleSelectMember(m.id)}
                       >
                         <ListItemAvatar>
                           <Avatar sx={{ bgcolor: "primary.main" }}>
@@ -351,16 +365,46 @@ const Messages = () => {
                         </ListItemAvatar>
                         <ListItemText
                           primary={
-                            <Typography variant="body1" fontWeight={500}>
-                              {m.name}
-                            </Typography>
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "space-between",
+                              }}
+                            >
+                              <Typography
+                                variant="body1"
+                                fontWeight={unreadCounts.has(m.id) ? 900 : 500}
+                              >
+                                {m.name}
+                              </Typography>
+                              {unreadCounts.has(m.id) && (
+                                <Box
+                                  sx={{
+                                    minWidth: 20,
+                                    height: 20,
+                                    borderRadius: "50%",
+                                    bgcolor: "primary.main",
+                                    color: "primary.contrastText",
+                                    fontSize: "0.7rem",
+                                    fontWeight: 700,
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    px: 0.5,
+                                  }}
+                                >
+                                  {unreadCounts.get(m.id)}
+                                </Box>
+                              )}
+                            </Box>
                           }
                           secondary={
                             <Typography
                               variant="caption"
                               color="text.secondary"
                             >
-                              {m.role}
+                              {m.role.toUpperCase().charAt(0)}{m.role.slice(1).toLowerCase()}
                             </Typography>
                           }
                         />
