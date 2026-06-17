@@ -587,14 +587,14 @@ CREATE TABLE public.messages (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   sender_id uuid NOT NULL,
   recipient_id uuid NOT NULL,
-  subject text,
   body text NOT NULL,
-  attachments jsonb NOT NULL DEFAULT '[]'::jsonb,
   read_at timestamp with time zone,
-  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  send_at timestamp with time zone NOT NULL DEFAULT now(),
+  is_modified boolean DEFAULT false,
   CONSTRAINT messages_pkey PRIMARY KEY (id),
-  CONSTRAINT messages_sender_id_fkey FOREIGN KEY (sender_id) REFERENCES public.profiles(id),
-  CONSTRAINT messages_recipient_id_fkey FOREIGN KEY (recipient_id) REFERENCES public.profiles(id)
+  CONSTRAINT messages_recipient_id_fkey FOREIGN KEY (sender_id) REFERENCES public.users(id),
+  CONSTRAINT messages_sender_id_fkey FOREIGN KEY (sender_id) REFERENCES public.users(id),
+  CONSTRAINT messages_recipient_id_fkey1 FOREIGN KEY (recipient_id) REFERENCES public.users(id)
 );
 CREATE TABLE public.conversations (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -781,5 +781,6 @@ CREATE TABLE public.notification_receipts (
   is_read boolean NOT NULL DEFAULT false,
   read_at timestamp with time zone,
   CONSTRAINT notification_receipts_pkey PRIMARY KEY (id),
-  CONSTRAINT notification_receipts_notification_id_fkey FOREIGN KEY (notification_id) REFERENCES public.notifications(id)
+  CONSTRAINT notification_receipts_notification_id_fkey FOREIGN KEY (notification_id) REFERENCES public.notifications(id),
+  CONSTRAINT notification_receipts_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
 );
