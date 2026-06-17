@@ -214,14 +214,15 @@ const Messages = () => {
   }, [messages]);
 
   const handleSendMessage = async () => {
-    if (!text.trim() || !currentUserId || !activeMemberId) return;
+    const cleanedText = text.trim();
+    if (!cleanedText || !currentUserId || !activeMemberId) return;
 
     const now = new Date().toISOString();
     const optimisticMsg: Message = {
       id: crypto.randomUUID(),
       sender_id: currentUserId,
       recipient_id: activeMemberId,
-      body: text.trim(),
+      body: cleanedText,
       read_at: now,
       send_at: now,
     };
@@ -443,7 +444,10 @@ const Messages = () => {
                                 borderRadius: 2,
                               }}
                             >
-                              <Typography variant="body2">
+                              <Typography
+                                variant="body2"
+                                sx={{ whiteSpace: "pre-wrap" }}
+                              >
                                 {msg.body}
                               </Typography>
                               <Typography
