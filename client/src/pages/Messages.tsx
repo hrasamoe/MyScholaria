@@ -22,14 +22,8 @@ import {
   Typography,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
-import { createClient } from "@supabase/supabase-js";
 import { useEffect, useRef, useState } from "react";
 import ReconnectingWebSocket from "reconnecting-websocket";
-
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_ANON_KEY,
-);
 
 interface Member {
   id: string;
@@ -117,19 +111,18 @@ const Messages = () => {
 
     const initData = async () => {
       try {
-        const { data: userMessages, error } = await supabase
-          .from("messages")
-          .select("sender_id, recipient_id")
-          .or(`sender_id.eq.${currentUserId},recipient_id.eq.${currentUserId}`);
+        const channelsResponse = await apiRequest(
+          "/api/messages/history-channels",
+          {
+            method: "GET",
+            credentials: "include",
+          },
+        );
 
-        const interactedUserIds = new Set<string>();
-        if (!error && userMessages) {
-          userMessages.forEach((msg) => {
-            if (msg.sender_id !== currentUserId)
-              interactedUserIds.add(msg.sender_id);
-            if (msg.recipient_id !== currentUserId)
-              interactedUserIds.add(msg.recipient_id);
-          });
+        let interactedUserIds = new Set<string>();
+        if (channelsResponse.ok) {
+          const channelsData: string[] = await channelsResponse.json();
+          interactedUserIds = new Set(channelsData);
           setChatHistoryUserIds(interactedUserIds);
         }
 
@@ -186,16 +179,21 @@ const Messages = () => {
     }
 
     const fetchMessages = async () => {
-      const { data, error } = await supabase
-        .from("messages")
-        .select("*")
-        .or(
-          `and(sender_id.eq.${currentUserId},recipient_id.eq.${activeMemberId}),and(sender_id.eq.${activeMemberId},recipient_id.eq.${currentUserId})`,
-        )
-        .order("send_at", { ascending: true });
+      try {
+        const response = await apiRequest(
+          `/api/messages/history/${activeMemberId}`,
+          {
+            method: "GET",
+            credentials: "include",
+          },
+        );
 
-      if (!error && data) {
-        setMessages(data);
+        if (response.ok) {
+          const data = await response.json();
+          setMessages(data);
+        }
+      } catch (error) {
+        console.error(error);
       }
     };
 
@@ -394,7 +392,6 @@ const Messages = () => {
                             variant="caption"
                             sx={{
                               alignSelf: isMe ? "flex-end" : "flex-start",
-
                               display: "flex",
                               mt: 0.5,
                               opacity: 0.65,
@@ -446,8 +443,11 @@ const Messages = () => {
                           target.selectionStart = target.selectionEnd =
                             start + 1;
                         }, 0);
-                      }
-                      else if (e.key === "Enter" && !e.ctrlKey && !e.shiftKey) {
+                      } else if (
+                        e.key === "Enter" &&
+                        !e.ctrlKey &&
+                        !e.shiftKey
+                      ) {
                         e.preventDefault();
                         handleSendMessage();
                       }
