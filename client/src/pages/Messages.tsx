@@ -1,29 +1,29 @@
-import { useState, useEffect, useRef } from "react";
 import PageHeader from "@/components/PageHeader";
 import { useAuth } from "@/hooks/Authcontext";
-import { createClient } from "@supabase/supabase-js";
+import { apiRequest } from "@/services/api.service";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import SearchIcon from "@mui/icons-material/Search";
+import SendIcon from "@mui/icons-material/Send";
 import {
+  Avatar,
+  Box,
+  Button,
   Card,
   CardContent,
-  Box,
-  List,
-  ListItemButton,
-  ListItemAvatar,
-  Avatar,
-  ListItemText,
-  Typography,
   Divider,
-  TextField,
-  Button,
-  Stack,
-  InputAdornment,
   IconButton,
+  InputAdornment,
+  List,
+  ListItemAvatar,
+  ListItemButton,
+  ListItemText,
+  Stack,
+  TextField,
+  Typography,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
-import SendIcon from "@mui/icons-material/Send";
-import SearchIcon from "@mui/icons-material/Search";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import { apiRequest } from "@/services/api.service";
+import { createClient } from "@supabase/supabase-js";
+import { useEffect, useRef, useState } from "react";
 import ReconnectingWebSocket from "reconnecting-websocket";
 
 const supabase = createClient(
@@ -393,7 +393,9 @@ const Messages = () => {
                           <Typography
                             variant="caption"
                             sx={{
-                              display: "block",
+                              alignSelf: isMe ? "flex-end" : "flex-start",
+
+                              display: "flex",
                               mt: 0.5,
                               opacity: 0.65,
                               fontSize: "0.65rem",
@@ -423,12 +425,14 @@ const Messages = () => {
                 >
                   <TextField
                     fullWidth
+                    multiline
                     size="small"
+                    maxRows={3}
                     placeholder="Type a message..."
                     value={text}
                     onChange={(e) => setText(e.target.value)}
                     onKeyDown={(e) => {
-                      if (e.key === "Enter" && !e.shiftKey) {
+                      if (e.key === "Enter" && !e.ctrlKey) {
                         e.preventDefault();
                         handleSendMessage();
                       }
