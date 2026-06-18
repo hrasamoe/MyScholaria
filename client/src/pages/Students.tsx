@@ -248,7 +248,7 @@ const Students = () => {
                       {" "}
                       <Typography
                         fontWeight="500"
-                        noWrap
+                        // noWrap
                         sx={{
                           textOverflow: "ellipsis",
                           overflow: "hidden",
