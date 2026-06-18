@@ -16,12 +16,14 @@ interface NotificationContextType {
   playSound: (type: SoundType) => void;
 }
 
-type SoundType = "message" | "delete" | "success" | "error";
+type SoundType = "message" | "delete" | "success" | "send_message" |"error" | "message_error";
 
 const SOUNDS: Record<SoundType, string> = {
   message: "/sound/notification.mp3",
   delete: "/sound/delete.mp3",
   success: "/sound/success.mp3",
+  message_error: "/sound/message_error.mp3",
+  send_message: "/sound/long_pop.mp3",
   error: "/sound/error.mp3",
 };
 
