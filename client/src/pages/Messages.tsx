@@ -532,7 +532,7 @@ const Messages = () => {
                           target.selectionStart = target.selectionEnd =
                             start + 1;
                         }, 0);
-                      } else if (e.key === "Enter" && e.ctrlKey) {
+                      } else if (e.key === "Enter" && e.shiftKey) {
                         e.preventDefault();
                         handleSendMessage();
                       }
