@@ -1,6 +1,6 @@
 import PageHeader from "@/components/PageHeader";
-import { useNotification } from "@/hooks/NotificationContext";
 import { useAuth } from "@/hooks/Authcontext";
+import { useNotification } from "@/hooks/NotificationContext";
 import { apiRequest } from "@/services/api.service";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import SearchIcon from "@mui/icons-material/Search";
@@ -516,7 +516,7 @@ const Messages = () => {
                     value={text}
                     onChange={(e) => setText(e.target.value)}
                     onKeyDown={(e) => {
-                      if (e.key === "Enter" && e.ctrlKey) {
+                      if (e.key === "Enter") {
                         e.preventDefault();
                         const target = e.target as HTMLTextAreaElement;
                         const start = target.selectionStart;
@@ -528,11 +528,7 @@ const Messages = () => {
                           target.selectionStart = target.selectionEnd =
                             start + 1;
                         }, 0);
-                      } else if (
-                        e.key === "Enter" &&
-                        !e.ctrlKey &&
-                        !e.shiftKey
-                      ) {
+                      } else if (e.key === "Enter" && e.ctrlKey) {
                         e.preventDefault();
                         handleSendMessage();
                       }
