@@ -520,19 +520,7 @@ const Messages = () => {
                     value={text}
                     onChange={(e) => setText(e.target.value)}
                     onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        const target = e.target as HTMLTextAreaElement;
-                        const start = target.selectionStart;
-                        const end = target.selectionEnd;
-                        const newValue =
-                          text.substring(0, start) + "\n" + text.substring(end);
-                        setText(newValue);
-                        setTimeout(() => {
-                          target.selectionStart = target.selectionEnd =
-                            start + 1;
-                        }, 0);
-                      } else if (e.key === "Enter" && e.shiftKey) {
+                      if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
                         e.preventDefault();
                         handleSendMessage();
                       }
