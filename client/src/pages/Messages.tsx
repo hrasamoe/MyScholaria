@@ -45,7 +45,8 @@ const Messages = () => {
   const { user } = useAuth();
   const establishmentId = user?.establishment_id;
   const currentUserId = user?.id;
-  const { unreadCounts, clearUnread, onNewMessage } = useNotification();
+  const { unreadCounts, clearUnread, onNewMessage, playSound } =
+    useNotification();
 
   const [allMembers, setAllMembers] = useState<Member[]>([]);
   const [displayedMembers, setDisplayedMembers] = useState<Member[]>([]);
@@ -224,6 +225,7 @@ const Messages = () => {
 
     setMessages((prev) => [...prev, optimisticMsg]);
     setText("");
+    playSound("send_message");
 
     try {
       const response = await apiRequest(`/api/messages/send/${currentUserId}`, {
@@ -239,6 +241,7 @@ const Messages = () => {
       if (!response.ok) {
         setMessages((prev) => prev.filter((m) => m.id !== optimisticMsg.id));
         setText(optimisticMsg.body);
+        playSound("message_error");
       } else {
         const { message: realMsg } = await response.json();
         setMessages((prev) =>
@@ -254,6 +257,7 @@ const Messages = () => {
       console.error(error);
       setMessages((prev) => prev.filter((m) => m.id !== optimisticMsg.id));
       setText(optimisticMsg.body);
+      playSound("message_error");
     }
   };
 
