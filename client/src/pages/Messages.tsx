@@ -3,6 +3,7 @@ import { useAuth } from "@/hooks/Authcontext";
 import { useNotification } from "@/hooks/NotificationContext";
 import { apiRequest } from "@/services/api.service";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import CloseIcon from "@mui/icons-material/Close";
 import MoreVertSharpIcon from "@mui/icons-material/MoreVertSharp";
 import ReplyIcon from "@mui/icons-material/Reply";
 import SearchIcon from "@mui/icons-material/Search";
@@ -49,6 +50,9 @@ interface Message {
   body: string;
   read_at: string;
   send_at: string;
+  reply_to_id?: string | null;
+  reply_to_body?: string | null;
+  reply_to_sender_id?: string | null;
 }
 
 const Messages = () => {
@@ -76,12 +80,27 @@ const Messages = () => {
     element: HTMLElement;
     message: Message;
   } | null>(null);
+  const [replyingTo, setReplyingTo] = useState<Message | null>(null);
+  const [editingMessage, setEditingMessage] = useState<Message | null>(null);
   const isMy = menuAnchor?.message.sender_id === currentUserId;
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const textFieldRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     const unsubscribe = onNewMessage((newMsg) => {
+      if (newMsg.__type === "edit") {
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === newMsg.id ? { ...m, body: newMsg.body } : m,
+          ),
+        );
+        return;
+      }
+      if (newMsg.__type === "delete") {
+        setMessages((prev) => prev.filter((m) => m.id !== newMsg.id));
+        return;
+      }
       setChatHistory((prev) => {
         const next = new Map(prev);
         next.set(newMsg.sender_id, newMsg.send_at);
@@ -225,6 +244,9 @@ const Messages = () => {
   const handleSelectMember = (id: string) => {
     setActiveMemberId(id);
     clearUnread(id);
+    setReplyingTo(null);
+    setEditingMessage(null);
+    setText("");
   };
 
   const handleOpenMenu = (
@@ -238,28 +260,42 @@ const Messages = () => {
     setMenuAnchor(null);
   };
 
-  const handleAction = (action: string) => {
+  const handleStartReply = (msg: Message) => {
+    setEditingMessage(null);
+    setReplyingTo(msg);
     handleCloseMenu();
-    if (action === "delete" && menuAnchor) {
-      setMessageToDelete(menuAnchor.message);
+    textFieldRef.current?.focus();
+  };
+
+  const handleStartEdit = (msg: Message) => {
+    setReplyingTo(null);
+    setEditingMessage(msg);
+    setText(msg.body);
+    handleCloseMenu();
+    textFieldRef.current?.focus();
+  };
+
+  const handleCancelCompose = () => {
+    setReplyingTo(null);
+    setEditingMessage(null);
+    setText("");
+  };
+
+  const handleAction = (action: string) => {
+    if (!menuAnchor) return;
+    const msg = menuAnchor.message;
+    if (action === "delete") {
+      handleCloseMenu();
+      setMessageToDelete(msg);
       setIsConfirmOpen(true);
+    } else if (action === "edit") {
+      handleStartEdit(msg);
     }
   };
 
   const handleCancelDelete = () => {
     setIsConfirmOpen(false);
     setMessageToDelete(null);
-  };
-
-  const handleConfirmDelete = async () => {
-    if (!messageToDelete) return;
-    try {
-    } catch (error) {
-      console.log(error);
-    } finally {
-      setIsConfirmOpen(false);
-      setMessageToDelete(null);
-    }
   };
 
   const handleContextMenu = (
@@ -295,7 +331,6 @@ const Messages = () => {
         });
       } else {
         const error = await response.json();
-        console.log(error);
         enqueueSnackbar(error.message, {
           variant: "error",
           autoHideDuration: 3000,
@@ -303,7 +338,6 @@ const Messages = () => {
         });
       }
     } catch (error: any) {
-      console.log(error.message);
       enqueueSnackbar(error.message, {
         variant: "warning",
         autoHideDuration: 3000,
@@ -325,7 +359,6 @@ const Messages = () => {
       );
       if (!response.ok) {
         const error = await response.json();
-        console.log(error);
         enqueueSnackbar(error.message, {
           variant: "error",
           autoHideDuration: 3000,
@@ -340,7 +373,6 @@ const Messages = () => {
         });
       }
     } catch (error: any) {
-      console.log(error.message);
       enqueueSnackbar(error.message, {
         variant: "warning",
         autoHideDuration: 3000,
@@ -350,9 +382,53 @@ const Messages = () => {
       setIsConfirmOpen(false);
     }
   };
+
   const handleSendMessage = async () => {
     const cleanedText = text.trim();
     if (!cleanedText || !currentUserId || !activeMemberId) return;
+
+    if (editingMessage) {
+      const previousBody = editingMessage.body;
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === editingMessage.id ? { ...m, body: cleanedText } : m,
+        ),
+      );
+      setText("");
+      setEditingMessage(null);
+      playSound("send_message");
+
+      try {
+        const response = await apiRequest(
+          `/api/messages/edit/${editingMessage.id}`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ content: cleanedText }),
+          },
+        );
+        if (!response.ok) {
+          playSound("message_error");
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === editingMessage.id ? { ...m, body: previousBody } : m,
+            ),
+          );
+          enqueueSnackbar("Couldn't edit the message", { variant: "error" });
+        }
+      } catch (error) {
+        playSound("message_error");
+
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === editingMessage.id ? { ...m, body: previousBody } : m,
+          ),
+        );
+        enqueueSnackbar("Couldn't edit the message", { variant: "error" });
+      }
+      return;
+    }
 
     const now = new Date().toISOString();
     const optimisticMsg: Message = {
@@ -362,10 +438,14 @@ const Messages = () => {
       body: cleanedText,
       read_at: now,
       send_at: now,
+      reply_to_id: replyingTo?.id ?? null,
+      reply_to_body: replyingTo?.body ?? null,
+      reply_to_sender_id: replyingTo?.sender_id ?? null,
     };
 
     setMessages((prev) => [...prev, optimisticMsg]);
     setText("");
+    setReplyingTo(null);
     playSound("send_message");
 
     try {
@@ -376,6 +456,7 @@ const Messages = () => {
         body: JSON.stringify({
           recipient_id: activeMemberId,
           content: optimisticMsg.body,
+          reply_to_id: optimisticMsg.reply_to_id || null,
         }),
       });
 
@@ -395,7 +476,6 @@ const Messages = () => {
         });
       }
     } catch (error) {
-      console.error(error);
       setMessages((prev) => prev.filter((m) => m.id !== optimisticMsg.id));
       setText(optimisticMsg.body);
       playSound("message_error");
@@ -633,6 +713,7 @@ const Messages = () => {
                                   <IconButton
                                     className="menu-trigger"
                                     size="small"
+                                    onClick={() => handleStartReply(msg)}
                                     sx={{
                                       borderRadius: "50%",
                                       height: 24,
@@ -662,6 +743,43 @@ const Messages = () => {
                                   borderRadius: 2,
                                 }}
                               >
+                                {msg.reply_to_id && (
+                                  <Box
+                                    sx={{
+                                      borderLeft: 2,
+                                      borderColor: isMe
+                                        ? "rgba(255,255,255,0.6)"
+                                        : "primary.main",
+                                      pl: 1,
+                                      mb: 0.5,
+                                      opacity: 0.8,
+                                    }}
+                                  >
+                                    <Typography
+                                      variant="caption"
+                                      sx={{
+                                        display: "block",
+                                        fontStyle: "italic",
+                                      }}
+                                      noWrap
+                                    >
+                                      {msg.reply_to_sender_id === currentUserId
+                                        ? "You"
+                                        : currentMember?.name}
+                                      :
+                                    </Typography>
+                                    <Typography
+                                      variant="caption"
+                                      sx={{
+                                        display: "block",
+                                        fontStyle: "italic",
+                                      }}
+                                      noWrap
+                                    >
+                                      {msg.reply_to_body}
+                                    </Typography>
+                                  </Box>
+                                )}
                                 <Typography
                                   variant="body2"
                                   sx={{ whiteSpace: "pre-wrap" }}
@@ -710,6 +828,7 @@ const Messages = () => {
                                   <IconButton
                                     className="menu-trigger"
                                     size="small"
+                                    onClick={() => handleStartReply(msg)}
                                     sx={{
                                       borderRadius: "50%",
                                       height: 24,
@@ -735,39 +854,93 @@ const Messages = () => {
                   </Stack>
                 </CardContent>
 
-                <Box
-                  sx={{
-                    p: 2,
-                    borderTop: 1,
-                    borderColor: "divider",
-                    display: "flex",
-                    gap: 1,
-                    alignItems: "center",
-                  }}
-                >
-                  <TextField
-                    fullWidth
-                    multiline
-                    size="small"
-                    maxRows={3}
-                    placeholder="Type a message..."
-                    value={text}
-                    onChange={(e) => setText(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
-                        e.preventDefault();
-                        handleSendMessage();
-                      }
+                <Box sx={{ borderTop: 1, borderColor: "divider" }}>
+                  {(replyingTo || editingMessage) && (
+                    <Box
+                      sx={{
+                        px: 1,
+                        py: 0.5,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        borderLeft: 3,
+                        borderColor: "primary.main",
+                        bgcolor: "action.hover",
+                        mx: 2,
+                        mt: 1,
+                        borderRadius: 1,
+                      }}
+                    >
+                      <Box sx={{ py: 0.5, px: 1, overflow: "hidden" }}>
+                        <Typography
+                          variant="caption"
+                          fontWeight={700}
+                          color="primary.main"
+                        >
+                          {editingMessage
+                            ? "Editing message"
+                            : replyingTo?.sender_id === currentUserId
+                              ? "Replying to yourself"
+                              : `Replying to ${currentMember?.name ?? ""}`}
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          noWrap
+                          sx={{ maxWidth: 400 }}
+                        >
+                          {(editingMessage ?? replyingTo)?.body}
+                        </Typography>
+                      </Box>
+                      <IconButton size="small" onClick={handleCancelCompose}>
+                        <CloseIcon fontSize="small" />
+                      </IconButton>
+                    </Box>
+                  )}
+
+                  <Box
+                    sx={{
+                      p: 2,
+                      display: "flex",
+                      gap: 1,
+                      alignItems: "center",
                     }}
-                  />
-                  <Button
-                    variant="contained"
-                    endIcon={<SendIcon />}
-                    onClick={handleSendMessage}
-                    disabled={!text.trim() || isMessagesLoading}
                   >
-                    Send
-                  </Button>
+                    <TextField
+                      fullWidth
+                      multiline
+                      size="small"
+                      maxRows={3}
+                      inputRef={textFieldRef}
+                      placeholder={
+                        editingMessage
+                          ? "Edit your message..."
+                          : "Type a message..."
+                      }
+                      value={text}
+                      onChange={(e) => setText(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+                          e.preventDefault();
+                          handleSendMessage();
+                        }
+                        if (
+                          e.key === "Escape" &&
+                          (replyingTo || editingMessage)
+                        ) {
+                          handleCancelCompose();
+                        }
+                      }}
+                    />
+                    <Button
+                      variant="contained"
+                      endIcon={editingMessage ? undefined : <SendIcon />}
+                      onClick={handleSendMessage}
+                      disabled={!text.trim() || isMessagesLoading}
+                    >
+                      {editingMessage ? "Save" : "Send"}
+                    </Button>
+                  </Box>
                 </Box>
               </>
             ) : (
@@ -812,7 +985,7 @@ const Messages = () => {
         </MenuItem>
         {isMy && (
           <MenuItem
-            onClick={() => handleAction("editer")}
+            onClick={() => handleAction("edit")}
             sx={{ borderRadius: 4 }}
           >
             Edit
@@ -832,7 +1005,6 @@ const Messages = () => {
           Delete
         </MenuItem>
       </Menu>
-
 
       <Dialog open={isConfirmOpen} onClose={handleCancelDelete}>
         <DialogTitle>Delete the message?</DialogTitle>

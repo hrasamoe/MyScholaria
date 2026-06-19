@@ -1,18 +1,35 @@
 import { pool } from "../../db/pool";
 import { MessageInfo } from "./message.schema";
 
-export async function sendMessage(Message: MessageInfo) {
+export async function sendMessage(Message: MessageInfo, reply_to_id?: string) {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
-    const queryText = `INSERT INTO messages (sender_id, recipient_id, body, read_at)
-      VALUES ($1, $2, $3, NULL)
-      RETURNING id, sender_id, recipient_id, body, send_at, read_at`;
-    const result = await client.query(queryText, [
+
+    const insertQuery = `
+      INSERT INTO messages (sender_id, recipient_id, body, read_at, reply_id)
+      VALUES ($1, $2, $3, NULL, $4)
+      RETURNING id, sender_id, recipient_id, body, send_at, read_at, reply_id
+    `;
+    const inserted = await client.query(insertQuery, [
       Message.sender_id,
       Message.recipient_id,
       Message.content,
+      reply_to_id ?? null,
     ]);
+
+    const fetchQuery = `
+      SELECT 
+        m.id, m.sender_id, m.recipient_id, m.body, m.send_at, m.read_at,
+        r.id       AS reply_to_id,
+        r.body     AS reply_to_body,
+        r.sender_id AS reply_to_sender_id
+      FROM messages m
+      LEFT JOIN messages r ON m.reply_id = r.id
+      WHERE m.id = $1
+    `;
+    const result = await client.query(fetchQuery, [inserted.rows[0].id]);
+
     await client.query("COMMIT");
     return result.rows[0];
   } catch (error: any) {
@@ -59,15 +76,21 @@ export async function getMessages(
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
-    const queryText = `SELECT * FROM messages 
-                        WHERE deleted = FALSE
-                          AND (
-                            (sender_id = $1 AND recipient_id = $2 AND deleted_by_sender = FALSE)
-                            OR 
-                            (sender_id = $2 AND recipient_id = $1 AND deleted_by_receiver = FALSE)
-                          )
-                        ORDER BY send_at ASC
-                      `;
+    const queryText = `SELECT 
+    m.*,
+    r.id AS reply_to_id,
+    r.body AS reply_to_body,
+    r.sender_id AS reply_to_sender_id
+  FROM messages m
+  LEFT JOIN messages r ON m.reply_id = r.id
+  WHERE m.deleted = FALSE
+    AND (
+      (m.sender_id = $1 AND m.recipient_id = $2 AND m.deleted_by_sender = FALSE)
+      OR 
+      (m.sender_id = $2 AND m.recipient_id = $1 AND m.deleted_by_receiver = FALSE)
+    )
+  ORDER BY m.send_at ASC
+`;
 
     const result = await client.query(queryText, [
       currentUserId,
@@ -117,8 +140,32 @@ export async function DeleteMessageForEveryone(
     SET deleted = TRUE
     WHERE id = $1 AND sender_id = $2
     RETURNING *`;
-    await client.query(queryText, [messageID, userID]);
+    const result = await client.query(queryText, [messageID, userID]);
     await client.query("COMMIT");
+    return result.rows[0];
+  } catch (error: any) {
+    console.log(error.message);
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+export async function EditMessage(
+  content: string,
+  messageID: string,
+  userID: string,
+) {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const queryText = `UPDATE messages
+    SET body = $1, send_at = NOW(), is_edited = TRUE WHERE sender_id = $2 AND id = $3
+    RETURNING *`;
+    const reponse = await client.query(queryText, [content, userID, messageID]);
+    await client.query("COMMIT");
+    return reponse.rows[0];
   } catch (error: any) {
     console.log(error.message);
     await client.query("ROLLBACK");

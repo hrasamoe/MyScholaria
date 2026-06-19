@@ -1,10 +1,11 @@
-import { Request, Response, Router } from "express";
+import { Request, response, Response, Router } from "express";
 import { AuthRequest, RequireAuth } from "../../middleware/auth.middleware";
 import { sendToUser } from "../../services/websocket/ws-server";
 import { MessageSchema } from "./message.schema";
 import {
   DeleteMessageForEveryone,
   DeleteMessageForMe,
+  EditMessage,
   getHistory,
   getMessages,
   sendMessage,
@@ -17,7 +18,7 @@ messageRouter.post(
   RequireAuth,
   async (req: Request, res: Response) => {
     const userID = req.params.senderID as string;
-    const { recipient_id, content } = req.body;
+    const { recipient_id, content, reply_to_id } = req.body;
     try {
       const parsed = MessageSchema.parse({
         sender_id: userID,
@@ -25,7 +26,7 @@ messageRouter.post(
         content,
       });
 
-      const message = await sendMessage(parsed);
+      const message = await sendMessage(parsed, reply_to_id);
 
       const delivered = sendToUser(recipient_id, message);
       res.status(200).json({ success: true, message });
@@ -76,7 +77,11 @@ messageRouter.put(
     const userID = req.userId as string;
     const messageID = req.params.messageID as string;
     try {
-      await DeleteMessageForMe(messageID, userID);
+      const deletedMessage = await DeleteMessageForMe(messageID, userID);
+      sendToUser(deletedMessage.recipient_id, {
+        __type: "delete",
+        id: deletedMessage.id
+      })
       res.status(200).json({ success: true });
     } catch (error: any) {
       console.log(error.message);
@@ -92,11 +97,39 @@ messageRouter.put(
     const userID = req.userId as string;
     const messageID = req.params.messageID as string;
     try {
-      await DeleteMessageForEveryone(messageID, userID);
+      const response = await DeleteMessageForEveryone(messageID, userID);
+        sendToUser(response.recipient_id, {
+          __type: "delete",
+          ...response,
+        });
       res.status(200).json({ success: true });
     } catch (error: any) {
       console.log(error.message);
       res.status(500).json({ message: error.message, error: error.message });
+    }
+  },
+);
+
+
+messageRouter.put(
+  "/edit/:messageID",
+  RequireAuth,
+  async (req: AuthRequest, res: Response) => {
+    const userID = req.userId as string;
+    const { content } = req.body;
+    const messageID = req.params.messageID as string;
+
+    try {
+      const updatedMessage = await EditMessage(content, messageID, userID);
+
+      sendToUser(updatedMessage.recipient_id, {
+        __type: "edit",
+        ...updatedMessage,
+      });
+
+      res.status(200).json({ success: true, message: updatedMessage });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message, message: error.message });
     }
   },
 );
