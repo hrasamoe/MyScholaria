@@ -401,43 +401,33 @@ useEffect(() => {
     }
   };
 
-  const handleSendMessage = async () => {
-    const cleanedText = text.trim();
-    if (!cleanedText || !currentUserId || !activeMemberId) return;
+const handleSendMessage = async () => {
+  const cleanedText = text.trim();
+  if (!cleanedText || !currentUserId || !activeMemberId) return;
 
-    if (editingMessage) {
-      const previousBody = editingMessage.body;
-      setMessages((prev) =>
-        prev.map((m) =>
-          m.id === editingMessage.id ? { ...m, body: cleanedText } : m,
-        ),
+  if (editingMessage) {
+    const previousBody = editingMessage.body;
+    setMessages((prev) =>
+      prev.map((m) =>
+        m.id === editingMessage.id ? { ...m, body: cleanedText } : m,
+      ),
+    );
+    setText("");
+    setEditingMessage(null);
+    playSound("send_message");
+
+    try {
+      const response = await apiRequest(
+        `/api/messages/edit/${editingMessage.id}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ content: cleanedText }),
+        },
       );
-      setText("");
-      setEditingMessage(null);
-      playSound("send_message");
-
-      try {
-        const response = await apiRequest(
-          `/api/messages/edit/${editingMessage.id}`,
-          {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
-            body: JSON.stringify({ content: cleanedText }),
-          },
-        );
-        if (!response.ok) {
-          playSound("message_error");
-          setMessages((prev) =>
-            prev.map((m) =>
-              m.id === editingMessage.id ? { ...m, body: previousBody } : m,
-            ),
-          );
-          enqueueSnackbar("Couldn't edit the message", { variant: "error" });
-        }
-      } catch (error) {
+      if (!response.ok) {
         playSound("message_error");
-
         setMessages((prev) =>
           prev.map((m) =>
             m.id === editingMessage.id ? { ...m, body: previousBody } : m,
@@ -445,60 +435,52 @@ useEffect(() => {
         );
         enqueueSnackbar("Couldn't edit the message", { variant: "error" });
       }
-      return;
-    }
-
-    const now = new Date().toISOString();
-    const optimisticMsg: Message = {
-      id: crypto.randomUUID(),
-      sender_id: currentUserId,
-      recipient_id: activeMemberId,
-      body: cleanedText,
-      read_at: now,
-      send_at: now,
-      reply_to_id: replyingTo?.id ?? null,
-      reply_to_body: replyingTo?.body ?? null,
-      reply_to_sender_id: replyingTo?.sender_id ?? null,
-    };
-
-    setMessages((prev) => [...prev, optimisticMsg]);
-    setText("");
-    setReplyingTo(null);
-    playSound("send_message");
-
-    try {
-      const response = await apiRequest(`/api/messages/send/${currentUserId}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          recipient_id: activeMemberId,
-          content: optimisticMsg.body,
-          reply_to_id: optimisticMsg.reply_to_id || null,
-        }),
-      });
-
-      if (!response.ok) {
-        setMessages((prev) => prev.filter((m) => m.id !== optimisticMsg.id));
-        setText(optimisticMsg.body);
-        playSound("message_error");
-      } else {
-        const { message: realMsg } = await response.json();
-        setMessages((prev) =>
-          prev.map((m) => (m.id === optimisticMsg.id ? realMsg : m)),
-        );
-        setChatHistory((prev) => {
-          const next = new Map(prev);
-          next.set(activeMemberId, realMsg.send_at);
-          return next;
-        });
-      }
     } catch (error) {
-      setMessages((prev) => prev.filter((m) => m.id !== optimisticMsg.id));
-      setText(optimisticMsg.body);
       playSound("message_error");
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === editingMessage.id ? { ...m, body: previousBody } : m,
+        ),
+      );
+      enqueueSnackbar("Couldn't edit the message", { variant: "error" });
     }
-  };
+    return;
+  }
+
+  const replyToId = replyingTo?.id ?? null;
+
+  setText("");
+  setReplyingTo(null);
+  playSound("send_message");
+
+  try {
+    const response = await apiRequest(`/api/messages/send/${currentUserId}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({
+        recipient_id: activeMemberId,
+        content: cleanedText,
+        reply_to_id: replyToId,
+      }),
+    });
+
+    if (!response.ok) {
+      setText(cleanedText);
+      playSound("message_error");
+    } else {
+      const { message: realMsg } = await response.json();
+      setChatHistory((prev) => {
+        const next = new Map(prev);
+        next.set(activeMemberId, realMsg.send_at);
+        return next;
+      });
+    }
+  } catch (error) {
+    setText(cleanedText);
+    playSound("message_error");
+  }
+};
 
   const currentMember = allMembers.find((m) => m.id === activeMemberId);
 
