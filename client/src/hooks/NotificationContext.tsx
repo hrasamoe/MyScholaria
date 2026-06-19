@@ -77,6 +77,15 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     wsRef.current = ws;
     ws.onmessage = (event) => {
       const newMessage = JSON.parse(event.data);
+
+      if (newMessage.__type === "edit") {
+        listenersRef.current.forEach((cb) => cb(newMessage))
+        return;
+      }
+      if (newMessage.__type === "delete") {
+         listenersRef.current.forEach((cb) => cb(newMessage));
+         return;
+      }
       listenersRef.current.forEach((cb) => cb(newMessage));
       playSound("message");
       setUnreadCounts((prev) => {
