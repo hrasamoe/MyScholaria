@@ -3,6 +3,8 @@ import { useAuth } from "@/hooks/Authcontext";
 import { useNotification } from "@/hooks/NotificationContext";
 import { apiRequest } from "@/services/api.service";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import MoreVertSharpIcon from "@mui/icons-material/MoreVertSharp";
+import ReplyIcon from "@mui/icons-material/Reply";
 import SearchIcon from "@mui/icons-material/Search";
 import SendIcon from "@mui/icons-material/Send";
 import {
@@ -11,6 +13,11 @@ import {
   Button,
   Card,
   CardContent,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
   Divider,
   IconButton,
   InputAdornment,
@@ -18,12 +25,15 @@ import {
   ListItemAvatar,
   ListItemButton,
   ListItemText,
+  Menu,
+  MenuItem,
   Skeleton,
   Stack,
   TextField,
   Typography,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
+import { useSnackbar } from "notistack";
 import { useEffect, useRef, useState } from "react";
 
 interface Member {
@@ -53,12 +63,20 @@ const Messages = () => {
   const [chatHistory, setChatHistory] = useState<Map<string, string>>(
     new Map(),
   );
+  const { enqueueSnackbar } = useSnackbar();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeMemberId, setActiveMemberId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState("");
   const [isChannelsLoading, setIsChannelsLoading] = useState(true);
   const [isMessagesLoading, setIsMessagesLoading] = useState(false);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [messageToDelete, setMessageToDelete] = useState<Message | null>(null);
+  const [menuAnchor, setMenuAnchor] = useState<{
+    element: HTMLElement;
+    message: Message;
+  } | null>(null);
+  const isMy = menuAnchor?.message.sender_id === currentUserId;
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
@@ -209,6 +227,129 @@ const Messages = () => {
     clearUnread(id);
   };
 
+  const handleOpenMenu = (
+    event: React.MouseEvent<HTMLButtonElement>,
+    msg: Message,
+  ) => {
+    setMenuAnchor({ element: event.currentTarget, message: msg });
+  };
+
+  const handleCloseMenu = () => {
+    setMenuAnchor(null);
+  };
+
+  const handleAction = (action: string) => {
+    handleCloseMenu();
+    if (action === "delete" && menuAnchor) {
+      setMessageToDelete(menuAnchor.message);
+      setIsConfirmOpen(true);
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setIsConfirmOpen(false);
+    setMessageToDelete(null);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!messageToDelete) return;
+    try {
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setIsConfirmOpen(false);
+      setMessageToDelete(null);
+    }
+  };
+
+  const handleContextMenu = (
+    event: React.MouseEvent<HTMLDivElement>,
+    msg: Message,
+  ) => {
+    event.preventDefault();
+    setMenuAnchor({ element: event.currentTarget, message: msg });
+  };
+
+  const copyMessage = (text: string) => {
+    if (text.trim()) {
+      navigator.clipboard.writeText(text);
+    }
+    handleCloseMenu();
+  };
+
+  const deleteMessageForMe = async (messageID: string) => {
+    try {
+      const response = await apiRequest(
+        `/api/messages/remove-for-me/${messageID}`,
+        {
+          method: "PUT",
+          credentials: "include",
+        },
+      );
+      if (response.ok) {
+        setMessages((prev) => prev.filter((m) => m.id !== messageID));
+        enqueueSnackbar("The messsage have been deleted for you", {
+          variant: "success",
+          autoHideDuration: 3000,
+          preventDuplicate: true,
+        });
+      } else {
+        const error = await response.json();
+        console.log(error);
+        enqueueSnackbar(error.message, {
+          variant: "error",
+          autoHideDuration: 3000,
+          preventDuplicate: true,
+        });
+      }
+    } catch (error: any) {
+      console.log(error.message);
+      enqueueSnackbar(error.message, {
+        variant: "warning",
+        autoHideDuration: 3000,
+        preventDuplicate: true,
+      });
+    } finally {
+      setIsConfirmOpen(false);
+    }
+  };
+
+  const deleteMessageForEveryone = async (messageID: string) => {
+    try {
+      const response = await apiRequest(
+        `/api/messages/remove-for-everyone/${messageID}`,
+        {
+          method: "PUT",
+          credentials: "include",
+        },
+      );
+      if (!response.ok) {
+        const error = await response.json();
+        console.log(error);
+        enqueueSnackbar(error.message, {
+          variant: "error",
+          autoHideDuration: 3000,
+          preventDuplicate: true,
+        });
+      } else {
+        setMessages((prev) => prev.filter((m) => m.id !== messageID));
+        enqueueSnackbar("The messsage have been deleted for everyone", {
+          variant: "success",
+          autoHideDuration: 3000,
+          preventDuplicate: true,
+        });
+      }
+    } catch (error: any) {
+      console.log(error.message);
+      enqueueSnackbar(error.message, {
+        variant: "warning",
+        autoHideDuration: 3000,
+        preventDuplicate: true,
+      });
+    } finally {
+      setIsConfirmOpen(false);
+    }
+  };
   const handleSendMessage = async () => {
     const cleanedText = text.trim();
     if (!cleanedText || !currentUserId || !activeMemberId) return;
@@ -267,7 +408,7 @@ const Messages = () => {
     <>
       <PageHeader title="Messages" subtitle="Internal messaging" />
 
-      <Grid container spacing={2} sx={{ height: "calc(105vh - 200px)" }}>
+      <Grid container spacing={2} sx={{ height: "calc(107vh - 200px)" }}>
         <Grid
           size={{ xs: 12, md: 4 }}
           sx={{
@@ -426,9 +567,6 @@ const Messages = () => {
                     <Typography fontWeight={700}>
                       {currentMember.name}
                     </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {currentMember.role}
-                    </Typography>
                   </Box>
                 </Box>
 
@@ -460,38 +598,134 @@ const Messages = () => {
                           return (
                             <Box
                               key={msg.id}
+                              onContextMenu={(e) => handleContextMenu(e, msg)}
                               sx={{
+                                display: "flex",
                                 alignSelf: isMe ? "flex-end" : "flex-start",
                                 maxWidth: "75%",
-                                bgcolor: isMe ? "primary.main" : "action.hover",
-                                color: isMe
-                                  ? "primary.contrastText"
-                                  : "text.primary",
-                                p: 1.2,
-                                borderRadius: 2,
+                                alignItems: "center",
+                                justifyContent: "center",
+                                "&:hover .menu-trigger": {
+                                  opacity: 1,
+                                },
                               }}
                             >
-                              <Typography
-                                variant="body2"
-                                sx={{ whiteSpace: "pre-wrap" }}
-                              >
-                                {msg.body}
-                              </Typography>
-                              <Typography
-                                variant="caption"
+                              {isMe && (
+                                <>
+                                  <IconButton
+                                    className="menu-trigger"
+                                    size="small"
+                                    onClick={(e) => handleOpenMenu(e, msg)}
+                                    sx={{
+                                      borderRadius: "50%",
+                                      height: 24,
+                                      width: 24,
+                                      p: 0,
+                                      mr: 0.5,
+                                      mt: 0.5,
+                                      opacity: 0,
+                                      color: "text.secondary",
+                                      transition: "opacity 0.2s",
+                                    }}
+                                  >
+                                    <MoreVertSharpIcon />
+                                  </IconButton>
+                                  <IconButton
+                                    className="menu-trigger"
+                                    size="small"
+                                    sx={{
+                                      borderRadius: "50%",
+                                      height: 24,
+                                      width: 24,
+                                      p: 0,
+                                      mr: 0.5,
+                                      mt: 0.5,
+                                      opacity: 0,
+                                      color: "text.secondary",
+                                      transition: "opacity 0.2s",
+                                    }}
+                                  >
+                                    <ReplyIcon />
+                                  </IconButton>
+                                </>
+                              )}
+                              <Box
                                 sx={{
-                                  alignSelf: isMe ? "flex-end" : "flex-start",
-                                  display: "flex",
-                                  mt: 0.5,
-                                  opacity: 0.65,
-                                  fontSize: "0.65rem",
+                                  maxWidth: "100%",
+                                  bgcolor: isMe
+                                    ? "primary.main"
+                                    : "action.hover",
+                                  color: isMe
+                                    ? "primary.contrastText"
+                                    : "text.primary",
+                                  p: 1.2,
+                                  borderRadius: 2,
                                 }}
                               >
-                                {new Date(msg.send_at).toLocaleTimeString([], {
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                })}
-                              </Typography>
+                                <Typography
+                                  variant="body2"
+                                  sx={{ whiteSpace: "pre-wrap" }}
+                                >
+                                  {msg.body}
+                                </Typography>
+                                <Typography
+                                  variant="caption"
+                                  sx={{
+                                    alignSelf: isMe ? "flex-end" : "flex-start",
+                                    display: "flex",
+                                    mt: 0.5,
+                                    opacity: 0.65,
+                                    fontSize: "0.65rem",
+                                  }}
+                                >
+                                  {new Date(msg.send_at).toLocaleTimeString(
+                                    [],
+                                    {
+                                      hour: "2-digit",
+                                      minute: "2-digit",
+                                    },
+                                  )}
+                                </Typography>
+                              </Box>
+                              {!isMe && (
+                                <>
+                                  <IconButton
+                                    className="menu-trigger"
+                                    size="small"
+                                    onClick={(e) => handleOpenMenu(e, msg)}
+                                    sx={{
+                                      borderRadius: "50%",
+                                      height: 24,
+                                      width: 24,
+                                      p: 0,
+                                      ml: 0.5,
+                                      mt: 0.5,
+                                      opacity: 0,
+                                      color: "text.secondary",
+                                      transition: "opacity 0.2s",
+                                    }}
+                                  >
+                                    <MoreVertSharpIcon />
+                                  </IconButton>
+                                  <IconButton
+                                    className="menu-trigger"
+                                    size="small"
+                                    sx={{
+                                      borderRadius: "50%",
+                                      height: 24,
+                                      width: 24,
+                                      p: 0,
+                                      ml: 0.5,
+                                      mt: 0.5,
+                                      opacity: 0,
+                                      color: "text.secondary",
+                                      transition: "opacity 0.2s",
+                                    }}
+                                  >
+                                    <ReplyIcon />
+                                  </IconButton>
+                                </>
+                              )}
                             </Box>
                           );
                         })}
@@ -553,6 +787,91 @@ const Messages = () => {
           </Card>
         </Grid>
       </Grid>
+
+      <Menu
+        anchorEl={menuAnchor?.element}
+        open={Boolean(menuAnchor)}
+        onClose={handleCloseMenu}
+        sx={{
+          borderRadius: 4,
+        }}
+        MenuListProps={{
+          sx: {
+            display: "flex",
+            flexDirection: "row",
+            p: 0.5,
+            borderRadius: 2,
+          },
+        }}
+      >
+        <MenuItem
+          onClick={() => copyMessage(menuAnchor.message.body)}
+          sx={{ borderRadius: 4 }}
+        >
+          Copy
+        </MenuItem>
+        {isMy && (
+          <MenuItem
+            onClick={() => handleAction("editer")}
+            sx={{ borderRadius: 4 }}
+          >
+            Edit
+          </MenuItem>
+        )}
+        <MenuItem
+          onClick={() => handleAction("delete")}
+          sx={{
+            color: "error.main",
+            borderRadius: 4,
+            "&:hover": {
+              bgcolor: "error.main",
+              color: "white",
+            },
+          }}
+        >
+          Delete
+        </MenuItem>
+      </Menu>
+
+
+      <Dialog open={isConfirmOpen} onClose={handleCancelDelete}>
+        <DialogTitle>Delete the message?</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Do you really want to delete this message? This action is
+            irreversible.
+          </DialogContentText>
+          <DialogActions>
+            <Button
+              color="error"
+              autoFocus
+              variant="contained"
+              onClick={() => {
+                if (messageToDelete) {
+                  deleteMessageForMe(messageToDelete.id);
+                }
+              }}
+            >
+              Delete for me
+            </Button>
+            {messageToDelete?.sender_id === currentUserId && (
+              <Button
+                color="error"
+                variant="contained"
+                onClick={() => {
+                  if (messageToDelete) {
+                    deleteMessageForEveryone(messageToDelete.id);
+                  }
+                }}
+              >
+                Delete for everyone
+              </Button>
+            )}
+
+            <Button onClick={handleCancelDelete}>Cancel</Button>
+          </DialogActions>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
