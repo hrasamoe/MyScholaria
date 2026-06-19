@@ -16,7 +16,13 @@ interface NotificationContextType {
   playSound: (type: SoundType) => void;
 }
 
-type SoundType = "message" | "delete" | "success" | "send_message" |"error" | "message_error";
+type SoundType =
+  | "message"
+  | "delete"
+  | "success"
+  | "send_message"
+  | "error"
+  | "message_error";
 
 const SOUNDS: Record<SoundType, string> = {
   message: "/sound/notification.mp3",
@@ -79,12 +85,16 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
       const newMessage = JSON.parse(event.data);
 
       if (newMessage.__type === "edit") {
-        listenersRef.current.forEach((cb) => cb(newMessage))
+        listenersRef.current.forEach((cb) => cb(newMessage));
         return;
       }
       if (newMessage.__type === "delete") {
-         listenersRef.current.forEach((cb) => cb(newMessage));
-         return;
+        listenersRef.current.forEach((cb) => cb(newMessage));
+        return;
+      }
+      if (newMessage.__type === "sync") {
+        listenersRef.current.forEach((cb) => cb(newMessage));
+        return;
       }
       listenersRef.current.forEach((cb) => cb(newMessage));
       playSound("message");

@@ -87,41 +87,59 @@ const Messages = () => {
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const textFieldRef = useRef<HTMLInputElement | null>(null);
 
-  useEffect(() => {
-    const unsubscribe = onNewMessage((newMsg) => {
-      if (newMsg.__type === "edit") {
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.id === newMsg.id ? { ...m, body: newMsg.body } : m,
-          ),
-        );
-        return;
-      }
-      if (newMsg.__type === "delete") {
-        setMessages((prev) => prev.filter((m) => m.id !== newMsg.id));
-        return;
-      }
-      setChatHistory((prev) => {
-        const next = new Map(prev);
-        next.set(newMsg.sender_id, newMsg.send_at);
-        return next;
-      });
+useEffect(() => {
+  const unsubscribe = onNewMessage((newMsg) => {
+    if (newMsg.__type === "edit") {
+      setMessages((prev) =>
+        prev.map((m) => (m.id === newMsg.id ? { ...m, body: newMsg.body } : m)),
+      );
+      return;
+    }
 
+    if (newMsg.__type === "delete") {
+      setMessages((prev) => prev.filter((m) => m.id !== newMsg.id));
+      return;
+    }
+
+    if (newMsg.__type === "sync") {
       setActiveMemberId((activeId) => {
-        if (newMsg.sender_id === activeId) {
+        if (newMsg.recipient_id === activeId) {
           setMessages((prev) => {
             const exists = prev.some((m) => m.id === newMsg.id);
             if (exists) return prev;
             return [...prev, newMsg];
           });
-          clearUnread(newMsg.sender_id);
         }
         return activeId;
       });
-    });
+      setChatHistory((prev) => {
+        const next = new Map(prev);
+        next.set(newMsg.recipient_id, newMsg.send_at);
+        return next;
+      });
+      return;
+    }
 
-    return unsubscribe;
-  }, []);
+    setChatHistory((prev) => {
+      const next = new Map(prev);
+      next.set(newMsg.sender_id, newMsg.send_at);
+      return next;
+    });
+    setActiveMemberId((activeId) => {
+      if (newMsg.sender_id === activeId) {
+        setMessages((prev) => {
+          const exists = prev.some((m) => m.id === newMsg.id);
+          if (exists) return prev;
+          return [...prev, newMsg];
+        });
+        clearUnread(newMsg.sender_id);
+      }
+      return activeId;
+    });
+  });
+
+  return unsubscribe;
+}, []);
 
   useEffect(() => {
     if (!establishmentId || !currentUserId) return;

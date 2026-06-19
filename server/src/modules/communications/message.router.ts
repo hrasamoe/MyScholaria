@@ -1,4 +1,4 @@
-import { Request, response, Response, Router } from "express";
+import { Request, Response, Router } from "express";
 import { AuthRequest, RequireAuth } from "../../middleware/auth.middleware";
 import { sendToUser } from "../../services/websocket/ws-server";
 import { MessageSchema } from "./message.schema";
@@ -28,7 +28,8 @@ messageRouter.post(
 
       const message = await sendMessage(parsed, reply_to_id);
 
-      const delivered = sendToUser(recipient_id, message);
+      sendToUser(recipient_id, message);
+      sendToUser(userID, { __type: "sync", ...message });
       res.status(200).json({ success: true, message });
     } catch (error: any) {
       console.log(error.message);
@@ -80,8 +81,8 @@ messageRouter.put(
       const deletedMessage = await DeleteMessageForMe(messageID, userID);
       sendToUser(deletedMessage.recipient_id, {
         __type: "delete",
-        id: deletedMessage.id
-      })
+        id: deletedMessage.id,
+      });
       res.status(200).json({ success: true });
     } catch (error: any) {
       console.log(error.message);
@@ -98,10 +99,11 @@ messageRouter.put(
     const messageID = req.params.messageID as string;
     try {
       const response = await DeleteMessageForEveryone(messageID, userID);
-        sendToUser(response.recipient_id, {
-          __type: "delete",
-          ...response,
-        });
+      sendToUser(response.recipient_id, {
+        __type: "delete",
+        ...response,
+      });
+      sendToUser(userID, { __type: "delete", id: response.id });
       res.status(200).json({ success: true });
     } catch (error: any) {
       console.log(error.message);
@@ -109,7 +111,6 @@ messageRouter.put(
     }
   },
 );
-
 
 messageRouter.put(
   "/edit/:messageID",
@@ -126,7 +127,7 @@ messageRouter.put(
         __type: "edit",
         ...updatedMessage,
       });
-
+      sendToUser(userID, { __type: "edit", ...updatedMessage });
       res.status(200).json({ success: true, message: updatedMessage });
     } catch (error: any) {
       res.status(500).json({ error: error.message, message: error.message });
