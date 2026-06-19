@@ -838,8 +838,7 @@ const Messages = () => {
         <DialogTitle>Delete the message?</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Do you really want to delete this message? This action is
-            irreversible.
+            Do you really want to delete this message?
           </DialogContentText>
           <DialogActions>
             <Button
