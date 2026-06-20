@@ -18,7 +18,7 @@ messageRouter.post(
   RequireAuth,
   async (req: Request, res: Response) => {
     const userID = req.params.senderID as string;
-    const { recipient_id, content, reply_to_id } = req.body;
+    const { recipient_id, content, reply_to_id, client_id } = req.body;
     try {
       const parsed = MessageSchema.parse({
         sender_id: userID,
@@ -29,8 +29,10 @@ messageRouter.post(
       const message = await sendMessage(parsed, reply_to_id);
 
       sendToUser(recipient_id, message);
-      sendToUser(userID, { __type: "sync", ...message });
-      res.status(200).json({ success: true, message });
+      sendToUser(userID, { __type: "sync", client_id, ...message });
+      res
+        .status(200)
+        .json({ success: true, message: { ...message, client_id } });
     } catch (error: any) {
       console.log(error.message);
       res.status(500).json({ message: error.message, error: error.message });

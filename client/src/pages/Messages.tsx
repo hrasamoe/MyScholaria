@@ -87,59 +87,57 @@ const Messages = () => {
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const textFieldRef = useRef<HTMLInputElement | null>(null);
 
-useEffect(() => {
-  const unsubscribe = onNewMessage((newMsg) => {
-    if (newMsg.__type === "edit") {
-      setMessages((prev) =>
-        prev.map((m) => (m.id === newMsg.id ? { ...m, body: newMsg.body } : m)),
-      );
-      return;
-    }
+  useEffect(() => {
+    const unsubscribe = onNewMessage((newMsg) => {
+      if (newMsg.__type === "edit") {
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === newMsg.id ? { ...m, body: newMsg.body } : m,
+          ),
+        );
+        return;
+      }
 
-    if (newMsg.__type === "delete") {
-      setMessages((prev) => prev.filter((m) => m.id !== newMsg.id));
-      return;
-    }
+      if (newMsg.__type === "delete") {
+        setMessages((prev) => prev.filter((m) => m.id !== newMsg.id));
+        return;
+      }
 
-    if (newMsg.__type === "sync") {
+if (newMsg.__type === "sync") {
+  setActiveMemberId((activeId) => {
+    if (newMsg.recipient_id === activeId) {
+      setMessages((prev) => reconcileMessage(prev, newMsg, newMsg.client_id));
+    }
+    return activeId;
+  });
+  setChatHistory((prev) => {
+    const next = new Map(prev);
+    next.set(newMsg.recipient_id, newMsg.send_at);
+    return next;
+  });
+  return;
+}
+
+      setChatHistory((prev) => {
+        const next = new Map(prev);
+        next.set(newMsg.sender_id, newMsg.send_at);
+        return next;
+      });
       setActiveMemberId((activeId) => {
-        if (newMsg.recipient_id === activeId) {
+        if (newMsg.sender_id === activeId) {
           setMessages((prev) => {
             const exists = prev.some((m) => m.id === newMsg.id);
             if (exists) return prev;
             return [...prev, newMsg];
           });
+          clearUnread(newMsg.sender_id);
         }
         return activeId;
       });
-      setChatHistory((prev) => {
-        const next = new Map(prev);
-        next.set(newMsg.recipient_id, newMsg.send_at);
-        return next;
-      });
-      return;
-    }
-
-    setChatHistory((prev) => {
-      const next = new Map(prev);
-      next.set(newMsg.sender_id, newMsg.send_at);
-      return next;
     });
-    setActiveMemberId((activeId) => {
-      if (newMsg.sender_id === activeId) {
-        setMessages((prev) => {
-          const exists = prev.some((m) => m.id === newMsg.id);
-          if (exists) return prev;
-          return [...prev, newMsg];
-        });
-        clearUnread(newMsg.sender_id);
-      }
-      return activeId;
-    });
-  });
 
-  return unsubscribe;
-}, []);
+    return unsubscribe;
+  }, []);
 
   useEffect(() => {
     if (!establishmentId || !currentUserId) return;
@@ -400,33 +398,52 @@ useEffect(() => {
       setIsConfirmOpen(false);
     }
   };
+  const reconcileMessage = (
+    prev: Message[],
+    real: Message,
+    clientId?: string,
+  ): Message[] => {
+    const hasPlaceholder = clientId && prev.some((m) => m.id === clientId);
+    if (hasPlaceholder) {
+      return prev.map((m) => (m.id === clientId ? real : m));
+    }
+    return prev.some((m) => m.id === real.id) ? prev : [...prev, real];
+  };
+  const handleSendMessage = async () => {
+    const cleanedText = text.trim();
+    if (!cleanedText || !currentUserId || !activeMemberId) return;
 
-const handleSendMessage = async () => {
-  const cleanedText = text.trim();
-  if (!cleanedText || !currentUserId || !activeMemberId) return;
-
-  if (editingMessage) {
-    const previousBody = editingMessage.body;
-    setMessages((prev) =>
-      prev.map((m) =>
-        m.id === editingMessage.id ? { ...m, body: cleanedText } : m,
-      ),
-    );
-    setText("");
-    setEditingMessage(null);
-    playSound("send_message");
-
-    try {
-      const response = await apiRequest(
-        `/api/messages/edit/${editingMessage.id}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({ content: cleanedText }),
-        },
+    if (editingMessage) {
+      const previousBody = editingMessage.body;
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === editingMessage.id ? { ...m, body: cleanedText } : m,
+        ),
       );
-      if (!response.ok) {
+      setText("");
+      setEditingMessage(null);
+      playSound("send_message");
+
+      try {
+        const response = await apiRequest(
+          `/api/messages/edit/${editingMessage.id}`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ content: cleanedText }),
+          },
+        );
+        if (!response.ok) {
+          playSound("message_error");
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === editingMessage.id ? { ...m, body: previousBody } : m,
+            ),
+          );
+          enqueueSnackbar("Couldn't edit the message", { variant: "error" });
+        }
+      } catch (error) {
         playSound("message_error");
         setMessages((prev) =>
           prev.map((m) =>
@@ -435,52 +452,62 @@ const handleSendMessage = async () => {
         );
         enqueueSnackbar("Couldn't edit the message", { variant: "error" });
       }
-    } catch (error) {
-      playSound("message_error");
-      setMessages((prev) =>
-        prev.map((m) =>
-          m.id === editingMessage.id ? { ...m, body: previousBody } : m,
-        ),
-      );
-      enqueueSnackbar("Couldn't edit the message", { variant: "error" });
+      return;
     }
-    return;
-  }
 
-  const replyToId = replyingTo?.id ?? null;
+    const replyToId = replyingTo?.id ?? null;
+    const clientId = crypto.randomUUID();
 
-  setText("");
-  setReplyingTo(null);
-  playSound("send_message");
+    const optimisticMsg: Message = {
+      id: clientId,
+      sender_id: currentUserId,
+      recipient_id: activeMemberId,
+      body: cleanedText,
+      read_at: "",
+      send_at: new Date().toISOString(),
+      reply_to_id: replyToId,
+      reply_to_body: replyingTo?.body ?? null,
+      reply_to_sender_id: replyingTo?.sender_id ?? null,
+    };
 
-  try {
-    const response = await apiRequest(`/api/messages/send/${currentUserId}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({
-        recipient_id: activeMemberId,
-        content: cleanedText,
-        reply_to_id: replyToId,
-      }),
-    });
+    setMessages((prev) => [...prev, optimisticMsg]);
+    setText("");
+    setReplyingTo(null);
+    playSound("send_message");
 
-    if (!response.ok) {
+    try {
+      const response = await apiRequest(`/api/messages/send/${currentUserId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          recipient_id: activeMemberId,
+          content: cleanedText,
+          reply_to_id: replyToId,
+          client_id: clientId
+        }),
+      });
+
+      if (!response.ok) {
+        setMessages((prev) => prev.filter((m) => m.id !== clientId));
+        setText(cleanedText);
+        playSound("message_error");
+        return;
+      } else {
+        const { message: realMsg } = await response.json();
+        setMessages((prev) => reconcileMessage(prev, realMsg, clientId));
+        setChatHistory((prev) => {
+          const next = new Map(prev);
+          next.set(activeMemberId, realMsg.send_at);
+          return next;
+        });
+      }
+    } catch (error) {
+      setMessages((prev) => prev.filter((m) => m.id !== clientId));
       setText(cleanedText);
       playSound("message_error");
-    } else {
-      const { message: realMsg } = await response.json();
-      setChatHistory((prev) => {
-        const next = new Map(prev);
-        next.set(activeMemberId, realMsg.send_at);
-        return next;
-      });
     }
-  } catch (error) {
-    setText(cleanedText);
-    playSound("message_error");
-  }
-};
+  };
 
   const currentMember = allMembers.find((m) => m.id === activeMemberId);
 
