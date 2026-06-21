@@ -170,10 +170,10 @@ notificationROuter.put(
 );
 
 notificationROuter.get(
-  "/alerts/:establishmentID",
+  "/alerts",
   RequireAuth,
   async (req: AuthRequest, res: Response) => {
-    const establishmentID = req.params.establishmentID as string;
+    const establishmentID = req.establishmentID as string;
     const userID = req.userId as string;
     try {
       const result = await getAllAlerts(establishmentID, userID);
