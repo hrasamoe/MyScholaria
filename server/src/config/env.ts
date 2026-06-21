@@ -16,4 +16,5 @@ export const ENV = {
   APP_PASSWORD: process.env.GMAIL_APP_PASSWORD,
   REFRESH_TOKEN_SECRET: process.env.REFRESH_TOKEN_SECRET || "7d",
   PORT: process.env.PORT || "4242",
+  MESSAGE_ENCRYPTION_KEY: process.env.MESSAGE_ENCRYPTION_KEY,
 };
