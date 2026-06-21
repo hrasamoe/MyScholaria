@@ -37,7 +37,6 @@ interface StudentDetail {
   class_name: string | null;
   status: "active" | "expelled" | "transferred" | "graduated";
   medical_notes: string | null;
-  // ✅ Remplacé parent_ids + parent_first/last_name par un tableau d'objets
   parents: ParentOption[] | null;
 }
 
@@ -154,7 +153,6 @@ const StudentDetails = () => {
         const data: StudentDetail = await res.json();
         setStudent(data);
 
-        // ✅ Plus besoin de reconstruire manuellement : les parents viennent directement de l'API
         setParents(data.parents || []);
 
         try {
