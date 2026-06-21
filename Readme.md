@@ -70,6 +70,8 @@ Built with a **mobile-first**, accessibility-aware design and a strong focus on 
 
 ![DM Preview](./screenshot6.png)
 
+> 🛡️ Message deletion follows a moderation-aware retention policy.
+> See [`docs/MESSAGE_MODERATION.md`](./docs/MESSAGE_MODERATION.md) for details.
 
 ### 🛠️ Administration
 
@@ -153,6 +155,9 @@ myscholaria/
 │   │   │   └── establishments/
 │   │   └── index.ts         # App entry
 │   └── package.json
+│
+├── docs/
+│   └── MESSAGE_MODERATION.md  # Message deletion & retention policy
 │
 └── README.md
 ```
@@ -259,6 +264,26 @@ MyScholaria is designed with **GDPR** at its core:
 - ⏱️ Configurable retention policies
 - 📜 Full **Privacy Policy** and **Terms of Service** included
 - 👤 Data subject rights: access, rectification, erasure, portability
+
+### 💬 Message Moderation & Retention
+
+To protect minors and allow institutions to investigate misconduct,
+harassment, or policy violations, messages are **not permanently
+erased** when a user selects **"Delete for everyone."**
+
+- The message is hidden from both participants' conversation view.
+- The original content is retained in the database, flagged as
+  deleted, and accessible only to authorized administrators for
+  moderation and compliance purposes.
+- This retention period follows the institution's configured data
+  retention policy (see **Settings**).
+- Users are informed of this behavior in the **Privacy Policy** at
+  the point of account creation.
+
+This approach balances user privacy with the safety obligations
+schools have toward minors using the platform.
+
+📄 Full details: [`docs/MESSAGE_MODERATION.md`](./docs/MESSAGE_MODERATION.md)
 
 ---
 
