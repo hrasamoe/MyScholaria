@@ -91,9 +91,9 @@ establishementRouter.post(
 establishementRouter.post(
   "/my",
   RequireAuth,
-  async (req: Request, res: Response) => {
+  async (req: AuthRequest, res: Response) => {
     try {
-      const { userID } = req.body;
+      const userID = req.userId as string
       const myEstablishment = await getMyEstablishment(userID);
       res.status(200).json({
         message: "My establishment retrieved successfully",

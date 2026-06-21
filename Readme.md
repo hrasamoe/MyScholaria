@@ -57,7 +57,7 @@ Built with a **mobile-first**, accessibility-aware design and a strong focus on 
 
 ### 💬 Communication & Portals
 
-- **Direct Messages (DM)** *(New in v1.1.0)* — private messaging between users and between users and admins
+- **Direct Messages (DM)** *(New in v2.1.0)* — private messaging between users and between users and admins
 - **Messages** — internal messaging
 - **Announcements & Notifications** — institution-wide updates
 - **Events** — calendar of school events
@@ -293,11 +293,12 @@ schools have toward minors using the platform.
 
 - [x] Role-based authentication (RBAC) with JWT
 - [x] Student, Teacher, Staff & Admin portals
-- [x] **Direct Messages (DM)** — user ↔ user & user ↔ admin *(v1.1.0)*
+- [x] Real-time notifications
+- [x] **Direct Messages (DM)** — user ↔ user & user ↔ admin *(v2.1.0)*
 
 ### 🔜 Coming Soon
 
-- [ ] Real-time notifications (WebSockets)
+
 - [ ] Mobile companion app (React Native)
 - [ ] Stripe / Paddle payment integration
 - [ ] Finance & Scholarships management
@@ -305,7 +306,6 @@ schools have toward minors using the platform.
 - [ ] Multi-language i18n (FR / EN / ES / AR)
 - [ ] SecNumCloud-certified hosting option
 - [ ] Group messaging & channels
-- [ ] File attachments in DMs
 
 ---
 

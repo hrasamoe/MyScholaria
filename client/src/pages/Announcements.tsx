@@ -140,7 +140,7 @@ const Announcements = () => {
     }
     try {
       setLoading(true);
-      const response = await apiRequest(`/api/announcement/create/${userID}`,
+      const response = await apiRequest(`/api/announcement/create`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

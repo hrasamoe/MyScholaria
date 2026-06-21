@@ -200,7 +200,7 @@ const AppSidebar = ({ collapsed, onToggleCollapsed }: AppSidebarProps) => {
   const fetchAlerts = async () => {
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/notification/alerts/${establishmentID}/${userID}`,
+        `${import.meta.env.VITE_API_URL}/api/notification/alerts/${establishmentID}`,
         {
           method: "GET",
           credentials: "include",

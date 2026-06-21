@@ -1,5 +1,5 @@
 import { Request, Response, Router } from "express";
-import { RequireAuthOnly } from "../../middleware/auth.middleware";
+import { AuthRequest, RequireAuth, RequireAuthOnly } from "../../middleware/auth.middleware";
 import { announcementSchema, NotificationSchema } from "./notification.schema";
 import {
   createAnnouncement,
@@ -16,10 +16,10 @@ export const announcementRouter = Router();
 export const notificationROuter = Router();
 
 announcementRouter.post(
-  "/create/:userID",
-  RequireAuthOnly,
-  async (req: Request, res: Response) => {
-    const userID = req.params.userID as string;
+  "/create",
+  RequireAuth,
+  async (req: AuthRequest, res: Response) => {
+    const userID = req.userId as string;
     const parsed = announcementSchema.safeParse(req.body);
     if (!parsed.success) {
       res.status(400).json({
@@ -74,10 +74,10 @@ announcementRouter.delete(
 );
 
 notificationROuter.post(
-  "/create/:userID",
-  RequireAuthOnly,
-  async (req: Request, res: Response) => {
-    const userID = req.params.userID as string;
+  "/create",
+  RequireAuth,
+  async (req: AuthRequest, res: Response) => {
+    const userID = req.userId as string;
     const parsed = NotificationSchema.safeParse(req.body);
     if (!parsed.success) {
       res.status(400).json({
@@ -116,11 +116,11 @@ notificationROuter.delete(
 );
 
 notificationROuter.get(
-  "/get-list/:id/:userID",
-  RequireAuthOnly,
-  async (req: Request, res: Response) => {
+  "/get-list/:id",
+  RequireAuth,
+  async (req: AuthRequest, res: Response) => {
     const establishmentID = req.params.id as string;
-    const userID = req.params.userID as string;
+    const userID = req.userId as string;
     try {
       const result = await getNotification(establishmentID, userID);
       res.status(200).json(result);
@@ -133,10 +133,10 @@ notificationROuter.get(
 );
 
 notificationROuter.put(
-  "/mark-all-read/:userID",
-  RequireAuthOnly,
-  async (req: Request, res: Response) => {
-    const userID = req.params.userID as string;
+  "/mark-all-read",
+  RequireAuth,
+  async (req: AuthRequest, res: Response) => {
+    const userID = req.userId as string;
     try {
       await markAllNotificationAsRead(userID);
       res.status(201).json({
@@ -151,11 +151,11 @@ notificationROuter.put(
 );
 
 notificationROuter.put(
-  "/mark-read/:id/:userID",
-  RequireAuthOnly,
-  async (req: Request, res: Response) => {
+  "/mark-read/:id",
+  RequireAuth,
+  async (req: AuthRequest, res: Response) => {
     const notificationID = req.params.id as string;
-    const userID = req.params.userID as string;
+    const userID = req.userId as string
     try {
       await markNotificationAsRead(notificationID, userID);
       res.status(201).json({
@@ -170,11 +170,11 @@ notificationROuter.put(
 );
 
 notificationROuter.get(
-  "/alerts/:establishmentID/:userID",
-  RequireAuthOnly,
-  async (req: Request, res: Response) => {
+  "/alerts/:establishmentID",
+  RequireAuth,
+  async (req: AuthRequest, res: Response) => {
     const establishmentID = req.params.establishmentID as string;
-    const userID = req.params.userID as string;
+    const userID = req.userId as string;
     try {
       const result = await getAllAlerts(establishmentID, userID);
       res.status(200).json(result);
