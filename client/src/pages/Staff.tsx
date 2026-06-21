@@ -99,7 +99,7 @@ const Staff = () => {
       if (!establishmentID) return;
       try {
         setLoading(true);
-        const response = await apiRequest(`/api/staff/list/${establishmentID}`,
+        const response = await apiRequest(`/api/staff/list`,
           {
             method: "GET",
             credentials: "include",

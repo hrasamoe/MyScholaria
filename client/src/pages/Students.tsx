@@ -95,7 +95,7 @@ const Students = () => {
       if (!establishmentID) return;
       try {
         setLoading(true);
-        const response = await apiRequest(`/api/students/list/${establishmentID}`,
+        const response = await apiRequest(`/api/students/list`,
           {
             method: "GET",
             credentials: "include",

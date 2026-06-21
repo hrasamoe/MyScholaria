@@ -80,7 +80,7 @@ const CreateParent = () => {
 
     setLoading(true);
     try {
-      const response = await apiRequest(`/api/utils/create-parent/${establishmentID}`,
+      const response = await apiRequest(`/api/utils/create-parent`,
         {
           method: "POST",
           headers: {

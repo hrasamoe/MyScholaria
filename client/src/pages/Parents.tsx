@@ -90,7 +90,7 @@ const ParentsList = () => {
       if (!establishmentID) return;
       try {
         setLoading(true);
-        const response = await apiRequest(`/api/utils/get-parent-list/${establishmentID}`,
+        const response = await apiRequest(`/api/utils/get-parent-list`,
           {
             method: "GET",
             credentials: "include",

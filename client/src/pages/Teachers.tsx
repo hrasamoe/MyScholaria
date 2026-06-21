@@ -68,12 +68,10 @@ const Teachers = () => {
   const handleDelete = async (id: string) => {
     try {
       setActionLoading(true);
-      const response = await apiRequest(`/api/teachers/delete/${id}`,
-        {
-          method: "DELETE",
-          credentials: "include",
-        },
-      );
+      const response = await apiRequest(`/api/teachers/delete/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
       const result = await response.json();
       if (response.ok) {
         setTeachers((prev) => prev.filter((t) => t.id !== id));
@@ -119,12 +117,10 @@ const Teachers = () => {
       if (!establishmentID) return;
       try {
         setLoading(true);
-        const response = await apiRequest(`/api/teachers/get-list/${establishmentID}`,
-          {
-            method: "GET",
-            credentials: "include",
-          },
-        );
+        const response = await apiRequest(`/api/teachers/get-list`, {
+          method: "GET",
+          credentials: "include",
+        });
         const result = await response.json();
         if (!response.ok) {
           throw new Error(result.message || "Failed to fetch teachers");

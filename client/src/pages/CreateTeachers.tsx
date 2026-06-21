@@ -129,7 +129,7 @@ const CreateTeacher = () => {
 
     setLoading(true);
     try {
-      const response = await apiRequest(`/api/teachers/create-teacher/${establishmentID}`,
+      const response = await apiRequest(`/api/teachers/create-teacher`,
         {
           method: "POST",
           headers: {

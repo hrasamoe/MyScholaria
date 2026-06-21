@@ -106,10 +106,10 @@ const Classes = () => {
         apiRequest(`/api/establishment/classes-list`, {
           credentials: "include",
         }),
-        apiRequest(`/api/utils/get-classrooms/${establishmentID}`, {
+        apiRequest(`/api/utils/get-classrooms`, {
           credentials: "include",
         }),
-        apiRequest(`/api/teachers/get-list/${establishmentID}`, {
+        apiRequest(`/api/teachers/get-list`, {
           credentials: "include",
         }),
       ]);

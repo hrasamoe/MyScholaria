@@ -94,7 +94,7 @@ const CreateStudent = () => {
               credentials: "include",
             },
           ),
-          apiRequest(`/api/utils/get-parent-list/${establishmentID}`, {
+          apiRequest(`/api/utils/get-parent-list`, {
             credentials: "include",
           }),
         ]);
@@ -180,7 +180,7 @@ const CreateStudent = () => {
       };
 
       const response = await apiRequest(
-        `/api/students/create/${establishmentID}`,
+        `/api/students/create`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

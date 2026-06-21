@@ -1,5 +1,5 @@
 import { Request, Response, Router } from "express";
-import { RequireAuthOnly } from "../../middleware/auth.middleware";
+import { AuthRequest, RequireAuth, RequireAuthOnly } from "../../middleware/auth.middleware";
 import { staffSchema } from "./staff.schema";
 import {
   createStaff,
@@ -12,10 +12,10 @@ import {
 export const staffRouter = Router();
 
 staffRouter.post(
-  "/create/:id",
-  RequireAuthOnly,
-  async (req: Request, res: Response) => {
-    const establishementID = req.params.id as string;
+  "/create",
+  RequireAuth,
+  async (req: AuthRequest, res: Response) => {
+    const establishementID = req.establishmentID as string;
     const parsed = staffSchema.safeParse(req.body);
     if (!parsed.success) {
       res.status(400).json({
@@ -36,10 +36,10 @@ staffRouter.post(
 );
 
 staffRouter.get(
-  "/list/:id",
-  RequireAuthOnly,
-  async (req: Request, res: Response) => {
-    const establishementID = req.params.id as string;
+  "/list",
+  RequireAuth,
+  async (req: AuthRequest, res: Response) => {
+    const establishementID = req.establishmentID as string;
     try {
       const result = await getStaffList(establishementID);
       res.status(200).json(result);

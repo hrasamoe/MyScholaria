@@ -1,5 +1,5 @@
 import { Request, Response, Router } from "express";
-import { RequireAuthOnly } from "../../middleware/auth.middleware";
+import { RequireAuth, RequireAuthOnly, AuthRequest } from "../../middleware/auth.middleware";
 import { teacherSchema } from "./teacher.schema";
 import {
   createTeacher,
@@ -12,11 +12,11 @@ import {
 export const teacherRouter = Router();
 
 teacherRouter.post(
-  "/create-teacher/:id",
-  RequireAuthOnly,
-  async (req: Request, res: Response) => {
+  "/create-teacher",
+  RequireAuth,
+  async (req: AuthRequest, res: Response) => {
     try {
-      const establishmentID = req.params?.id as string;
+      const establishmentID = req.establishmentID as string;
       const body = req.body;
       const data = teacherSchema.parse({
         IDNumber: body.IDNumber,
@@ -49,11 +49,11 @@ teacherRouter.post(
 );
 
 teacherRouter.get(
-  "/get-list/:id",
-  RequireAuthOnly,
-  async (req: Request, res: Response) => {
+  "/get-list",
+  RequireAuth,
+  async (req: AuthRequest, res: Response) => {
     try {
-      const establishmentID = req.params?.id as string;
+      const establishmentID = req.establishmentID as string;
       const teacherList = await getTeacherList(establishmentID);
       res.status(200).json(teacherList);
     } catch (error: any) {
