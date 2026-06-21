@@ -293,11 +293,12 @@ schools have toward minors using the platform.
 
 - [x] Role-based authentication (RBAC) with JWT
 - [x] Student, Teacher, Staff & Admin portals
+- [x] Real-time notifications
 - [x] **Direct Messages (DM)** — user ↔ user & user ↔ admin *(v1.1.0)*
 
 ### 🔜 Coming Soon
 
-- [ ] Real-time notifications (WebSockets)
+
 - [ ] Mobile companion app (React Native)
 - [ ] Stripe / Paddle payment integration
 - [ ] Finance & Scholarships management
@@ -305,7 +306,6 @@ schools have toward minors using the platform.
 - [ ] Multi-language i18n (FR / EN / ES / AR)
 - [ ] SecNumCloud-certified hosting option
 - [ ] Group messaging & channels
-- [ ] File attachments in DMs
 
 ---
 
