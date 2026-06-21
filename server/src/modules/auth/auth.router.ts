@@ -144,9 +144,17 @@ authRouter.post("/refresh", async (req: Request, res: Response) => {
     );
     if (rows.length === 0)
       return res.status(401).json({ message: "Refresh token revoked" });
-
+    const memberResult = await pool.query(
+      `SELECT e.id as establishment_id
+       FROM establishment_members em
+       JOIN establishments e ON e.id = em.establishment_id
+       WHERE em.user_id = $1 AND em.is_active = true
+       LIMIT 1`,
+      [payload.userId],
+    );
+    const establishmentID = memberResult.rows[0]?.establishment_id ?? null;
     const newAccessToken = jwt.sign(
-      { userId: payload.userId },
+      { userId: payload.userId, establishmentID },
       ENV.JWT_SECRET,
       { expiresIn: "15m" },
     );
