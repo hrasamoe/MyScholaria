@@ -2,16 +2,20 @@ st:
 	git status
 lg: st
 	git log --oneline
-mmdh: st
-	git switch main
-	git merge dev
-	git switch dev
 
-po: mmdh
-	git push origin main dev hrasamoe
+sync_main:
+	git switch main
+	git pull origin main
+
+sync_dev:
+	git switch dev
+	git pull origin dev
+
+po: sync_dev sync_main
+	git push origin dev hrasamoe
 
 pc: po
-	git push organization main dev hrasamoe
+	git push organization dev hrasamoe
 
 dp: pc
 	cd client && make deploy
