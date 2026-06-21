@@ -590,11 +590,16 @@ CREATE TABLE public.messages (
   body text NOT NULL,
   read_at timestamp with time zone,
   send_at timestamp with time zone NOT NULL DEFAULT now(),
-  is_modified boolean DEFAULT false,
+  is_edited boolean DEFAULT false,
+  deleted_by_receiver boolean DEFAULT false,
+  deleted boolean NOT NULL DEFAULT false,
+  reply_id uuid,
+  deleted_by_sender boolean NOT NULL DEFAULT false,
   CONSTRAINT messages_pkey PRIMARY KEY (id),
   CONSTRAINT messages_recipient_id_fkey FOREIGN KEY (sender_id) REFERENCES public.users(id),
   CONSTRAINT messages_sender_id_fkey FOREIGN KEY (sender_id) REFERENCES public.users(id),
-  CONSTRAINT messages_recipient_id_fkey1 FOREIGN KEY (recipient_id) REFERENCES public.users(id)
+  CONSTRAINT messages_recipient_id_fkey1 FOREIGN KEY (recipient_id) REFERENCES public.users(id),
+  CONSTRAINT messages_reply_id_fkey FOREIGN KEY (reply_id) REFERENCES public.messages(id)
 );
 CREATE TABLE public.conversations (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
