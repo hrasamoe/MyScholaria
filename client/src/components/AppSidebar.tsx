@@ -1,64 +1,64 @@
-import { useEffect, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { logout } from "@/services/auth.service";
+import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
+import AssessmentIcon from "@mui/icons-material/Assessment";
+import BadgeIcon from "@mui/icons-material/Badge";
+import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
+import CampaignIcon from "@mui/icons-material/Campaign";
+import ChatIcon from "@mui/icons-material/Chat";
+import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+import CloseIcon from "@mui/icons-material/Close";
+import DashboardIcon from "@mui/icons-material/Dashboard";
+import DoneAllIcon from "@mui/icons-material/DoneAll";
+import EventIcon from "@mui/icons-material/Event";
+import EventNoteIcon from "@mui/icons-material/EventNote";
+import FactCheckIcon from "@mui/icons-material/FactCheck";
+import FamilyRestroomIcon from "@mui/icons-material/FamilyRestroom";
+import GradingIcon from "@mui/icons-material/Grading";
+import HistoryEduIcon from "@mui/icons-material/HistoryEdu";
+import LibraryBooksIcon from "@mui/icons-material/LibraryBooks";
+import LockIcon from "@mui/icons-material/Lock";
+import LogoutIcon from "@mui/icons-material/Logout";
+import ManageAccountsIcon from "@mui/icons-material/ManageAccounts";
+import MeetingRoomIcon from "@mui/icons-material/MeetingRoom";
+import MenuIcon from "@mui/icons-material/Menu";
+import ClassIcon from "@mui/icons-material/MenuBook";
+import NotificationsIcon from "@mui/icons-material/Notifications";
+import NotificationsNoneIcon from "@mui/icons-material/NotificationsNone";
+import PaymentIcon from "@mui/icons-material/Payment";
+import PeopleIcon from "@mui/icons-material/People";
+import PersonIcon from "@mui/icons-material/Person";
+import QuizIcon from "@mui/icons-material/Quiz";
+import ReceiptIcon from "@mui/icons-material/Receipt";
+import SavingsIcon from "@mui/icons-material/Savings";
+import SchoolIcon from "@mui/icons-material/School";
+import ScienceIcon from "@mui/icons-material/Science";
+import SettingsIcon from "@mui/icons-material/Settings";
+import ShieldIcon from "@mui/icons-material/Shield";
+import VerifiedIcon from "@mui/icons-material/Verified";
+import WorkIcon from "@mui/icons-material/Work";
+import WorkspacePremiumIcon from "@mui/icons-material/WorkspacePremium";
 import {
+  Badge,
+  Box,
+  Divider,
   Drawer,
+  IconButton,
   List,
   ListItem,
   ListItemButton,
   ListItemIcon,
   ListItemText,
   ListSubheader,
-  IconButton,
-  Box,
+  Popover,
+  Stack,
+  Tooltip,
   Typography,
   useMediaQuery,
   useTheme,
-  Tooltip,
-  Divider,
-  Badge,
-  Popover,
-  Stack,
 } from "@mui/material";
-import MenuIcon from "@mui/icons-material/Menu";
-import CloseIcon from "@mui/icons-material/Close";
-import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
-import DashboardIcon from "@mui/icons-material/Dashboard";
-import SchoolIcon from "@mui/icons-material/School";
-import PeopleIcon from "@mui/icons-material/People";
-import ClassIcon from "@mui/icons-material/MenuBook";
-import MeetingRoomIcon from "@mui/icons-material/MeetingRoom";
-import FactCheckIcon from "@mui/icons-material/FactCheck";
-import ShieldIcon from "@mui/icons-material/Shield";
-import PaymentIcon from "@mui/icons-material/Payment";
-import ReceiptIcon from "@mui/icons-material/Receipt";
-import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
-import EventIcon from "@mui/icons-material/Event";
-import NotificationsIcon from "@mui/icons-material/Notifications";
-import NotificationsNoneIcon from "@mui/icons-material/NotificationsNone";
-import DoneAllIcon from "@mui/icons-material/DoneAll";
-import ManageAccountsIcon from "@mui/icons-material/ManageAccounts";
-import BadgeIcon from "@mui/icons-material/Badge";
-import EventNoteIcon from "@mui/icons-material/EventNote";
-import LibraryBooksIcon from "@mui/icons-material/LibraryBooks";
-import HistoryEduIcon from "@mui/icons-material/HistoryEdu";
-import WorkIcon from "@mui/icons-material/Work";
-import GradingIcon from "@mui/icons-material/Grading";
-import QuizIcon from "@mui/icons-material/Quiz";
-import SavingsIcon from "@mui/icons-material/Savings";
-import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
-import FamilyRestroomIcon from "@mui/icons-material/FamilyRestroom";
-import PersonIcon from "@mui/icons-material/Person";
-import ChatIcon from "@mui/icons-material/Chat";
-import CampaignIcon from "@mui/icons-material/Campaign";
-import WorkspacePremiumIcon from "@mui/icons-material/WorkspacePremium";
-import ScienceIcon from "@mui/icons-material/Science";
-import VerifiedIcon from "@mui/icons-material/Verified";
-import AssessmentIcon from "@mui/icons-material/Assessment";
-import LockIcon from "@mui/icons-material/Lock";
-import SettingsIcon from "@mui/icons-material/Settings";
-import LogoutIcon from "@mui/icons-material/Logout";
+import { useEffect, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/Authcontext";
-import { logout } from "@/services/auth.service";
 
 export const DRAWER_WIDTH = 260;
 export const COLLAPSED_WIDTH = 72;
@@ -218,7 +218,7 @@ const AppSidebar = ({ collapsed, onToggleCollapsed }: AppSidebarProps) => {
 
   useEffect(() => {
     fetchAlerts();
-    const interval = setInterval(fetchAlerts, 60000);
+    const interval = setInterval(fetchAlerts, 3000);
     return () => clearInterval(interval);
   }, []);
 
@@ -253,7 +253,8 @@ const AppSidebar = ({ collapsed, onToggleCollapsed }: AppSidebarProps) => {
     }
   };
 
-  const unreadCount = notifications.filter((n) => !n.is_read).length;
+  const unreadCount =
+    notifications.filter((n) => !n.is_read).length + announcements.length;
   const hasAlerts = unreadCount > 0 || announcements.length > 0;
 
   const renderContent = (mini: boolean) => (
@@ -661,6 +662,7 @@ const AppSidebar = ({ collapsed, onToggleCollapsed }: AppSidebarProps) => {
                     }
                   >
                     <ListItemText
+                      sx={{ whiteSpace: "pre-wrap" }}
                       primary={notif.title}
                       secondary={notif.message}
                       primaryTypographyProps={{
