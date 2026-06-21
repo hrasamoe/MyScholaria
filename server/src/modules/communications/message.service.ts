@@ -1,11 +1,15 @@
 import { pool } from "../../db/pool";
+import {
+  decryptMessage,
+  encryptMessage,
+} from "../../services/crypto/message_encryption";
 import { MessageInfo } from "./message.schema";
 
 export async function sendMessage(Message: MessageInfo, reply_to_id?: string) {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
-
+    const encryptedContent = encryptMessage(Message.content);
     const insertQuery = `
       INSERT INTO messages (sender_id, recipient_id, body, read_at, reply_id)
       VALUES ($1, $2, $3, NULL, $4)
@@ -14,7 +18,7 @@ export async function sendMessage(Message: MessageInfo, reply_to_id?: string) {
     const inserted = await client.query(insertQuery, [
       Message.sender_id,
       Message.recipient_id,
-      Message.content,
+      encryptedContent,
       reply_to_id ?? null,
     ]);
 
@@ -31,7 +35,14 @@ export async function sendMessage(Message: MessageInfo, reply_to_id?: string) {
     const result = await client.query(fetchQuery, [inserted.rows[0].id]);
 
     await client.query("COMMIT");
-    return result.rows[0];
+    const row = result.rows[0];
+    return {
+      ...row,
+      body: Message.content,
+      reply_to_body: row.reply_to_body
+        ? decryptMessage(row.reply_to_body)
+        : row.reply_to_body,
+    };
   } catch (error: any) {
     await client.query("ROLLBACK");
     throw error;
@@ -97,7 +108,13 @@ export async function getMessages(
       activeMemberId,
     ]);
     await client.query("COMMIT");
-    return result.rows;
+    return result.rows.map((row) => ({
+      ...row,
+      body: decryptMessage(row.body),
+      reply_to_body: row.reply_to_body
+        ? decryptMessage(row.reply_to_body)
+        : row.reply_to_body,
+    }));
   } catch (error: any) {
     await client.query("ROLLBACK");
     throw error;
@@ -160,12 +177,17 @@ export async function EditMessage(
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
+    const encryptedContent = encryptMessage(content);
     const queryText = `UPDATE messages
     SET body = $1, send_at = NOW(), is_edited = TRUE WHERE sender_id = $2 AND id = $3
     RETURNING *`;
-    const reponse = await client.query(queryText, [content, userID, messageID]);
+    const reponse = await client.query(queryText, [
+      encryptedContent,
+      userID,
+      messageID,
+    ]);
     await client.query("COMMIT");
-    return reponse.rows[0];
+    return { ...reponse.rows[0], body: content };
   } catch (error: any) {
     console.log(error.message);
     await client.query("ROLLBACK");
