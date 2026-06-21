@@ -103,7 +103,7 @@ const Classes = () => {
     try {
       setLoading(true);
       const [resClasses, resClassrooms, resTeachers] = await Promise.all([
-        apiRequest(`/api/establishment/classes-list/${establishmentID}`, {
+        apiRequest(`/api/establishment/classes-list`, {
           credentials: "include",
         }),
         apiRequest(`/api/utils/get-classrooms/${establishmentID}`, {
@@ -190,7 +190,7 @@ const Classes = () => {
       setActionLoading(true);
       const url = selectedClass
         ? `/api/establishment/edit-classes/${selectedClass.id}`
-        : `/api/establishment/classes/${establishmentID}`;
+        : `/api/establishment/classes`;
 
       const method = selectedClass ? "PUT" : "POST";
 

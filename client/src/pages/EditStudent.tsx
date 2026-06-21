@@ -93,7 +93,7 @@ const EditStudent = () => {
         setLoading(true);
         const [resClasses, resParents] = await Promise.all([
           apiRequest(
-            `/api/establishment/classes-list/${establishmentID}`,
+            `/api/establishment/classes-list`,
             { credentials: "include" },
           ),
           apiRequest(`/api/utils/get-parent-list/${establishmentID}`, {

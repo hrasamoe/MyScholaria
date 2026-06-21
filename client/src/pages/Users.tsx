@@ -69,7 +69,7 @@ const Users = () => {
       if (!establishment_id) return;
       try {
         setLoadingUserList(true);
-        const response = await apiRequest(`/api/establishment/${establishment_id}/all-users`,
+        const response = await apiRequest(`/api/establishment/all-users`,
           {
             method: "GET",
             credentials: "include",
@@ -100,7 +100,7 @@ const Users = () => {
       if (!establishment_id) return;
       try {
         setLoading(true);
-        const response = await apiRequest(`/api/establishment/${establishment_id}/pending-members`,
+        const response = await apiRequest(`/api/establishment/pending-members`,
           {
             method: "GET",
             credentials: "include",
@@ -171,7 +171,6 @@ const Users = () => {
           },
           body: JSON.stringify({
             email: selectedUser.email,
-            establishmentId: establishment_id,
             isAproved: selectedUser.is_aproved,
             role: selectedUser.role,
           }),

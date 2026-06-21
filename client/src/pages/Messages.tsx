@@ -167,7 +167,7 @@ if (newMsg.__type === "sync") {
         }
 
         const response = await apiRequest(
-          `/api/establishment/${establishmentId}/all-users`,
+          `/api/establishment/all-users`,
           { method: "GET", credentials: "include" },
         );
 
