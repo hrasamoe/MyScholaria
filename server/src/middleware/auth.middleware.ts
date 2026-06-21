@@ -56,8 +56,12 @@ export async function RequireAuthOnly(
     return res.status(401).json({ message: "Token missing. Refresh the page" });
   }
   try {
-    const playload = jwt.verify(token, ENV.JWT_SECRET) as { userId: string };
+    const playload = jwt.verify(token, ENV.JWT_SECRET) as {
+      userId: string;
+      establishmentID: string;
+    };
     req.userId = playload.userId;
+    req.establishmentID = playload.establishmentID;
     next();
   } catch {
     return res.status(401).json({ message: "TOken invalid or missing" });
