@@ -8,12 +8,16 @@ import { sendForgotPasswordEmail } from "../../services/email/forgot-password";
 import { sendPendingValidationEmail } from "../../services/email/pendingValidation";
 import { LoginInput, RegisterInput, RegisterMemberInput } from "./auth.schema";
 
-function generateAccessToken(userId: string) {
-  return jwt.sign({ userId }, ENV.JWT_SECRET!, { expiresIn: "15m" });
+function generateAccessToken(userId: string, establishmentID: any) {
+  return jwt.sign({ userId, establishmentID }, ENV.JWT_SECRET!, {
+    expiresIn: "15m",
+  });
 }
 
-function generateRefreshToken(userId: string) {
-  return jwt.sign({ userId }, ENV.JWT_SECRET!, { expiresIn: "7d" });
+function generateRefreshToken(userId: string, establishmentID: any) {
+  return jwt.sign({ userId, establishmentID }, ENV.JWT_SECRET!, {
+    expiresIn: "7d",
+  });
 }
 
 export async function registerUserAsAdmin(data: RegisterInput) {
@@ -193,16 +197,6 @@ export async function loginUser(data: LoginInput) {
     [user.id],
   );
   const roles = rolesResult.rows.map((r) => r.role);
-
-  const accessToken = generateAccessToken(user.id);
-  const refreshToken = generateRefreshToken(user.id);
-  const tokenHash = await bcrypt.hash(refreshToken, 8);
-
-  await pool.query(
-    `INSERT INTO refresh_tokens (user_id, token_hash, expires_at)
-     VALUES ($1, $2, NOW() + INTERVAL '7 days')`,
-    [user.id, tokenHash],
-  );
   const memberResult = await pool.query(
     `SELECT em.is_aproved, e.name AS establishment_name, e.id as establishment_id
   FROM establishment_members em
@@ -212,6 +206,17 @@ export async function loginUser(data: LoginInput) {
     [user.id],
   );
   const member = memberResult.rows[0];
+  const establishmentID = member?.establishment_id ?? null;
+  const accessToken = generateAccessToken(user.id, establishmentID);
+  const refreshToken = generateRefreshToken(user.id, establishmentID);
+  const tokenHash = await bcrypt.hash(refreshToken, 8);
+
+  await pool.query(
+    `INSERT INTO refresh_tokens (user_id, token_hash, expires_at)
+     VALUES ($1, $2, NOW() + INTERVAL '7 days')`,
+    [user.id, tokenHash],
+  );
+
   return {
     user: {
       id: user.id,
@@ -257,8 +262,8 @@ export async function verifyEmail(token: any) {
   );
   const user = userRows[0];
 
-  const accessToken = generateAccessToken(userId);
-  const refreshToken = generateRefreshToken(userId);
+  const accessToken = generateAccessToken(userId, null);
+  const refreshToken = generateRefreshToken(userId, null);
   const tokenHash = await bcrypt.hash(refreshToken, 8);
 
   await pool.query(
@@ -309,8 +314,8 @@ export async function verifyEmailWithEstablishment(token: any) {
 
   const roles = rolesResult.rows.map((r) => r.role);
 
-  const accessToken = generateAccessToken(userId);
-  const refreshToken = generateRefreshToken(userId);
+  const accessToken = generateAccessToken(userId, establishmentId);
+  const refreshToken = generateRefreshToken(userId, establishmentId);
   const tokenHash = await bcrypt.hash(refreshToken, 8);
 
   await pool.query(
@@ -393,6 +398,15 @@ export async function resetPassword(token: string, newPassword: string) {
     [userId],
   );
   const roles = rolesResult.rows.map((r) => r.role);
+  const memberResult = await pool.query(
+    `SELECT e.id as establishment_id
+   FROM establishment_members em
+   JOIN establishments e ON e.id = em.establishment_id
+   WHERE em.user_id = $1 AND em.is_active = true
+   LIMIT 1`,
+    [userId],
+  );
+  const establishmentId = memberResult.rows[0]?.establishment_id ?? null;
 
   const { rows: userRows } = await pool.query(
     `SELECT u.id, u.email, p.full_name FROM users u
@@ -401,8 +415,8 @@ export async function resetPassword(token: string, newPassword: string) {
   );
   const user = userRows[0];
 
-  const accessToken = generateAccessToken(userId);
-  const refreshToken = generateRefreshToken(userId);
+  const accessToken = generateAccessToken(userId, establishmentId);
+  const refreshToken = generateRefreshToken(userId, establishmentId);
   const tokenHash = await bcrypt.hash(refreshToken, 8);
 
   await pool.query(

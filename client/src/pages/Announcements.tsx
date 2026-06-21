@@ -93,7 +93,7 @@ const Announcements = () => {
   const fetchUsers = async () => {
     if (!establishment_id) return;
     try {
-      const response = await apiRequest(`/api/establishment/${establishment_id}/all-users`,
+      const response = await apiRequest(`/api/establishment/all-users`,
         {
           method: "GET",
           credentials: "include",

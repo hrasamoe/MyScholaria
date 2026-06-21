@@ -1,5 +1,9 @@
 import { Request, Response, Router } from "express";
-import { RequireAuthOnly } from "../../middleware/auth.middleware";
+import {
+  AuthRequest,
+  RequireAuth,
+  RequireAuthOnly,
+} from "../../middleware/auth.middleware";
 import { studentSchema } from "./students.schema";
 import {
   createStudent,
@@ -13,10 +17,10 @@ import {
 export const studentRouter = Router();
 
 studentRouter.post(
-  "/create/:id",
-  RequireAuthOnly,
-  async (req: Request, res: Response) => {
-    const establishmentID = req.params.id as string;
+  "/create",
+  RequireAuth,
+  async (req: AuthRequest, res: Response) => {
+    const establishmentID = req.establishmentID as string;
     const parsed = studentSchema.safeParse(req.body);
     if (!parsed.success) {
       const fieldErrors = parsed.error.flatten().fieldErrors;
@@ -46,10 +50,10 @@ studentRouter.post(
 );
 
 studentRouter.get(
-  "/list/:id",
-  RequireAuthOnly,
-  async (req: Request, res: Response) => {
-    const establishmentID = req.params.id as string;
+  "/list",
+  RequireAuth,
+  async (req: AuthRequest, res: Response) => {
+    const establishmentID = req.establishmentID as string;
     try {
       const students = await getStudentList(establishmentID);
       res.status(200).json(students);

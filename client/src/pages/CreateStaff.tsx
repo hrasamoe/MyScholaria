@@ -131,7 +131,7 @@ const CreateStaff = () => {
         status: form.status,
       };
 
-      const response = await apiRequest(`/api/staff/create/${establishmentID}`,
+      const response = await apiRequest(`/api/staff/create`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

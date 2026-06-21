@@ -85,7 +85,7 @@ const Classrooms = () => {
     if (!establishmentID) return;
     try {
       setLoading(true);
-      const response = await apiRequest(`/api/utils/get-classrooms/${establishmentID}`,
+      const response = await apiRequest(`/api/utils/get-classrooms`,
         {
           method: "GET",
           credentials: "include",
@@ -166,7 +166,7 @@ const Classrooms = () => {
       setActionLoading(true);
       const url = selectedRoom
         ? `/api/utils/update-classroom/${selectedRoom.id}`
-        : `/api/utils/create-classroom/${establishmentID}`;
+        : `/api/utils/create-classroom`;
 
       const method = selectedRoom ? "PUT" : "POST";
 

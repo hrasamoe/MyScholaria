@@ -89,12 +89,12 @@ const CreateStudent = () => {
         setLoading(true);
         const [resClasses, resParents] = await Promise.all([
           apiRequest(
-            `/api/establishment/classes-list/${establishmentID}`,
+            `/api/establishment/classes-list`,
             {
               credentials: "include",
             },
           ),
-          apiRequest(`/api/utils/get-parent-list/${establishmentID}`, {
+          apiRequest(`/api/utils/get-parent-list`, {
             credentials: "include",
           }),
         ]);
@@ -180,7 +180,7 @@ const CreateStudent = () => {
       };
 
       const response = await apiRequest(
-        `/api/students/create/${establishmentID}`,
+        `/api/students/create`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

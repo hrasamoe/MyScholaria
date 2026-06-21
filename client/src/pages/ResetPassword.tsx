@@ -69,7 +69,7 @@ const ResetPassword = () => {
   const theme = useTheme();
 
   const token = params.get("token");
-  const isReset = !!token; // true = vient de l'email, false = changement depuis settings
+  const isReset = !!token; 
 
   const [next, setNext] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -129,7 +129,6 @@ const ResetPassword = () => {
     }
   };
 
-  // Token invalide
   if (isReset && tokenValid === false) {
     return (
       <Box
@@ -160,7 +159,6 @@ const ResetPassword = () => {
     );
   }
 
-  // Chargement vérification token
   if (isReset && tokenValid === null) {
     return (
       <Box

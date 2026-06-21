@@ -1,5 +1,9 @@
 import { Request, Response, Router } from "express";
-import { AuthRequest, RequireAuthOnly } from "../../middleware/auth.middleware";
+import {
+  AuthRequest,
+  RequireAuth,
+  RequireAuthOnly,
+} from "../../middleware/auth.middleware";
 import { parentSchema, roomSchema } from "./other.schema";
 import {
   createParent,
@@ -16,11 +20,11 @@ import {
 export const utilschemaRouter = Router();
 
 utilschemaRouter.post(
-  "/create-parent/:id",
-  RequireAuthOnly,
+  "/create-parent",
+  RequireAuth,
   async (req: AuthRequest | Request | any, res: Response) => {
     try {
-      const establishmentId = req.params?.id || req.body.establishmentId;
+      const establishmentId = req.establishmentID as string;
 
       const data = parentSchema.parse({
         firstName: req.body.firstName,
@@ -49,11 +53,11 @@ utilschemaRouter.post(
 );
 
 utilschemaRouter.get(
-  "/get-parent-list/:id",
-  RequireAuthOnly,
-  async (req: Request, res: Response) => {
+  "/get-parent-list",
+  RequireAuth,
+  async (req: AuthRequest, res: Response) => {
     try {
-      const establishmentId = req.params?.id || req.body.establishmentId;
+      const establishmentId = req.establishmentID as string;
       const parentList = await getParentList(establishmentId);
       res.status(200).json(parentList);
     } catch (error: any) {
@@ -118,11 +122,11 @@ utilschemaRouter.put(
 );
 
 utilschemaRouter.post(
-  "/create-classroom/:id",
-  RequireAuthOnly,
-  async (req: Request, res: Response) => {
+  "/create-classroom",
+  RequireAuth,
+  async (req: AuthRequest, res: Response) => {
     try {
-      const estalishmentID = req.params?.id || req.body.establishmentId;
+      const estalishmentID = req.establishmentID as string;
       const data = roomSchema.parse({
         name: req.body.name,
         building: req.body.building,
@@ -145,11 +149,11 @@ utilschemaRouter.post(
 );
 
 utilschemaRouter.get(
-  "/get-classrooms/:id",
-  RequireAuthOnly,
-  async (req: Request, res: Response) => {
+  "/get-classrooms",
+  RequireAuth,
+  async (req: AuthRequest, res: Response) => {
     try {
-      const establishmentID = req.params?.id;
+      const establishmentID = req.establishmentID;
       const roomList = await getRooms(establishmentID);
       res.status(200).json(roomList);
     } catch (error: any) {

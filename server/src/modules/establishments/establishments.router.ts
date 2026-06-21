@@ -93,7 +93,7 @@ establishementRouter.post(
   RequireAuth,
   async (req: AuthRequest, res: Response) => {
     try {
-      const userID = req.userId as string
+      const userID = req.userId as string;
       const myEstablishment = await getMyEstablishment(userID);
       res.status(200).json({
         message: "My establishment retrieved successfully",
@@ -123,11 +123,11 @@ establishementRouter.post(
 );
 
 establishementRouter.get(
-  "/:id/pending-members",
-  RequireAuthOnly,
+  "/pending-members",
+  RequireAuth,
   async (req: AuthRequest, res: Response) => {
     try {
-      const establishementID = req.params.id;
+      const establishementID = req.establishmentID;
       const members = await findPendingMember(establishementID as string);
       res.status(200).json(members);
     } catch (err: any) {
@@ -142,11 +142,11 @@ establishementRouter.get(
 );
 
 establishementRouter.get(
-  "/:id/all-users",
+  "/all-users",
   RequireAuth,
   async (req: AuthRequest, res: Response) => {
     try {
-      const establishementID = req.params.id;
+      const establishementID = req.establishmentID;
       const allmembers = await findAllMemberAproved(establishementID as string);
       res.status(200).json(allmembers);
     } catch (error: any) {
@@ -165,7 +165,8 @@ establishementRouter.post(
   RequireAuthOnly,
   async (req: AuthRequest, res: Response) => {
     try {
-      const { email, establishmentId, isAproved, role } = req.body;
+      const establishmentId = req.establishmentID as string;
+      const { email, isAproved, role } = req.body;
       const response = await approveMember(
         email,
         establishmentId,
@@ -183,11 +184,11 @@ establishementRouter.post(
 );
 
 establishementRouter.post(
-  "/classes/:id",
-  RequireAuthOnly,
-  async (req: Request, res: Response) => {
+  "/classes",
+  RequireAuth,
+  async (req: AuthRequest, res: Response) => {
     try {
-      const establishmentID = req.params.id as string;
+      const establishmentID = req.establishmentID as string;
       const classData = req.body as ClassInfo;
       const newClass = await createClasses(establishmentID, classData);
       res.status(201).json({
@@ -204,11 +205,11 @@ establishementRouter.post(
 );
 
 establishementRouter.get(
-  "/classes-list/:id",
-  RequireAuthOnly,
-  async (req: Request, res: Response) => {
+  "/classes-list",
+  RequireAuth,
+  async (req: AuthRequest, res: Response) => {
     try {
-      const establishmentID = req.params.id as string;
+      const establishmentID = req.establishmentID as string;
       const classList = await getClassList(establishmentID);
       res.status(200).json(classList);
     } catch (error: any) {
@@ -233,9 +234,9 @@ establishementRouter.put(
   RequireAuthOnly,
   async (req: Request, res: Response) => {
     try {
-      const establishmentID = req.params.id as string;
+      const classID = req.params.id as string;
       const classData = req.body as ClassInfo;
-      const newClass = await editClass(establishmentID, classData);
+      const newClass = await editClass(classID, classData);
       res.status(201).json({
         message: "Class updated successfully",
         data: newClass,
@@ -259,11 +260,11 @@ establishementRouter.put(
 );
 
 establishementRouter.delete(
-  "/delete-classes/:id",
-  RequireAuthOnly,
+  "/delete-classes/:classID",
+  RequireAuth,
   async (req: Request, res: Response) => {
     try {
-      const classID = req.params.id as string;
+      const classID = req.params.classID as string;
       await deleteClass(classID);
       res.status(200).json({
         message: "Class deleted successfully",

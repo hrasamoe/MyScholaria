@@ -1,38 +1,37 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { apiRequest } from "@/services/api.service";
+import BusinessIcon from "@mui/icons-material/Business";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import EmailIcon from "@mui/icons-material/Email";
+import PhoneIcon from "@mui/icons-material/Phone";
 import {
+  Alert,
   Box,
+  Button,
   Card,
   CardContent,
-  TextField,
-  Button,
-  Typography,
-  Stack,
-  Divider,
   CircularProgress,
-  Alert,
-  useTheme,
-  Stepper,
-  Step,
-  StepLabel,
+  Divider,
   FormControl,
   InputLabel,
-  Select,
-  MenuItem,
   Link,
+  MenuItem,
+  Select,
+  Stack,
+  Step,
+  StepLabel,
+  Stepper,
+  TextField,
+  Typography,
+  useTheme,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import BusinessIcon from "@mui/icons-material/Business";
-import PhoneIcon from "@mui/icons-material/Phone";
-import EmailIcon from "@mui/icons-material/Email";
 import { useSnackbar } from "notistack";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/Authcontext";
-import { apiRequest } from "@/services/api.service";
 
 const CreateEstablishment = () => {
   const [form, setForm] = useState({
-    // Étape 1 - Info de base
     name: "",
     code: "",
     type: "primary",
@@ -72,19 +71,16 @@ const CreateEstablishment = () => {
     { value: "other", label: "Other" },
   ];
 
-  // Générer un code aléatoire
   const generateCode = () => {
     return Math.random().toString(36).substring(2, 12).toUpperCase();
   };
 
   const validateStep = (step: number): boolean => {
     if (step === 1) {
-      // Validation Étape 1 - Info de base
       if (!form.name || !form.code || !form.type) {
         setError("Please fill all required fields: Name, Code, Type");
         return false;
       }
-      // Vérifier que le code commence par EST ou est valide
       if (!/^[A-Z0-9\-]+$/.test(form.code)) {
         setError(
           "Establishment code must contain only uppercase letters, numbers and hyphens",
@@ -92,23 +88,19 @@ const CreateEstablishment = () => {
         return false;
       }
     } else if (step === 2) {
-      // Validation Étape 2 - Contact
       if (!form.address || !form.phone || !form.email) {
         setError("Please fill all contact details");
         return false;
       }
-      // Validation email
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
         setError("Please enter a valid email address");
         return false;
       }
-      // Validation téléphone
       if (!/^\d{10,}$/.test(form.phone.replace(/[\s\-()]/g, ""))) {
         setError("Please enter a valid phone number");
         return false;
       }
     } else if (step === 3) {
-      // Validation Étape 3 - Codes d'accès
       if (!form.joinCode || !form.adminCode) {
         setError("Join code and admin code are required");
         return false;
@@ -156,32 +148,30 @@ const CreateEstablishment = () => {
     setIsLoading(true);
     try {
       const token = localStorage.getItem("accessToken");
-      const response = await apiRequest(`/api/establishment/create`,
-        {
-          method: "POST",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-          body: JSON.stringify({
-            name: form.name,
-
-            code: form.code,
-            type: form.type,
-            identificationNumber: form.identificationNumber || null,
-            address: form.address,
-            city: form.city,
-            zipCode: form.zipCode,
-            phone: form.phone,
-            email: form.email,
-            joinCode: form.joinCode,
-            adminCode: form.adminCode,
-            isActive: true,
-            ownerId: user?.id,
-          }),
+      const response = await apiRequest(`/api/establishment/create`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-      );
+        body: JSON.stringify({
+          name: form.name,
+
+          code: form.code,
+          type: form.type,
+          identificationNumber: form.identificationNumber || null,
+          address: form.address,
+          city: form.city,
+          zipCode: form.zipCode,
+          phone: form.phone,
+          email: form.email,
+          joinCode: form.joinCode,
+          adminCode: form.adminCode,
+          isActive: true,
+          ownerId: user?.id,
+        }),
+      });
 
       if (!response.ok) {
         const data = await response.json();
