@@ -179,7 +179,7 @@ export async function EditMessage(
     await client.query("BEGIN");
     const encryptedContent = encryptMessage(content);
     const queryText = `UPDATE messages
-    SET body = $1, send_at = NOW(), is_edited = TRUE WHERE sender_id = $2 AND id = $3
+    SET body = $1, is_edited = TRUE WHERE sender_id = $2 AND id = $3
     RETURNING *`;
     const reponse = await client.query(queryText, [
       encryptedContent,
