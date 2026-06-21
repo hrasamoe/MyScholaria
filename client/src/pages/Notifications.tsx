@@ -79,6 +79,7 @@ const Notifications = () => {
   const [loading, setLoading] = useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedDeleteId, setSelectedDeleteId] = useState<string | null>(null);
+  const [isBulkDelete, setIsBulkDelete] = useState(false);
   const [form, setForm] = useState<
     Partial<Omit<Notif, "target_user_ids">> & {
       target_user_ids: (string | number)[];
@@ -93,7 +94,8 @@ const Notifications = () => {
 
   const fetchNotifications = async () => {
     try {
-      const response = await apiRequest(`/api/notification/get-list/${establishment_id}/${userID}`,
+      const response = await apiRequest(
+        `/api/notification/get-list/${establishment_id}/${userID}`,
         {
           method: "GET",
           credentials: "include",
@@ -111,7 +113,8 @@ const Notifications = () => {
   const fetchUsers = async () => {
     if (!establishment_id) return;
     try {
-      const response = await apiRequest(`/api/establishment/${establishment_id}/all-users`,
+      const response = await apiRequest(
+        `/api/establishment/${establishment_id}/all-users`,
         {
           method: "GET",
           credentials: "include",
@@ -158,7 +161,8 @@ const Notifications = () => {
 
   const handleMarkAllRead = async () => {
     try {
-      const response = await apiRequest(`/api/notification/mark-all-read/${userID}`,
+      const response = await apiRequest(
+        `/api/notification/mark-all-read/${userID}`,
         {
           method: "PUT",
           credentials: "include",
@@ -177,7 +181,8 @@ const Notifications = () => {
 
   const handleMarkAsRead = async (id: string) => {
     try {
-      const response = await apiRequest(`/api/notification/mark-read/${id}/${userID}`,
+      const response = await apiRequest(
+        `/api/notification/mark-read/${id}/${userID}`,
         {
           method: "PUT",
           credentials: "include",
@@ -192,7 +197,13 @@ const Notifications = () => {
   };
 
   const openDeleteConfirmation = (id: string) => {
+    setIsBulkDelete(false);
     setSelectedDeleteId(id);
+    setDeleteDialogOpen(true);
+  };
+
+  const openBulkDeleteConfirmation = () => {
+    setIsBulkDelete(true);
     setDeleteDialogOpen(true);
   };
 
@@ -202,9 +213,31 @@ const Notifications = () => {
   };
 
   const handleDelete = async () => {
+    if (isBulkDelete) {
+      try {
+        const response = await apiRequest(
+          `/api/notification/delete-all/${userID}`,
+          {
+            method: "DELETE",
+            credentials: "include",
+          },
+        );
+        if (response.ok) {
+          setItems([]);
+          enqueueSnackbar("All notifications deleted", { variant: "success" });
+        }
+      } catch (error) {
+        enqueueSnackbar("Failed to delete notifications", { variant: "error" });
+      } finally {
+        closeDeleteConfirmation();
+      }
+      return;
+    }
+
     if (!selectedDeleteId) return;
     try {
-      const response = await apiRequest(`/api/notification/delete/${selectedDeleteId}`,
+      const response = await apiRequest(
+        `/api/notification/delete/${selectedDeleteId}`,
         {
           method: "DELETE",
           credentials: "include",
@@ -233,24 +266,22 @@ const Notifications = () => {
       return;
     }
     try {
-      const response = await apiRequest(`/api/notification/create/${userID}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({
-            title: form.title,
-            message: form.message,
-            audience: form.audience,
-            target_user_ids:
-              form.audience !== "all" ? form.target_user_ids : null,
-            type: form.type,
-            expires_at: form.expires_at
-              ? new Date(form.expires_at).toISOString()
-              : null,
-          }),
-        },
-      );
+      const response = await apiRequest(`/api/notification/create/${userID}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          title: form.title,
+          message: form.message,
+          audience: form.audience,
+          target_user_ids:
+            form.audience !== "all" ? form.target_user_ids : null,
+          type: form.type,
+          expires_at: form.expires_at
+            ? new Date(form.expires_at).toISOString()
+            : null,
+        }),
+      });
       if (response.ok) {
         const newNotif = await response.json();
         setItems([newNotif, ...items]);
@@ -283,11 +314,21 @@ const Notifications = () => {
           <Stack direction="row" spacing={1}>
             <Button
               variant="outlined"
+              color="inherit"
               startIcon={<DoneAllIcon />}
               onClick={handleMarkAllRead}
-              disabled={loading}
+              disabled={loading || items.length === 0}
             >
               Mark all read
+            </Button>
+            <Button
+              variant="outlined"
+              color="error"
+              startIcon={<DeleteIcon />}
+              onClick={openBulkDeleteConfirmation}
+              disabled={loading || items.length === 0}
+            >
+              Delete all
             </Button>
             <Button
               variant="contained"
@@ -361,8 +402,13 @@ const Notifications = () => {
               <Box key={n.id}>
                 <ListItem
                   sx={{
+                    alignItems: "flex-start",
                     bgcolor: n.is_read ? "transparent" : "action.hover",
                     py: 1.5,
+                    "& .MuiListItemSecondaryAction-root": {
+                      top: "16px",
+                      transform: "none",
+                    },
                   }}
                   secondaryAction={
                     <Stack direction="row" spacing={0.5}>
@@ -432,6 +478,7 @@ const Notifications = () => {
                           component="span"
                           variant="body2"
                           color="text.secondary"
+                          sx={{ whiteSpace: "pre-wrap" }}
                         >
                           {n.message}
                         </Typography>
@@ -583,11 +630,14 @@ const Notifications = () => {
       </Dialog>
 
       <Dialog open={deleteDialogOpen} onClose={closeDeleteConfirmation}>
-        <DialogTitle>Confirm Delete</DialogTitle>
+        <DialogTitle>
+          {isBulkDelete ? "Confirm Delete All" : "Confirm Delete"}
+        </DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Are you sure you want to delete this notification? This action
-            cannot be undone.
+            {isBulkDelete
+              ? "Are you sure you want to delete all notifications? This action cannot be undone."
+              : "Are you sure you want to delete this notification? This action cannot be undone."}
           </DialogContentText>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
