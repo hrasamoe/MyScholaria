@@ -5,6 +5,7 @@ import { pool } from "../db/pool";
 
 export interface AuthRequest extends Request {
   userId?: string;
+  establishmentID?: string | null;
 }
 
 export async function RequireAuth(
@@ -20,8 +21,12 @@ export async function RequireAuth(
     return res.status(401).json({ message: "Token missing. Refresh the page" });
   }
   try {
-    const payload = jwt.verify(token, ENV.JWT_SECRET) as { userId: string };
+    const payload = jwt.verify(token, ENV.JWT_SECRET) as {
+      userId: string;
+      establishmentID: string | null;
+    };
     req.userId = payload.userId;
+    req.establishmentID = payload.establishmentID;
 
     const { rows } = await pool.query(
       `SELECT is_aproved FROM establishment_members
