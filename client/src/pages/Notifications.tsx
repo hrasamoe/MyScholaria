@@ -95,7 +95,7 @@ const Notifications = () => {
   const fetchNotifications = async () => {
     try {
       const response = await apiRequest(
-        `/api/notification/get-list/${establishment_id}/${userID}`,
+        `/api/notification/get-list/${establishment_id}`,
         {
           method: "GET",
           credentials: "include",
@@ -162,7 +162,7 @@ const Notifications = () => {
   const handleMarkAllRead = async () => {
     try {
       const response = await apiRequest(
-        `/api/notification/mark-all-read/${userID}`,
+        `/api/notification/mark-all-read`,
         {
           method: "PUT",
           credentials: "include",
@@ -182,7 +182,7 @@ const Notifications = () => {
   const handleMarkAsRead = async (id: string) => {
     try {
       const response = await apiRequest(
-        `/api/notification/mark-read/${id}/${userID}`,
+        `/api/notification/mark-read/${id}`,
         {
           method: "PUT",
           credentials: "include",
@@ -266,7 +266,7 @@ const Notifications = () => {
       return;
     }
     try {
-      const response = await apiRequest(`/api/notification/create/${userID}`, {
+      const response = await apiRequest(`/api/notification/create`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

@@ -46,14 +46,13 @@ export async function createEstablishment(
   return result;
 }
 
-export async function getMyEstablishments(userID: string): Promise<any[]> {
+export async function getMyEstablishments(): Promise<any[]> {
   const res = await apiRequest(`/api/establishment/my`, {
     method: "POST",
     credentials: "include",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ userID }),
   });
 
   const result = await res.json();

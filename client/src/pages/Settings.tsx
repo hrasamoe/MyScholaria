@@ -57,12 +57,11 @@ const Settings = () => {
   const { user } = useAuth();
   const isSearching = useRef(false);
   useEffect(() => {
-    // if (isSearching.current) return;
     const userID = user.id;
     isSearching.current = true;
     setLoading(true);
 
-    getMyEstablishments(userID)
+    getMyEstablishments()
       .then((establishments) => {
         setEstablishments(establishments);
       })
