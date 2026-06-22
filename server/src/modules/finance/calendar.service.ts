@@ -95,6 +95,19 @@ export async function deleteCalendar(userID: string, eventID: string) {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
+    const enventToDelete = await client.query(
+      `SELECT * FROM school_calendar WHERE id = $1`,
+      [eventID],
+    );
+    if (userID == enventToDelete.rows[0].author_id) {
+      await client.query(
+        `DELETE FROM school_calendar
+        WHERE id = $1`,
+        [eventID],
+      );
+    } else {
+      throw new Error("You are not allowed to delete this event");
+    }
     await client.query("COMMIT");
   } catch (error: any) {
     console.error(error);
