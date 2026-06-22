@@ -193,7 +193,7 @@ const SchoolCalendar = () => {
         const response = await apiRequest(
           `/api/calendar/delete/${eventToDelete.id}`,
           {
-            method: "POST",
+            method: "DELETE",
             credentials: "include",
           },
         );
