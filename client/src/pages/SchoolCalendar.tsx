@@ -3,6 +3,7 @@ import { useAuth } from "@/hooks/Authcontext";
 import { apiRequest } from "@/services/api.service";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import AddIcon from "@mui/icons-material/Add";
+import Delete from "@mui/icons-material/Delete";
 import EventIcon from "@mui/icons-material/Event";
 import {
   Box,
@@ -16,6 +17,7 @@ import {
   DialogContent,
   DialogTitle,
   FormControlLabel,
+  IconButton,
   MenuItem,
   Radio,
   RadioGroup,
@@ -238,7 +240,11 @@ const SchoolCalendar = () => {
           events.map((e) => (
             <Grid size={{ xs: 12, sm: 6, md: 4 }} key={e.id}>
               <Card variant="outlined" sx={{ height: "100%" }}>
-                <CardContent>
+                <CardContent
+                  sx={{
+                    position: "relative",
+                  }}
+                >
                   <Stack
                     direction="row"
                     justifyContent="space-between"
@@ -281,6 +287,15 @@ const SchoolCalendar = () => {
                   <Typography variant="body2" mt={1}>
                     {e.description}
                   </Typography>
+                  <IconButton
+                    sx={{
+                      position: "absolute",
+                      right: "9px",
+                      bottom: "20px",
+                    }}
+                  >
+                    <Delete color="error" />
+                  </IconButton>
                 </CardContent>
               </Card>
             </Grid>
