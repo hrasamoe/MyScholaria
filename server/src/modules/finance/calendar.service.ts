@@ -109,7 +109,13 @@ export async function GetListOfCalendar(establishmentID: string) {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
+    const result = await client.query(
+      `SELECT * FROM school_calendar
+       where establishment_id = $1`,
+      [establishmentID],
+    );
     await client.query("COMMIT");
+    return result.rows;
   } catch (error: any) {
     console.error(error);
     await client.query("ROLLBACK");

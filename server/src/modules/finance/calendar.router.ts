@@ -1,7 +1,7 @@
 import { Response, Router } from "express";
 import { AuthRequest, RequireAuth } from "../../middleware/auth.middleware";
 import { calendarSchema } from "./calendar.schema";
-import { createCalendar } from "./calendar.service";
+import { createCalendar, GetListOfCalendar } from "./calendar.service";
 export const calendarRouter = Router();
 
 calendarRouter.post(
@@ -40,7 +40,10 @@ calendarRouter.post(
   "/get-list",
   RequireAuth,
   async (req: AuthRequest, res: Response) => {
+    const establishmentID = req.establishmentID as string;
     try {
+      const result = GetListOfCalendar(establishmentID);
+      res.status(200).json(result);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
