@@ -28,7 +28,7 @@ import {
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import { useSnackbar } from "notistack";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface CalEvent {
   id: number;
@@ -79,7 +79,10 @@ const SchoolCalendar = () => {
     start_time: "",
     end_time: "",
   });
-  const { enqueueSnackbar } = useSnackbar();
+  const { enqueueSnackbar, closeSnackbar } = useSnackbar();
+  const timeoutsRef = useRef<{ [key: number]: ReturnType<typeof setTimeout> }>(
+    {},
+  );
 
   const fetchEvents = async () => {
     try {
@@ -180,6 +183,61 @@ const SchoolCalendar = () => {
       }
     }
   };
+
+  const handleDelete = (eventToDelete: CalEvent) => {
+    const previousEvents = [...events];
+    setEvents((prev) => prev.filter((e) => e.id !== eventToDelete.id));
+
+    const executeDelete = async () => {
+      try {
+        const response = await apiRequest(
+          `/api/calendar/delete/${eventToDelete.id}`,
+          {
+            method: "POST",
+            credentials: "include",
+          },
+        );
+        if (!response.ok) {
+          throw new Error("Failed to delete from server");
+        }
+        delete timeoutsRef.current[eventToDelete.id];
+      } catch (error: any) {
+        setEvents(previousEvents);
+        enqueueSnackbar(error.message || "Error during permanent deletion", {
+          variant: "error",
+        });
+      }
+    };
+
+    const timeoutId = setTimeout(executeDelete, 5000);
+    timeoutsRef.current[eventToDelete.id] = timeoutId;
+
+    enqueueSnackbar(`Suppression de l'événement : ${eventToDelete.title}`, {
+      variant: "warning",
+      autoHideDuration: 5000,
+      action: (key) => (
+        <Button
+          color="inherit"
+          size="small"
+          onClick={() => {
+            clearTimeout(timeoutsRef.current[eventToDelete.id]);
+            delete timeoutsRef.current[eventToDelete.id];
+            setEvents(previousEvents);
+            closeSnackbar(key);
+            enqueueSnackbar("Suppression annulée", { variant: "success" });
+          }}
+        >
+          Cancel
+        </Button>
+      ),
+    });
+  };
+
+  useEffect(() => {
+    return () => {
+      Object.values(timeoutsRef.current).forEach(clearTimeout);
+    };
+  }, []);
 
   useEffect(() => {
     if (establishmentID) {
@@ -284,10 +342,11 @@ const SchoolCalendar = () => {
                       </Typography>
                     </Box>
                   )}
-                  <Typography variant="body2" mt={1}>
+                  <Typography variant="body2" mt={1} sx={{ pr: 4 }}>
                     {e.description}
                   </Typography>
                   <IconButton
+                    onClick={() => handleDelete(e)}
                     sx={{
                       position: "absolute",
                       right: "9px",
