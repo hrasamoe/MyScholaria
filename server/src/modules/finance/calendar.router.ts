@@ -12,6 +12,7 @@ calendarRouter.post(
     try {
       const parsed = calendarSchema.safeParse(req.body);
       if (!parsed.success) {
+        console.log(parsed.error.message);
         return res
           .status(400)
           .json({ message: "Invalid data", errors: parsed.error });
