@@ -94,24 +94,25 @@ export async function createCalendar(userID: string, Event: EventInfo) {
 export async function deleteCalendar(userID: string, eventID: string) {
   const client = await pool.connect();
   try {
-    await client.query("BEGGIN");
+    await client.query("BEGIN");
     await client.query("COMMIT");
   } catch (error: any) {
-    console.log(error);
-    client.query("ROLLBACK");
+    console.error(error);
+    await client.query("ROLLBACK");
     throw error;
   } finally {
     client.release();
   }
 }
+
 export async function GetListOfCalendar(establishmentID: string) {
   const client = await pool.connect();
   try {
-    await client.query("BEGGIN");
+    await client.query("BEGIN");
     await client.query("COMMIT");
   } catch (error: any) {
-    console.log(error);
-    client.query("ROLLBACK");
+    console.error(error);
+    await client.query("ROLLBACK");
     throw error;
   } finally {
     client.release();
