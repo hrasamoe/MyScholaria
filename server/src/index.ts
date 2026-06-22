@@ -7,22 +7,21 @@ import cors from "cors";
 import { setDefaultResultOrder } from "dns";
 import express from "express";
 import helmet from "helmet";
+import { createServer } from "http";
 import cron from "node-cron";
 import { initPool } from "./db/pool";
-import { initWebSocketServer } from "./services/websocket/ws-server";
+import { announcementRouter } from "./modules/announcements/announcement.router";
 import { authRouter } from "./modules/auth/auth.router";
 import { cleanUnverifiedAccounts } from "./modules/auth/auth.service";
+import { messageRouter } from "./modules/communications/message.router";
 import { establishementRouter } from "./modules/establishments/establishments.router";
+import { calendarRouter } from "./modules/finance/calendar.router";
+import { notificationROuter } from "./modules/notification/notfication.router";
 import { utilschemaRouter } from "./modules/other/other.router";
+import { staffRouter } from "./modules/staff/staff.router";
 import { studentRouter } from "./modules/students/students.router";
 import { teacherRouter } from "./modules/teacher/teacher.router";
-import { staffRouter } from "./modules/staff/staff.router";
-import {
-  announcementRouter,
-  notificationROuter,
-} from "./modules/notification/notfication.router";
-import { messageRouter } from "./modules/communications/message.router";
-import { createServer } from "http";
+import { initWebSocketServer } from "./services/websocket/ws-server";
 
 setDefaultResultOrder("ipv4first");
 
@@ -58,6 +57,7 @@ app.use("/api/students", studentRouter);
 app.use("/api/staff", staffRouter);
 app.use("/api/announcement", announcementRouter);
 app.use("/api/notification", notificationROuter);
+app.use("/api/calendar", calendarRouter);
 
 app.get("/api/health", (_, res) => {
   res.json({ status: "ok", project: "MyScholaria" });

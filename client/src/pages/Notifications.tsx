@@ -95,7 +95,7 @@ const Notifications = () => {
   const fetchNotifications = async () => {
     try {
       const response = await apiRequest(
-        `/api/notification/get-list/${establishment_id}`,
+        `/api/notification/get-list`,
         {
           method: "GET",
           credentials: "include",
