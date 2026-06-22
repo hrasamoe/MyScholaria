@@ -15,6 +15,7 @@ import { authRouter } from "./modules/auth/auth.router";
 import { cleanUnverifiedAccounts } from "./modules/auth/auth.service";
 import { messageRouter } from "./modules/communications/message.router";
 import { establishementRouter } from "./modules/establishments/establishments.router";
+import { calendarRouter } from "./modules/finance/calendar.router";
 import { notificationROuter } from "./modules/notification/notfication.router";
 import { utilschemaRouter } from "./modules/other/other.router";
 import { staffRouter } from "./modules/staff/staff.router";
@@ -56,6 +57,7 @@ app.use("/api/students", studentRouter);
 app.use("/api/staff", staffRouter);
 app.use("/api/announcement", announcementRouter);
 app.use("/api/notification", notificationROuter);
+app.use("/api/calendat", calendarRouter);
 
 app.get("/api/health", (_, res) => {
   res.json({ status: "ok", project: "MyScholaria" });
