@@ -58,10 +58,10 @@ notificationROuter.delete(
 );
 
 notificationROuter.get(
-  "/get-list/:id",
+  "/get-list",
   RequireAuth,
   async (req: AuthRequest, res: Response) => {
-    const establishmentID = req.params.id as string;
+    const establishmentID = req.establishmentID as string;
     const userID = req.userId as string;
     try {
       const result = await getNotification(establishmentID, userID);
