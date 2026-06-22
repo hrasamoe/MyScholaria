@@ -1,24 +1,26 @@
 import PageHeader from "@/components/PageHeader";
+import { apiRequest } from "@/services/api.service";
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import AddIcon from "@mui/icons-material/Add";
 import EventIcon from "@mui/icons-material/Event";
-import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import {
   Box,
   Button,
   Card,
   CardContent,
   Chip,
+  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
+  FormControlLabel,
   MenuItem,
+  Radio,
+  RadioGroup,
   Stack,
   TextField,
   Typography,
-  FormControlLabel,
-  Radio,
-  RadioGroup,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import { useSnackbar } from "notistack";
@@ -27,7 +29,17 @@ import { useState } from "react";
 interface CalEvent {
   id: number;
   title: string;
-  type: "Holiday" | "Exam" | "Term" | "Event";
+  type:
+    | "Vacation"
+    | "Holidays"
+    | "Training days"
+    | "Exams periods"
+    | "School Trips"
+    | "Open Days"
+    | "Graduations"
+    | "Parent Meetings"
+    | "Sports Days"
+    | "Conferences";
   isMultiDay: boolean;
   date?: string;
   startTime: string;
@@ -37,30 +49,6 @@ interface CalEvent {
   description: string;
 }
 
-const seed: CalEvent[] = [
-  {
-    id: 1,
-    title: "Back to school",
-    type: "Term",
-    isMultiDay: false,
-    date: "2026-09-01",
-    startTime: "08:00",
-    endTime: "16:00",
-    description: "Start of academic year",
-  },
-  {
-    id: 2,
-    title: "Autumn break",
-    type: "Holiday",
-    isMultiDay: true,
-    startDate: "2026-10-26",
-    endDate: "2026-11-01",
-    startTime: "08:00",
-    endTime: "17:00",
-    description: "One week vacation",
-  },
-];
-
 const typeColor: any = {
   Holiday: "warning",
   Exam: "error",
@@ -69,17 +57,18 @@ const typeColor: any = {
 };
 
 const SchoolCalendar = () => {
-  const [events, setEvents] = useState(seed);
+  const [events, setEvents] = useState([]);
   const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [isMultiDay, setIsMultiDay] = useState(false);
   const [form, setForm] = useState<Partial<CalEvent>>({
-    type: "Event",
+    type: "School Trips",
     startTime: "",
     endTime: "",
   });
   const { enqueueSnackbar } = useSnackbar();
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (!form.title) {
       enqueueSnackbar("Title required", { variant: "error" });
       return;
@@ -90,6 +79,48 @@ const SchoolCalendar = () => {
         enqueueSnackbar("Start and end dates required", { variant: "error" });
         return;
       }
+      try {
+        setLoading(true);
+        const reponse = await apiRequest(`/api/calendar/create`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            title: form.title,
+            description: form.description,
+            type: form.type,
+            isMultiDay: true,
+            startDate: form.startDate,
+            endDate: form.endDate,
+            startTime: form.startTime,
+            endTime: form.endTime,
+          }),
+        });
+        if (reponse.ok) {
+          const newEvent: CalEvent = {
+            id: events.length + 1,
+            title: form.title!,
+            type: form.type,
+            isMultiDay: true,
+            startTime: form.startTime || "",
+            endTime: form.endTime || "",
+            description: form.description || "",
+            startDate: form.startDate,
+            endDate: form.endDate,
+          };
+
+          setEvents([...events, newEvent]);
+          setForm({ type: "Vacation", startTime: "", endTime: "" });
+          setOpen(false);
+          enqueueSnackbar("Calendar event added", { variant: "success" });
+        }
+      } catch (error: any) {
+        enqueueSnackbar(error.message || "Failed to add event", {
+          variant: "error",
+        });
+      } finally {
+        setLoading(false);
+      }
     } else {
       if (!form.date || !form.startTime || !form.endTime) {
         enqueueSnackbar("Date, start and end time required", {
@@ -97,25 +128,47 @@ const SchoolCalendar = () => {
         });
         return;
       }
+      try {
+        setLoading(true);
+        const reponse = await apiRequest(`/api/calendar/create`, {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: form.title,
+            description: form.description,
+            type: form.type,
+            isMultiDay: false,
+            date: form.date,
+            startTime: form.startTime,
+            endTime: form.endTime,
+          }),
+        });
+        if (reponse.ok) {
+          const newEvent: CalEvent = {
+            id: events.length + 1,
+            title: form.title!,
+            type: form.type,
+            isMultiDay: false,
+            startTime: form.startTime || "",
+            endTime: form.endTime || "",
+            description: form.description || "",
+            date: form.date,
+          };
+
+          setEvents([...events, newEvent]);
+          setForm({ type: "Vacation", startTime: "", endTime: "" });
+          setOpen(false);
+          enqueueSnackbar("Calendar event added", { variant: "success" });
+        }
+      } catch (error: any) {
+        enqueueSnackbar(error.message || "Failed to add event", {
+          variant: "error",
+        });
+      } finally {
+        setLoading(false);
+      }
     }
-
-    const newEvent: CalEvent = {
-      id: events.length + 1,
-      title: form.title!,
-      type: form.type || "Event",
-      isMultiDay,
-      startTime: form.startTime || "",
-      endTime: form.endTime || "",
-      description: form.description || "",
-      ...(isMultiDay
-        ? { startDate: form.startDate, endDate: form.endDate }
-        : { date: form.date }),
-    };
-
-    setEvents([...events, newEvent]);
-    setForm({ type: "Event", startTime: "", endTime: "" });
-    setOpen(false);
-    enqueueSnackbar("Calendar event added", { variant: "success" });
   };
 
   return (
@@ -184,7 +237,7 @@ const SchoolCalendar = () => {
 
       <Dialog
         open={open}
-        onClose={() => setOpen(false)}
+        onClose={() => !loading && setOpen(false)}
         maxWidth="sm"
         fullWidth
       >
@@ -199,12 +252,12 @@ const SchoolCalendar = () => {
               >
                 <FormControlLabel
                   value="single"
-                  control={<Radio />}
+                  control={<Radio disabled={loading} />}
                   label="Single Day"
                 />
                 <FormControlLabel
                   value="multiple"
-                  control={<Radio />}
+                  control={<Radio disabled={loading} />}
                   label="Multiple Days"
                 />
               </RadioGroup>
@@ -212,6 +265,7 @@ const SchoolCalendar = () => {
             <Grid size={12}>
               <TextField
                 fullWidth
+                disabled={loading}
                 label="Title *"
                 value={form.title || ""}
                 onChange={(e) => setForm({ ...form, title: e.target.value })}
@@ -221,52 +275,45 @@ const SchoolCalendar = () => {
               <TextField
                 select
                 fullWidth
+                disabled={loading}
                 label="Type"
                 value={form.type || "Event"}
                 onChange={(e) =>
                   setForm({ ...form, type: e.target.value as any })
                 }
               >
-                {["Vacation", "Holidays", "Training days", "Exams periods"].map(
-                  (t) => (
-                    <MenuItem key={t} value={t}>
-                      {t}
-                    </MenuItem>
-                  ),
-                )}
+                {[
+                  "Vacation",
+                  "Holidays",
+                  "Training days",
+                  "Exams periods",
+                  "School Trips",
+                ].map((t) => (
+                  <MenuItem key={t} value={t}>
+                    {t}
+                  </MenuItem>
+                ))}
               </TextField>
             </Grid>
-            <Grid size={12}>
-              <TextField
-                fullWidth
-                multiline
-                rows={2}
-                label="Description"
-                value={form.description || ""}
-                onChange={(e) =>
-                  setForm({ ...form, description: e.target.value })
-                }
-              />
-            </Grid>
             {!isMultiDay ? (
-              <>
-                <Grid size={12}>
-                  <TextField
-                    fullWidth
-                    type="date"
-                    label="Date *"
-                    InputLabelProps={{ shrink: true }}
-                    value={form.date || ""}
-                    onChange={(e) => setForm({ ...form, date: e.target.value })}
-                  />
-                </Grid>
-              </>
+              <Grid size={12}>
+                <TextField
+                  fullWidth
+                  type="date"
+                  disabled={loading}
+                  label="Date *"
+                  InputLabelProps={{ shrink: true }}
+                  value={form.date || ""}
+                  onChange={(e) => setForm({ ...form, date: e.target.value })}
+                />
+              </Grid>
             ) : (
               <>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <TextField
                     fullWidth
                     type="date"
+                    disabled={loading}
                     label="Start Date *"
                     InputLabelProps={{ shrink: true }}
                     value={form.startDate || ""}
@@ -279,6 +326,7 @@ const SchoolCalendar = () => {
                   <TextField
                     fullWidth
                     type="date"
+                    disabled={loading}
                     label="End Date *"
                     InputLabelProps={{ shrink: true }}
                     value={form.endDate || ""}
@@ -289,11 +337,11 @@ const SchoolCalendar = () => {
                 </Grid>
               </>
             )}
-
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 fullWidth
                 type="time"
+                disabled={loading}
                 label="Start Time *"
                 InputLabelProps={{ shrink: true }}
                 value={form.startTime || ""}
@@ -306,18 +354,41 @@ const SchoolCalendar = () => {
               <TextField
                 fullWidth
                 type="time"
+                disabled={loading}
                 label="End Time *"
                 InputLabelProps={{ shrink: true }}
                 value={form.endTime || ""}
                 onChange={(e) => setForm({ ...form, endTime: e.target.value })}
               />
             </Grid>
+            <Grid size={12}>
+              <TextField
+                fullWidth
+                multiline
+                rows={2}
+                disabled={loading}
+                label="Description"
+                value={form.description || ""}
+                onChange={(e) =>
+                  setForm({ ...form, description: e.target.value })
+                }
+              />
+            </Grid>
           </Grid>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setOpen(false)}>Cancel</Button>
-          <Button variant="contained" onClick={handleAdd}>
-            Save
+          <Button onClick={() => setOpen(false)} disabled={loading}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleAdd}
+            disabled={loading}
+            startIcon={
+              loading && <CircularProgress size={20} color="inherit" />
+            }
+          >
+            {loading ? "Saving..." : "Save"}
           </Button>
         </DialogActions>
       </Dialog>
