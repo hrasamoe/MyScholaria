@@ -30,9 +30,10 @@ export async function createCalendar(userID: string, Event: EventInfo) {
           start_date,
           end_date,
           start_time,
-          end_time
+          end_time,
+          created_at
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW())
         RETURNING *
       `;
       const values = [
@@ -59,9 +60,10 @@ export async function createCalendar(userID: string, Event: EventInfo) {
           establishment_id,
           date,
           start_time,
-          end_time
+          end_time,
+          created_at
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
         RETURNING *
       `;
       const values = [
@@ -89,3 +91,29 @@ export async function createCalendar(userID: string, Event: EventInfo) {
   }
 }
 
+export async function deleteCalendar(userID: string, eventID: string) {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGGIN");
+    await client.query("COMMIT");
+  } catch (error: any) {
+    console.log(error);
+    client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+export async function GetListOfCalendar(establishmentID: string) {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGGIN");
+    await client.query("COMMIT");
+  } catch (error: any) {
+    console.log(error);
+    client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+}
