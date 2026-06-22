@@ -125,7 +125,7 @@ const Subjects = () => {
   return (
     <>
       <PageHeader
-        title="Subjects & Syllabus"
+        title="Subjects and Syllabus"
         subtitle={`${items.length} subjects defined`}
         action={
           <Button
@@ -318,9 +318,20 @@ const Subjects = () => {
                 type="number"
                 label="Coefficient"
                 value={form.coefficient || ""}
-                onChange={(e) =>
-                  setForm({ ...form, coefficient: Number(e.target.value) })
-                }
+                slotProps={{
+                  htmlInput: {
+                    min: 1,
+                    max: 10,
+                    step: 1,
+                  },
+                }}
+                onChange={(e) => {
+                  const val = Math.min(
+                    10,
+                    Math.max(1, parseInt(e.target.value) || 1),
+                  );
+                  setForm({ ...form, coefficient: val });
+                }}
               />
             </Grid>
             <Grid size={{ xs: 6, sm: 3 }}>
@@ -329,9 +340,20 @@ const Subjects = () => {
                 type="number"
                 label="Hours/week"
                 value={form.hours || ""}
-                onChange={(e) =>
-                  setForm({ ...form, hours: Number(e.target.value) })
-                }
+                slotProps={{
+                  htmlInput: {
+                    min: 1,
+                    max: 40,
+                    step: 1,
+                  },
+                }}
+                onChange={(e) => {
+                  const val = Math.min(
+                    40,
+                    Math.max(1, parseInt(e.target.value) || 1),
+                  );
+                  setForm({ ...form, hours: val });
+                }}
               />
             </Grid>
           </Grid>
