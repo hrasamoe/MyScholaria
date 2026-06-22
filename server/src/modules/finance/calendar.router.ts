@@ -36,13 +36,13 @@ calendarRouter.post(
     }
   },
 );
-calendarRouter.post(
+calendarRouter.get(
   "/get-list",
   RequireAuth,
   async (req: AuthRequest, res: Response) => {
     const establishmentID = req.establishmentID as string;
     try {
-      const result = GetListOfCalendar(establishmentID);
+      const result = await GetListOfCalendar(establishmentID);
       res.status(200).json(result);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
