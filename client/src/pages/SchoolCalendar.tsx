@@ -198,7 +198,8 @@ const SchoolCalendar = () => {
           },
         );
         if (!response.ok) {
-          throw new Error("Failed to delete from server");
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.message || "Failed to delete from server");
         }
         delete timeoutsRef.current[eventToDelete.id];
       } catch (error: any) {
@@ -208,7 +209,6 @@ const SchoolCalendar = () => {
         });
       }
     };
-
     const timeoutId = setTimeout(executeDelete, 5000);
     timeoutsRef.current[eventToDelete.id] = timeoutId;
 
