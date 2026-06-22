@@ -57,7 +57,7 @@ app.use("/api/students", studentRouter);
 app.use("/api/staff", staffRouter);
 app.use("/api/announcement", announcementRouter);
 app.use("/api/notification", notificationROuter);
-app.use("/api/calendat", calendarRouter);
+app.use("/api/calendar", calendarRouter);
 
 app.get("/api/health", (_, res) => {
   res.json({ status: "ok", project: "MyScholaria" });
