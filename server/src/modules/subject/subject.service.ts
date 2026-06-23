@@ -44,13 +44,32 @@ export async function createSubject(
 
 export async function editSubject(
   userID: string,
-  SubjectData: SubjectInfo,
+  subjectData: SubjectInfo,
   subjectID: string,
 ) {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
+    const queryText = `UPDATE subjects 
+    SET 
+      code = $1, 
+      name = $2, 
+      level = $3, 
+      coefficient = $4, 
+      hours_per_week = $5
+    WHERE id = $6 AND created_by = $7 RETURNING *`;
+    const value = [
+      subjectData.code,
+      subjectData.name,
+      subjectData.level,
+      subjectData.coefficient,
+      subjectData.hours,
+      subjectID,
+      userID,
+    ];
+    const result = await client.query(queryText, value);
     await client.query("COMMIT");
+    return result.rows[0];
   } catch (error: any) {
     console.error(error);
     await client.query("ROLLBACK");
@@ -98,10 +117,25 @@ export async function getSubjectList(establishmentID: string) {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
-    const result = await client.query(
-      "SELECT *, hours_per_week as hours FROM subjects WHERE establishment_id = $1",
-      [establishmentID],
-    );
+    const queryText = `
+      SELECT 
+        MIN(s.id::text) as id,
+        s.name,
+        jsonb_agg(
+          jsonb_build_object(
+            'class_id', s.level,
+            'class_name', c.name,
+            'code', s.code,
+            'coefficient', s.coefficient,
+            'hours', s.hours_per_week
+          )
+        ) as classes
+      FROM subjects s
+      LEFT JOIN classes c ON s.level = c.id
+      WHERE s.establishment_id = $1
+      GROUP BY s.name
+    `;
+    const result = await client.query(queryText, [establishmentID]);
     await client.query("COMMIT");
     return result.rows;
   } catch (error: any) {
