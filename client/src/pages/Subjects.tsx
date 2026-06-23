@@ -27,10 +27,10 @@ import {
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import { useSnackbar } from "notistack";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface Subject {
-  id: number;
+  id: string;
   code: string;
   name: string;
   level: string;
@@ -55,6 +55,9 @@ const Subjects = () => {
   const { enqueueSnackbar } = useSnackbar();
   const { user } = useAuth();
   const establishmentID = user.establishment_id;
+  const timeoutRef = useRef<{ [key: string]: ReturnType<typeof setTimeout> }>(
+    {},
+  );
 
   const getSubjectList = async () => {
     try {
@@ -91,9 +94,53 @@ const Subjects = () => {
     setOpen(true);
   };
 
-  const handleDelete = (id: number) => {
-    setItems(items.filter((item) => item.id !== id));
-    enqueueSnackbar("Subject deleted", { variant: "success" });
+  const handleDelete = (subjectToDelete: Subject) => {
+    const previousSubject = [...items];
+    setItems((prev) => prev.filter((item) => item.id !== subjectToDelete.id));
+    const executeDelete = async () => {
+      try {
+        const response = await apiRequest(
+          `/api/subject/delete/${subjectToDelete.id}`,
+          {
+            method: "DELETE",
+            credentials: "include",
+          },
+        );
+        if (!response.ok) {
+          const errorMessage = await response.json().catch(() => ({}));
+          throw new Error(
+            errorMessage.message || "Failed to delete the subject",
+          );
+        }
+        delete timeoutRef.current[subjectToDelete.id];
+      } catch (error: any) {
+        setItems(previousSubject);
+        enqueueSnackbar(error.message || "Error deleting  subject", {
+          variant: "error",
+        });
+      }
+    };
+    const timeoutID = setTimeout(executeDelete, 5000);
+    timeoutRef.current[subjectToDelete.id] = timeoutID;
+    enqueueSnackbar(`Deleting subject: ${subjectToDelete.name} `, {
+      autoHideDuration: 5000,
+      variant: "warning",
+      action: (key) => (
+        <Button
+          color="inherit"
+          onClick={() => {
+            clearTimeout(timeoutRef.current[subjectToDelete.id]);
+            delete timeoutRef.current[subjectToDelete.id];
+            setItems(previousSubject);
+            enqueueSnackbar(`Deletion of ${subjectToDelete.name} canceled`, {
+              variant: "success",
+            });
+          }}
+        >
+          Cancel
+        </Button>
+      ),
+    });
   };
 
   const handleSave = async () => {
@@ -145,17 +192,8 @@ const Subjects = () => {
             errorMessage.message || "Failed to create the subject",
           );
         } else {
-          setItems([
-            ...items,
-            {
-              id: items.length + 1,
-              code: form.code!,
-              name: form.name!,
-              level: form.level || "",
-              coefficient: Number(form.coefficient) || 1,
-              hours: Number(form.hours) || 1,
-            },
-          ]);
+          const createdSubject = await response.json();
+          setItems([...items, createdSubject]);
           enqueueSnackbar("Subject added", { variant: "success" });
         }
       } catch (error) {
@@ -392,7 +430,7 @@ const Subjects = () => {
                       </IconButton>
                       <IconButton
                         size="small"
-                        onClick={() => handleDelete(item.id)}
+                        onClick={() => handleDelete(item)}
                       >
                         <DeleteIcon fontSize="small" color="error" />
                       </IconButton>
