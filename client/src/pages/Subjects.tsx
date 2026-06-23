@@ -85,12 +85,28 @@ const Subjects = () => {
     enqueueSnackbar("Subject deleted", { variant: "success" });
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.code || !form.name) {
       enqueueSnackbar("Code and name required", { variant: "error" });
       return;
     }
-
+    if (form.code.length < 3) {
+      enqueueSnackbar("Subject code must be at least 3 charachters", {
+        variant: "warning",
+      });
+      return;
+    }
+    if (form.name.length < 3) {
+      enqueueSnackbar("Subject name must be at least 3 charachters", {
+        variant: "warning",
+      });
+      return;
+    }
+    if (!form.level) {
+      enqueueSnackbar("We must provide the class for new subject", {
+        variant: "warning",
+      });
+    }
     if (selectedSubject) {
       setItems(
         items.map((item) =>
@@ -99,21 +115,44 @@ const Subjects = () => {
       );
       enqueueSnackbar("Subject updated", { variant: "success" });
     } else {
-      setItems([
-        ...items,
-        {
-          id: items.length + 1,
-          code: form.code!,
-          name: form.name!,
-          level: form.level || "",
-          coefficient: Number(form.coefficient) || 1,
-          hours: Number(form.hours) || 1,
-        },
-      ]);
-      enqueueSnackbar("Subject added", { variant: "success" });
+      try {
+        const response = await apiRequest("/api/subject/create", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(form),
+          credentials: "include",
+        });
+
+        if (!response.ok) {
+          const errorMessage = await response.json().catch(() => ({}));
+          throw new Error(
+            errorMessage.message || "Failed to create the subject",
+          );
+        } else {
+          setItems([
+            ...items,
+            {
+              id: items.length + 1,
+              code: form.code!,
+              name: form.name!,
+              level: form.level || "",
+              coefficient: Number(form.coefficient) || 1,
+              hours: Number(form.hours) || 1,
+            },
+          ]);
+          enqueueSnackbar("Subject added", { variant: "success" });
+        }
+      } catch (error) {
+        enqueueSnackbar(error.message || "Error creating subject", {
+          variant: "error",
+        });
+      } finally {
+        setOpen(false);
+        setForm({});
+      }
     }
-    setForm({});
-    setOpen(false);
   };
 
   const filteredItems = items.filter(
@@ -195,7 +234,9 @@ const Subjects = () => {
                       {item.name}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      Class: {item.level || "N/A"}
+                      Class:{" "}
+                      {classes.find((cls) => cls.id === item.level)?.name ||
+                        "N/A"}
                     </Typography>
                   </Box>
                   <Chip
@@ -306,7 +347,7 @@ const Subjects = () => {
                   <em>Select a class</em>
                 </MenuItem>
                 {classes.map((cls) => (
-                  <MenuItem key={cls.id} value={cls.name}>
+                  <MenuItem key={cls.id} value={cls.id}>
                     {cls.name} {cls.level ? `(${cls.level})` : ""}
                   </MenuItem>
                 ))}
