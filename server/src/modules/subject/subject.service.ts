@@ -21,7 +21,7 @@ export async function createSubject(userID: string, subjectData: SubjectInfo) {
       subjectData.name,
       subjectData.level,
       subjectData.coefficient,
-      subjectData.hours_per_week,
+      subjectData.hours,
       new Date(),
       userID,
     ];
