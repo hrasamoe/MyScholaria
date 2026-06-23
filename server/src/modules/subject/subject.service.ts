@@ -19,8 +19,7 @@ export async function createSubject(
       created_at,
       created_by,
       establishment_id
-    ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
-      `;
+    ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`;
     const value = [
       subjectData.code,
       subjectData.name,
@@ -69,17 +68,22 @@ export async function deleteSubject(userID: string, subjectID: string) {
       `SELECT * FROM subjects WHERE id = $1`,
       [subjectID],
     );
-    if (userID == subjetToDelete.rows[0].created_by) {
+
+    if (!subjetToDelete.rows || subjetToDelete.rows.length === 0) {
+      throw new Error("Subject not found");
+    }
+
+    if (userID !== subjetToDelete.rows[0].created_by) {
       throw new Error(
         `You are not allowed to delete ${subjetToDelete.rows[0].name} subject`,
       );
-    } else {
-      await client.query(
-        `DELETE FROM subjects
-        WHERE id = $1`,
-        [subjectID],
-      );
     }
+
+    await client.query(
+      `DELETE FROM subjects
+      WHERE id = $1`,
+      [subjectID],
+    );
     await client.query("COMMIT");
   } catch (error: any) {
     console.error(error);
