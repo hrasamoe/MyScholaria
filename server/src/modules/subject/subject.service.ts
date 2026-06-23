@@ -65,6 +65,21 @@ export async function deleteSubject(userID: string, subjectID: string) {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
+    const subjetToDelete = await client.query(
+      `SELECT * FROM subjects WHERE id = $1`,
+      [subjectID],
+    );
+    if (userID == subjetToDelete.rows[0].created_by) {
+      throw new Error(
+        `You are not allowed to delete ${subjetToDelete.rows[0].name} subject`,
+      );
+    } else {
+      await client.query(
+        `DELETE FROM subjects
+        WHERE id = $1`,
+        [subjectID],
+      );
+    }
     await client.query("COMMIT");
   } catch (error: any) {
     console.error(error);

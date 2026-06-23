@@ -1,7 +1,11 @@
 import { Response, Router } from "express";
 import { AuthRequest, RequireAuth } from "../../middleware/auth.middleware";
 import { SubjectSchema } from "./subject.schema";
-import { createSubject, getSubjectList } from "./subject.service";
+import {
+  createSubject,
+  deleteSubject,
+  getSubjectList,
+} from "./subject.service";
 export const subjectRouter = Router();
 
 subjectRouter.post(
@@ -40,8 +44,19 @@ subjectRouter.delete(
   "/delete/:subjectID",
   RequireAuth,
   async (req: AuthRequest, res: Response) => {
+    const userID = req.userId as string;
+    const subjectID = req.establishmentID as string;
     try {
-    } catch {}
+      await deleteSubject(userID, subjectID);
+      res.status(200).json({
+        message: "The subject have been deleted successfully",
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        error: error.message,
+        message: error.message,
+      });
+    }
   },
 );
 subjectRouter.get(
