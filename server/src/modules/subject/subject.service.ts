@@ -1,7 +1,11 @@
 import { pool } from "../../db/pool";
 import { SubjectInfo } from "./subject.schema";
 
-export async function createSubject(userID: string, subjectData: SubjectInfo) {
+export async function createSubject(
+  userID: string,
+  establishmentID: string,
+  subjectData: SubjectInfo,
+) {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
@@ -13,8 +17,9 @@ export async function createSubject(userID: string, subjectData: SubjectInfo) {
       coefficient,
       hours_per_week,
       created_at,
-      created_by
-    ) VALUES ($1,$2,$3,$4,$5,$6,$7)
+      created_by,
+      establishment_id
+    ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
       `;
     const value = [
       subjectData.code,
@@ -24,6 +29,7 @@ export async function createSubject(userID: string, subjectData: SubjectInfo) {
       subjectData.hours,
       new Date(),
       userID,
+      establishmentID,
     ];
     const result = await client.query(queryText, value);
     await client.query("COMMIT");
