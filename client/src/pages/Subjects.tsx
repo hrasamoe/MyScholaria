@@ -1,4 +1,5 @@
 import PageHeader from "@/components/PageHeader";
+import { TeacherSubject } from "@/data/type";
 import { useAuth } from "@/hooks/Authcontext";
 import { apiRequest } from "@/services/api.service";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
@@ -28,8 +29,7 @@ import {
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import { useSnackbar } from "notistack";
-import { useEffect, useState } from "react";
-import { TeacherSubject } from "@/data/type";
+import { useEffect, useRef, useState } from "react";
 
 const SUBJECT_OPTIONS: TeacherSubject[] = [
   "Mathematics",
@@ -120,6 +120,9 @@ const Subjects = () => {
   const { enqueueSnackbar } = useSnackbar();
   const { user } = useAuth();
   const establishmentID = user.establishment_id;
+  const timeoutsRef = useRef<{ [key: string]: ReturnType<typeof setTimeout> }>(
+    {},
+  );
 
   const getSubjectList = async () => {
     try {
@@ -152,11 +155,68 @@ const Subjects = () => {
     setOpen(true);
   };
 
-  const handleDeleteClassRelation = async (classId: string) => {
-    enqueueSnackbar("Removal feature integration required", {
-      variant: "info",
-    });
+const handleDeleteClassRelation = async (
+  classId: string,
+  className: string,
+  subjectName: string,
+  subjectID: string,
+) => {
+  const previousState = [...items];
+
+  setItems((prev) =>
+    prev
+      .map((subject) => subject.id === subjectID ? {
+        ...subject,
+        classes: subject.classes.filter((cls) => cls.class_id !== classId),
+      } : subject)
+      .filter((subject) => subject.classes.length > 0),
+  );
+
+  const executeDelete = async () => {
+    try {
+      const response = await apiRequest(
+        `/api/subject/delete/${classId}/${subjectID}`,
+        {
+          method: "DELETE",
+          credentials: "include",
+        },
+      );
+      if (!response.ok) {
+        const errorMessage = await response.json().catch(() => ({}));
+        throw new Error(errorMessage.message || "Failed to delete row");
+      }
+      delete timeoutsRef.current[classId];
+    } catch (error: any) {
+      setItems(previousState);
+    
+      enqueueSnackbar(
+        error.message || "Error deleting subject-class relation",
+        { variant: "error" },
+      );
+    }
   };
+
+  const timeoutID = setTimeout(executeDelete, 5000);
+  timeoutsRef.current[classId] = timeoutID;
+
+  enqueueSnackbar(`Removing ${subjectName} from ${className}`, {
+    autoHideDuration: 5000,
+    variant: "warning",
+    action: () => (
+      <Button
+        color="inherit"
+        onClick={() => {
+          clearTimeout(timeoutsRef.current[classId]);
+          delete timeoutsRef.current[classId];
+          setItems(previousState);
+          enqueueSnackbar("Deletion canceled", { variant: "success" });
+        }}
+      >
+        Cancel
+      </Button>
+    ),
+  });
+};
 
   const handleSave = async () => {
     if (!form.code || !form.name || !form.level) {
@@ -450,7 +510,12 @@ const Subjects = () => {
                               <IconButton
                                 size="small"
                                 onClick={() =>
-                                  handleDeleteClassRelation(cls.class_id)
+                                  handleDeleteClassRelation(
+                                    cls.class_id,
+                                    cls.class_name,
+                                    item.name,
+                                    item.id
+                                  )
                                 }
                               >
                                 <DeleteIcon fontSize="inherit" color="error" />
@@ -528,10 +593,10 @@ const Subjects = () => {
                 }}
                 onChange={(e) => {
                   const val = Math.min(
-                    10,
-                    Math.max(1, parseInt(e.target.value) || 1),
+                    40,
+                    Math.max(1, parseInt(e.target.value) || 0),
                   );
-                  setForm({ ...form, coefficient: val });
+                  setForm({ ...form, coefficient: Number(e.target.value) });
                 }}
               />
             </Grid>
@@ -547,9 +612,9 @@ const Subjects = () => {
                 onChange={(e) => {
                   const val = Math.min(
                     40,
-                    Math.max(1, parseInt(e.target.value) || 1),
+                    Math.max(1, parseInt(e.target.value) || 0),
                   );
-                  setForm({ ...form, hours: val });
+                  setForm({ ...form, hours: Number(e.target.value) });
                 }}
               />
             </Grid>
