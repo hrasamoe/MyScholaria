@@ -1,7 +1,7 @@
 import { Response, Router } from "express";
 import { AuthRequest, RequireAuth } from "../../middleware/auth.middleware";
 import { SubjectSchema } from "./subject.schema";
-import { createSubject } from "./subject.service";
+import { createSubject, getSubjectList } from "./subject.service";
 export const subjectRouter = Router();
 
 subjectRouter.post(
@@ -49,6 +49,14 @@ subjectRouter.get(
   RequireAuth,
   async (req: AuthRequest, res: Response) => {
     try {
-    } catch {}
+      const establishmentID = req.establishmentID as string;
+      const response = await getSubjectList(establishmentID);
+      res.status(200).json(response);
+    } catch (error: any) {
+      res.status(500).json({
+        message: error.message,
+        error: error.message,
+      });
+    }
   },
 );
