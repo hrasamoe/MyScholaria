@@ -1,4 +1,5 @@
 import PageHeader from "@/components/PageHeader";
+import { useAuth } from "@/hooks/Authcontext";
 import { apiRequest } from "@/services/api.service";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import AddIcon from "@mui/icons-material/Add";
@@ -50,30 +51,37 @@ const Subjects = () => {
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
   const [form, setForm] = useState<Partial<Subject>>({});
   const { enqueueSnackbar } = useSnackbar();
+  const { user } = useAuth();
+  const establishmentID = user.establishment_id;
 
-  useEffect(() => {
-    const fetchClasses = async () => {
-      try {
-        const response = await apiRequest(`/api/establishment/classes-list`, {
-          credentials: "include",
-        });
-        if (response.ok) {
-          const data = await response.json();
-          setClasses(data);
-        }
-      } catch (error) {
-        enqueueSnackbar("Error loading classes from API", { variant: "error" });
+  const getSubjectList = async () => {
+    try {
+      const response = await apiRequest("/api/subject/list", {
+        method: "GET",
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        const errorMessage = await response.json().catch(() => ({}));
+        throw new Error(
+          errorMessage.message || "Failed to fetch the subject list",
+        );
+      } else {
+        const data = await response.json();
+        setItems(data);
       }
-    };
-    fetchClasses();
-  }, []);
+    } catch (error) {
+      enqueueSnackbar(error.message || "Error fetching subject list", {
+        variant: "error",
+      });
+    }
+  };
 
   const handleOpenCreate = () => {
     setSelectedSubject(null);
     setForm({});
     setOpen(true);
   };
-
   const handleOpenEdit = (subject: Subject) => {
     setSelectedSubject(subject);
     setForm(subject);
@@ -154,6 +162,24 @@ const Subjects = () => {
       }
     }
   };
+  useEffect(() => {
+    const fetchClasses = async () => {
+      try {
+        const response = await apiRequest(`/api/establishment/classes-list`, {
+          credentials: "include",
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setClasses(data);
+        }
+      } catch (error) {
+        enqueueSnackbar("Error loading classes from API", { variant: "error" });
+      }
+    };
+    fetchClasses();
+    getSubjectList();
+  }, [establishmentID]);
+
 
   const filteredItems = items.filter(
     (item) =>
