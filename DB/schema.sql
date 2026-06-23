@@ -217,23 +217,31 @@ CREATE TABLE public.school_calendar (
   establishment_id uuid NOT NULL,
   event_type text NOT NULL,
   title text NOT NULL,
-  start_date date NOT NULL,
-  end_date date NOT NULL,
+  start_date date,
+  end_date date,
   description text,
   created_at timestamp with time zone NOT NULL DEFAULT now(),
+  start_time time without time zone,
+  end_time time without time zone,
+  is_multiple_day boolean DEFAULT false,
+  date date,
+  author_id uuid,
   CONSTRAINT school_calendar_pkey PRIMARY KEY (id),
-  CONSTRAINT school_calendar_establishment_id_fkey FOREIGN KEY (establishment_id) REFERENCES public.establishments(id)
+  CONSTRAINT school_calendar_establishment_id_fkey FOREIGN KEY (establishment_id) REFERENCES public.establishments(id),
+  CONSTRAINT school_calendar_author_id_fkey FOREIGN KEY (author_id) REFERENCES public.users(id)
 );
 CREATE TABLE public.subjects (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   code text NOT NULL UNIQUE,
   name text NOT NULL,
-  level text,
+  level uuid,
   coefficient numeric NOT NULL DEFAULT 1.0,
   hours_per_week integer,
-  description text,
   created_at timestamp with time zone NOT NULL DEFAULT now(),
-  CONSTRAINT subjects_pkey PRIMARY KEY (id)
+  created_by uuid,
+  CONSTRAINT subjects_pkey PRIMARY KEY (id),
+  CONSTRAINT subjects_level_fkey FOREIGN KEY (level) REFERENCES public.classes(id),
+  CONSTRAINT subjects_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id)
 );
 CREATE TABLE public.programs (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
