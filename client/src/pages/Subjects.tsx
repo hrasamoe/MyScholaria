@@ -6,6 +6,7 @@ import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import AddIcon from "@mui/icons-material/Add";
 import BookIcon from "@mui/icons-material/Book";
 import DeleteIcon from "@mui/icons-material/Delete";
+import EditIcon from "@mui/icons-material/Edit";
 import SearchIcon from "@mui/icons-material/Search";
 import StarBorderIcon from "@mui/icons-material/StarBorder";
 import {
@@ -26,6 +27,7 @@ import {
   Skeleton,
   TextField,
   Typography,
+  useTheme,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import { useSnackbar } from "notistack";
@@ -85,6 +87,7 @@ const SUBJECT_OPTIONS: TeacherSubject[] = [
 ];
 
 interface SubjectClassDetails {
+  id: string;
   class_id: string;
   class_name: string;
   code: string;
@@ -108,8 +111,15 @@ const Subjects = () => {
   const [items, setItems] = useState<GroupedSubject[]>([]);
   const [classes, setClasses] = useState<ClassOption[]>([]);
   const [loading, setLoading] = useState(true);
+  const [operationLoading, setOperationLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [open, setOpen] = useState(false);
+  const theme = useTheme();
+  const [openEdit, setOpenEdit] = useState(false);
+  const [editingRow, setEditingRow] = useState<{
+    subjectID: string;
+    classID: string;
+  } | null>(null);
   const [form, setForm] = useState<{
     name?: string;
     level?: string;
@@ -117,6 +127,13 @@ const Subjects = () => {
     coefficient?: number;
     hours?: number;
   }>({});
+  const [editForm, setEditForm] = useState<{
+    name: string;
+    level: string;
+    code: string;
+    coefficient: number;
+    hours: number;
+  }>({ name: "", level: "", code: "", coefficient: 1, hours: 1 });
   const { enqueueSnackbar } = useSnackbar();
   const { user } = useAuth();
   const establishmentID = user.establishment_id;
@@ -155,68 +172,120 @@ const Subjects = () => {
     setOpen(true);
   };
 
-const handleDeleteClassRelation = async (
-  classId: string,
-  className: string,
-  subjectName: string,
-  subjectID: string,
-) => {
-  const previousState = [...items];
+  const handleOpenEdit = (
+    subject: GroupedSubject,
+    cls: SubjectClassDetails,
+  ) => {
+    setEditingRow({ subjectID: cls.id, classID: cls.class_id });
+    setEditForm({
+      name: subject.name,
+      level: cls.class_id,
+      code: cls.code,
+      coefficient: cls.coefficient,
+      hours: cls.hours,
+    });
+    setOpenEdit(true);
+  };
 
-  setItems((prev) =>
-    prev
-      .map((subject) => subject.id === subjectID ? {
-        ...subject,
-        classes: subject.classes.filter((cls) => cls.class_id !== classId),
-      } : subject)
-      .filter((subject) => subject.classes.length > 0),
-  );
+  const handleUpdate = async () => {
+    if (!editForm.code || !editForm.name || !editForm.level || !editingRow) {
+      enqueueSnackbar("All fields required", { variant: "error" });
+      return;
+    }
 
-  const executeDelete = async () => {
+    setOperationLoading(true);
     try {
       const response = await apiRequest(
-        `/api/subject/delete/${classId}/${subjectID}`,
+        `/api/subject/edit/${editingRow.subjectID}`,
         {
-          method: "DELETE",
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(editForm),
           credentials: "include",
         },
       );
+
       if (!response.ok) {
         const errorMessage = await response.json().catch(() => ({}));
-        throw new Error(errorMessage.message || "Failed to delete row");
+        throw new Error(errorMessage.message || "Failed to update the subject");
+      } else {
+        enqueueSnackbar("Subject updated successfully", { variant: "success" });
+        await getSubjectList();
       }
-      delete timeoutsRef.current[classId];
-    } catch (error: any) {
-      setItems(previousState);
-    
-      enqueueSnackbar(
-        error.message || "Error deleting subject-class relation",
-        { variant: "error" },
-      );
+    } catch (error) {
+      const msg =
+        error instanceof Error ? error.message : "Error updating subject";
+      enqueueSnackbar(msg, { variant: "error" });
+    } finally {
+      setOpenEdit(false);
+      setEditingRow(null);
+      setOperationLoading(false);
     }
   };
 
-  const timeoutID = setTimeout(executeDelete, 5000);
-  timeoutsRef.current[classId] = timeoutID;
+  const handleDeleteClassRelation = async (
+    classId: string,
+    className: string,
+    subjectName: string,
+    subjectID: string,
+  ) => {
+    const previousState = [...items];
 
-  enqueueSnackbar(`Removing ${subjectName} from ${className}`, {
-    autoHideDuration: 5000,
-    variant: "warning",
-    action: () => (
-      <Button
-        color="inherit"
-        onClick={() => {
-          clearTimeout(timeoutsRef.current[classId]);
-          delete timeoutsRef.current[classId];
-          setItems(previousState);
-          enqueueSnackbar("Deletion canceled", { variant: "success" });
-        }}
-      >
-        Cancel
-      </Button>
-    ),
-  });
-};
+    setItems((prev) =>
+      prev
+        .map((subject) => ({
+          ...subject,
+          classes: subject.classes.filter((cls) => cls.id !== subjectID),
+        }))
+        .filter((subject) => subject.classes.length > 0),
+    );
+
+    const executeDelete = async () => {
+      try {
+        const response = await apiRequest(
+          `/api/subject/delete/${classId}/${subjectID}`,
+          {
+            method: "DELETE",
+            credentials: "include",
+          },
+        );
+        if (!response.ok) {
+          const errorMessage = await response.json().catch(() => ({}));
+          throw new Error(errorMessage.message || "Failed to delete row");
+        }
+        delete timeoutsRef.current[subjectID];
+      } catch (error: any) {
+        setItems(previousState);
+        enqueueSnackbar(
+          error.message || "Error deleting subject-class relation",
+          { variant: "error" },
+        );
+      }
+    };
+
+    const timeoutID = setTimeout(executeDelete, 5000);
+    timeoutsRef.current[subjectID] = timeoutID;
+
+    enqueueSnackbar(`Removing ${subjectName} from ${className}`, {
+      autoHideDuration: 5000,
+      variant: "warning",
+      action: () => (
+        <Button
+          color="inherit"
+          onClick={() => {
+            clearTimeout(timeoutsRef.current[subjectID]);
+            delete timeoutsRef.current[subjectID];
+            setItems(previousState);
+            enqueueSnackbar("Deletion canceled", { variant: "success" });
+          }}
+        >
+          Cancel
+        </Button>
+      ),
+    });
+  };
 
   const handleSave = async () => {
     if (!form.code || !form.name || !form.level) {
@@ -236,6 +305,7 @@ const handleDeleteClassRelation = async (
       return;
     }
 
+    setOperationLoading(true);
     try {
       const response = await apiRequest("/api/subject/create", {
         method: "POST",
@@ -260,6 +330,7 @@ const handleDeleteClassRelation = async (
     } finally {
       setOpen(false);
       setForm({});
+      setOperationLoading(false);
     }
   };
 
@@ -373,6 +444,7 @@ const handleDeleteClassRelation = async (
                     borderRadius: 2,
                     border: "1px solid #2a2f3d",
                     height: "100%",
+                    background: theme.palette.background.paper,
                     display: "flex",
                     flexDirection: "column",
                   }}
@@ -389,7 +461,7 @@ const handleDeleteClassRelation = async (
                       sx={{
                         display: "flex",
                         alignItems: "center",
-                        justifyValue: "space-between",
+                        justifyContent: "space-between",
                         mb: 1,
                       }}
                     >
@@ -443,8 +515,9 @@ const handleDeleteClassRelation = async (
                     >
                       {item.classes.map((cls) => (
                         <Box
-                          key={cls.class_id}
+                          key={cls.id}
                           sx={{
+                            position: "relative",
                             p: 1.5,
                             borderRadius: 1,
                             bgcolor: "background.neutral",
@@ -470,10 +543,8 @@ const handleDeleteClassRelation = async (
                               size="small"
                               label={cls.code}
                               variant="outlined"
-                              color="secondary"
                             />
                           </Box>
-
                           <Box
                             sx={{
                               display: "flex",
@@ -506,21 +577,34 @@ const handleDeleteClassRelation = async (
                                 Hours: <strong>{cls.hours}h</strong>
                               </Typography>
                             </Box>
-                            <Box sx={{ ml: "auto" }}>
-                              <IconButton
-                                size="small"
-                                onClick={() =>
-                                  handleDeleteClassRelation(
-                                    cls.class_id,
-                                    cls.class_name,
-                                    item.name,
-                                    item.id
-                                  )
-                                }
-                              >
-                                <DeleteIcon fontSize="inherit" color="error" />
-                              </IconButton>
-                            </Box>
+                          </Box>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              position: "absolute",
+                              bottom: "3px",
+                              right: "0px",
+                            }}
+                          >
+                            <IconButton
+                              size="small"
+                              onClick={() => handleOpenEdit(item, cls)}
+                            >
+                              <EditIcon fontSize="inherit" color="primary" />
+                            </IconButton>
+                            <IconButton
+                              size="small"
+                              onClick={() =>
+                                handleDeleteClassRelation(
+                                  cls.class_id,
+                                  cls.class_name,
+                                  item.name,
+                                  cls.id,
+                                )
+                              }
+                            >
+                              <DeleteIcon fontSize="inherit" color="error" />
+                            </IconButton>
                           </Box>
                         </Box>
                       ))}
@@ -591,13 +675,9 @@ const handleDeleteClassRelation = async (
                 slotProps={{
                   htmlInput: { min: 1, max: 10, step: 1 },
                 }}
-                onChange={(e) => {
-                  const val = Math.min(
-                    40,
-                    Math.max(1, parseInt(e.target.value) || 0),
-                  );
-                  setForm({ ...form, coefficient: Number(e.target.value) });
-                }}
+                onChange={(e) =>
+                  setForm({ ...form, coefficient: Number(e.target.value) })
+                }
               />
             </Grid>
             <Grid size={{ xs: 6, sm: 3 }}>
@@ -609,21 +689,125 @@ const handleDeleteClassRelation = async (
                 slotProps={{
                   htmlInput: { min: 1, max: 40, step: 1 },
                 }}
-                onChange={(e) => {
-                  const val = Math.min(
-                    40,
-                    Math.max(1, parseInt(e.target.value) || 0),
-                  );
-                  setForm({ ...form, hours: Number(e.target.value) });
-                }}
+                onChange={(e) =>
+                  setForm({ ...form, hours: Number(e.target.value) })
+                }
               />
             </Grid>
           </Grid>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setOpen(false)}>Cancel</Button>
-          <Button variant="contained" onClick={handleSave}>
+          <Button onClick={() => setOpen(false)} disabled={operationLoading}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleSave}
+            disabled={operationLoading}
+          >
             Save
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={openEdit}
+        onClose={() => setOpenEdit(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Edit Subject Assignment</DialogTitle>
+        <DialogContent>
+          <Grid container spacing={2} sx={{ mt: 0.5 }}>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TextField
+                fullWidth
+                label="Code *"
+                value={editForm.code}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, code: e.target.value })
+                }
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <Autocomplete
+                freeSolo
+                options={SUBJECT_OPTIONS}
+                value={editForm.name}
+                onChange={(_, newValue) =>
+                  setEditForm({ ...editForm, name: newValue || "" })
+                }
+                onInputChange={(_, newInputValue) =>
+                  setEditForm({ ...editForm, name: newInputValue })
+                }
+                renderInput={(params) => (
+                  <TextField {...params} label="Name *" fullWidth />
+                )}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TextField
+                select
+                fullWidth
+                label="Class / Level *"
+                value={editForm.level}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, level: e.target.value })
+                }
+              >
+                {classes.map((cls) => (
+                  <MenuItem key={cls.id} value={cls.id}>
+                    {cls.name} {cls.level ? `(${cls.level})` : ""}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Grid>
+            <Grid size={{ xs: 6, sm: 3 }}>
+              <TextField
+                fullWidth
+                type="number"
+                label="Coefficient"
+                value={editForm.coefficient}
+                slotProps={{
+                  htmlInput: { min: 1, max: 10, step: 1 },
+                }}
+                onChange={(e) =>
+                  setEditForm({
+                    ...editForm,
+                    coefficient: Number(e.target.value),
+                  })
+                }
+              />
+            </Grid>
+            <Grid size={{ xs: 6, sm: 3 }}>
+              <TextField
+                fullWidth
+                type="number"
+                label="Hours/week"
+                value={editForm.hours}
+                slotProps={{
+                  htmlInput: { min: 1, max: 40, step: 1 },
+                }}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, hours: Number(e.target.value) })
+                }
+              />
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button
+            disabled={operationLoading}
+            onClick={() => setOpenEdit(false)}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleUpdate}
+            disabled={operationLoading}
+          >
+            Save Changes
           </Button>
         </DialogActions>
       </Dialog>
