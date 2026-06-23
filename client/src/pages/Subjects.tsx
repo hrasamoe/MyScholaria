@@ -5,10 +5,10 @@ import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import AddIcon from "@mui/icons-material/Add";
 import BookIcon from "@mui/icons-material/Book";
 import DeleteIcon from "@mui/icons-material/Delete";
-import EditIcon from "@mui/icons-material/Edit";
 import SearchIcon from "@mui/icons-material/Search";
 import StarBorderIcon from "@mui/icons-material/StarBorder";
 import {
+  Autocomplete,
   Box,
   Button,
   Card,
@@ -18,6 +18,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Divider,
   IconButton,
   InputAdornment,
   MenuItem,
@@ -27,15 +28,74 @@ import {
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import { useSnackbar } from "notistack";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
+import { TeacherSubject } from "@/data/type";
 
-interface Subject {
-  id: string;
+const SUBJECT_OPTIONS: TeacherSubject[] = [
+  "Mathematics",
+  "Physics",
+  "Chemistry",
+  "Biology",
+  "Malagasy",
+  "English",
+  "Philosophy",
+  "French",
+  "History & Geography",
+  "Computer Science",
+  "Physical Education",
+  "Art & Music",
+  "Civic Education",
+  "Economics & Social Sciences",
+  "Arithmetic & Pre-Algebra",
+  "Algebra",
+  "Geometry & Topology",
+  "Trigonometry",
+  "Calculus & Mathematical Analysis",
+  "Probability & Statistics",
+  "Earth & Space Sciences",
+  "Environmental Science & Ecology",
+  "Modern Foreign Languages",
+  "Classical & Ancient Languages",
+  "Linguistics & Philology",
+  "Creative Writing & Composition",
+  "World History",
+  "Physical Geography",
+  "Human & Economic Geography",
+  "Economics",
+  "Sociology",
+  "Anthropology",
+  "Political Science",
+  "Psychology",
+  "Information & Communication Technology",
+  "Robotics & Automation",
+  "Engineering & Technology",
+  "Web Design & Digital Media",
+  "Visual Arts",
+  "Performing Arts",
+  "Design & Technology",
+  "Media Studies & Journalism",
+  "Accounting & Financial Management",
+  "Business Studies & Entrepreneurship",
+  "Marketing & Commerce",
+  "Legal Studies",
+  "Home Economics & Culinary Arts",
+  "Vocational Technical Trades",
+  "Health & Nutrition Education",
+  "First Aid & Safety Education",
+];
+
+interface SubjectClassDetails {
+  class_id: string;
+  class_name: string;
   code: string;
-  name: string;
-  level: string;
   coefficient: number;
   hours: number;
+}
+
+interface GroupedSubject {
+  id: string;
+  name: string;
+  classes: SubjectClassDetails[];
 }
 
 interface ClassOption {
@@ -45,19 +105,21 @@ interface ClassOption {
 }
 
 const Subjects = () => {
-  const [items, setItems] = useState<Subject[]>([]);
+  const [items, setItems] = useState<GroupedSubject[]>([]);
   const [classes, setClasses] = useState<ClassOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [open, setOpen] = useState(false);
-  const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
-  const [form, setForm] = useState<Partial<Subject>>({});
+  const [form, setForm] = useState<{
+    name?: string;
+    level?: string;
+    code?: string;
+    coefficient?: number;
+    hours?: number;
+  }>({});
   const { enqueueSnackbar } = useSnackbar();
   const { user } = useAuth();
   const establishmentID = user.establishment_id;
-  const timeoutRef = useRef<{ [key: string]: ReturnType<typeof setTimeout> }>(
-    {},
-  );
 
   const getSubjectList = async () => {
     try {
@@ -83,69 +145,22 @@ const Subjects = () => {
   };
 
   const handleOpenCreate = () => {
-    setSelectedSubject(null);
-    setForm({});
+    setForm({
+      coefficient: 1,
+      hours: 1,
+    });
     setOpen(true);
   };
 
-  const handleOpenEdit = (subject: Subject) => {
-    setSelectedSubject(subject);
-    setForm(subject);
-    setOpen(true);
-  };
-
-  const handleDelete = (subjectToDelete: Subject) => {
-    const previousSubject = [...items];
-    setItems((prev) => prev.filter((item) => item.id !== subjectToDelete.id));
-    const executeDelete = async () => {
-      try {
-        const response = await apiRequest(
-          `/api/subject/delete/${subjectToDelete.id}`,
-          {
-            method: "DELETE",
-            credentials: "include",
-          },
-        );
-        if (!response.ok) {
-          const errorMessage = await response.json().catch(() => ({}));
-          throw new Error(
-            errorMessage.message || "Failed to delete the subject",
-          );
-        }
-        delete timeoutRef.current[subjectToDelete.id];
-      } catch (error: any) {
-        setItems(previousSubject);
-        enqueueSnackbar(error.message || "Error deleting  subject", {
-          variant: "error",
-        });
-      }
-    };
-    const timeoutID = setTimeout(executeDelete, 5000);
-    timeoutRef.current[subjectToDelete.id] = timeoutID;
-    enqueueSnackbar(`Deleting subject: ${subjectToDelete.name} `, {
-      autoHideDuration: 5000,
-      variant: "warning",
-      action: (key) => (
-        <Button
-          color="inherit"
-          onClick={() => {
-            clearTimeout(timeoutRef.current[subjectToDelete.id]);
-            delete timeoutRef.current[subjectToDelete.id];
-            setItems(previousSubject);
-            enqueueSnackbar(`Deletion of ${subjectToDelete.name} canceled`, {
-              variant: "success",
-            });
-          }}
-        >
-          Cancel
-        </Button>
-      ),
+  const handleDeleteClassRelation = async (classId: string) => {
+    enqueueSnackbar("Removal feature integration required", {
+      variant: "info",
     });
   };
 
   const handleSave = async () => {
-    if (!form.code || !form.name) {
-      enqueueSnackbar("Code and name required", { variant: "error" });
+    if (!form.code || !form.name || !form.level) {
+      enqueueSnackbar("Code, name and class required", { variant: "error" });
       return;
     }
     if (form.code.length < 3) {
@@ -160,50 +175,31 @@ const Subjects = () => {
       });
       return;
     }
-    if (!form.level) {
-      enqueueSnackbar("We must provide the class for new subject", {
-        variant: "warning",
+
+    try {
+      const response = await apiRequest("/api/subject/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(form),
+        credentials: "include",
       });
-      return;
-    }
 
-    if (selectedSubject) {
-      setItems(
-        items.map((item) =>
-          item.id === selectedSubject.id ? (form as Subject) : item,
-        ),
-      );
-      enqueueSnackbar("Subject updated", { variant: "success" });
-      setOpen(false);
-    } else {
-      try {
-        const response = await apiRequest("/api/subject/create", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(form),
-          credentials: "include",
-        });
-
-        if (!response.ok) {
-          const errorMessage = await response.json().catch(() => ({}));
-          throw new Error(
-            errorMessage.message || "Failed to create the subject",
-          );
-        } else {
-          const createdSubject = await response.json();
-          setItems([...items, createdSubject]);
-          enqueueSnackbar("Subject added", { variant: "success" });
-        }
-      } catch (error) {
-        const msg =
-          error instanceof Error ? error.message : "Error creating subject";
-        enqueueSnackbar(msg, { variant: "error" });
-      } finally {
-        setOpen(false);
-        setForm({});
+      if (!response.ok) {
+        const errorMessage = await response.json().catch(() => ({}));
+        throw new Error(errorMessage.message || "Failed to create the subject");
+      } else {
+        enqueueSnackbar("Subject assignment added", { variant: "success" });
+        await getSubjectList();
       }
+    } catch (error) {
+      const msg =
+        error instanceof Error ? error.message : "Error creating subject";
+      enqueueSnackbar(msg, { variant: "error" });
+    } finally {
+      setOpen(false);
+      setForm({});
     }
   };
 
@@ -230,7 +226,11 @@ const Subjects = () => {
   const filteredItems = items.filter(
     (item) =>
       item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.code.toLowerCase().includes(searchTerm.toLowerCase()),
+      item.classes.some(
+        (c) =>
+          c.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          c.class_name.toLowerCase().includes(searchTerm.toLowerCase()),
+      ),
   );
 
   return (
@@ -257,7 +257,7 @@ const Subjects = () => {
         <TextField
           fullWidth
           variant="outlined"
-          placeholder="Search subjects by name or code..."
+          placeholder="Search subjects by name, code or class..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           disabled={loading}
@@ -297,32 +297,10 @@ const Subjects = () => {
                       <Skeleton variant="rounded" width={50} height={50} />
                       <Box sx={{ flexGrow: 1 }}>
                         <Skeleton variant="text" width="60%" height={24} />
-                        <Skeleton variant="text" width="40%" height={20} />
                       </Box>
-                      <Skeleton variant="rounded" width={60} height={24} />
                     </Box>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 1,
-                        mb: 1,
-                      }}
-                    >
-                      <Skeleton variant="text" width="50%" />
-                      <Skeleton variant="text" width="40%" />
-                    </Box>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        justifyContent: "flex-end",
-                        gap: 1,
-                        mt: 2,
-                      }}
-                    >
-                      <Skeleton variant="circular" width={28} height={28} />
-                      <Skeleton variant="circular" width={28} height={28} />
-                    </Box>
+                    <Skeleton variant="text" width="80%" height={20} />
+                    <Skeleton variant="text" width="50%" height={20} />
                   </CardContent>
                 </Card>
               </Grid>
@@ -334,54 +312,24 @@ const Subjects = () => {
                   sx={{
                     borderRadius: 2,
                     border: "1px solid #2a2f3d",
-                    position: "relative",
-                    transition: "transform 0.2s",
-                    "&:hover": { transform: "translateY(-2px)" },
+                    height: "100%",
+                    display: "flex",
+                    flexDirection: "column",
                   }}
                 >
-                  <CardContent sx={{ p: 3 }}>
+                  <CardContent
+                    sx={{
+                      p: 3,
+                      flexGrow: 1,
+                      display: "flex",
+                      flexDirection: "column",
+                    }}
+                  >
                     <Box
                       sx={{
                         display: "flex",
                         alignItems: "center",
-                        gap: 2,
-                        mb: 2,
-                      }}
-                    >
-                      <Box
-                        sx={{
-                          p: 1,
-                          borderRadius: 1,
-                          bgcolor: "primary.shades",
-                          color: "primary.main",
-                          display: "flex",
-                        }}
-                      >
-                        <BookIcon sx={{ height: "34px", width: "34px" }} />
-                      </Box>
-                      <Box sx={{ minWidth: 0, flexGrow: 1 }}>
-                        <Typography variant="h6" fontWeight="600" noWrap>
-                          {item.name}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          Class:{" "}
-                          {classes.find((cls) => cls.id === item.level)?.name ||
-                            "N/A"}
-                        </Typography>
-                      </Box>
-                      <Chip
-                        size="small"
-                        label={item.code}
-                        color="primary"
-                        variant="outlined"
-                      />
-                    </Box>
-
-                    <Box
-                      sx={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 1,
+                        justifyValue: "space-between",
                         mb: 1,
                       }}
                     >
@@ -389,51 +337,128 @@ const Subjects = () => {
                         sx={{
                           display: "flex",
                           alignItems: "center",
-                          gap: 1,
-                          color: "text.secondary",
+                          gap: 2,
+                          minWidth: 0,
                         }}
                       >
-                        <StarBorderIcon fontSize="small" color="action" />
-                        <Typography variant="body2">
-                          Coefficient: <strong>{item.coefficient}</strong>
+                        <Box
+                          sx={{
+                            p: 1,
+                            borderRadius: 1,
+                            bgcolor: "primary.shades",
+                            color: "primary.main",
+                            display: "flex",
+                          }}
+                        >
+                          <BookIcon sx={{ height: "34px", width: "34px" }} />
+                        </Box>
+                        <Typography variant="h6" fontWeight="600" noWrap>
+                          {item.name}
                         </Typography>
                       </Box>
-
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 1,
-                          color: "text.secondary",
-                        }}
-                      >
-                        <AccessTimeIcon fontSize="small" color="action" />
-                        <Typography variant="body2">
-                          Hours / week: <strong>{item.hours}h</strong>
-                        </Typography>
-                      </Box>
+                      <Chip
+                        size="small"
+                        label={`${item.classes.length} classes`}
+                        color="primary"
+                        sx={{ ml: "auto", fontWeight: "600" }}
+                      />
                     </Box>
+
+                    <Divider sx={{ my: 1.5, borderColor: "#2a2f3d" }} />
 
                     <Box
                       sx={{
                         display: "flex",
-                        justifyContent: "flex-end",
-                        gap: 1,
-                        mt: 2,
+                        flexDirection: "column",
+                        gap: 1.5,
+                        maxHeight: "220px",
+                        overflowY: "auto",
+                        pr: 0.5,
+                        "::-webkit-scrollbar": { width: "7px" },
+                        "::-webkit-scrollbar-thumb": {
+                          bgcolor: "rgba(255,255,255,0.1)",
+                          borderRadius: "4px",
+                        },
                       }}
                     >
-                      <IconButton
-                        size="small"
-                        onClick={() => handleOpenEdit(item)}
-                      >
-                        <EditIcon fontSize="small" color="primary" />
-                      </IconButton>
-                      <IconButton
-                        size="small"
-                        onClick={() => handleDelete(item)}
-                      >
-                        <DeleteIcon fontSize="small" color="error" />
-                      </IconButton>
+                      {item.classes.map((cls) => (
+                        <Box
+                          key={cls.class_id}
+                          sx={{
+                            p: 1.5,
+                            borderRadius: 1,
+                            bgcolor: "background.neutral",
+                            border: "1px solid rgba(255,255,255,0.05)",
+                          }}
+                        >
+                          <Box
+                            sx={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "center",
+                              mb: 1,
+                            }}
+                          >
+                            <Typography
+                              variant="subtitle2"
+                              fontWeight="600"
+                              color="primary.main"
+                            >
+                              {cls.class_name}
+                            </Typography>
+                            <Chip
+                              size="small"
+                              label={cls.code}
+                              variant="outlined"
+                              color="secondary"
+                            />
+                          </Box>
+
+                          <Box
+                            sx={{
+                              display: "flex",
+                              gap: 2,
+                              color: "text.secondary",
+                              alignItems: "center",
+                            }}
+                          >
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 0.5,
+                              }}
+                            >
+                              <StarBorderIcon fontSize="inherit" />
+                              <Typography variant="caption">
+                                Coef: <strong>{cls.coefficient}</strong>
+                              </Typography>
+                            </Box>
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 0.5,
+                              }}
+                            >
+                              <AccessTimeIcon fontSize="inherit" />
+                              <Typography variant="caption">
+                                Hours: <strong>{cls.hours}h</strong>
+                              </Typography>
+                            </Box>
+                            <Box sx={{ ml: "auto" }}>
+                              <IconButton
+                                size="small"
+                                onClick={() =>
+                                  handleDeleteClassRelation(cls.class_id)
+                                }
+                              >
+                                <DeleteIcon fontSize="inherit" color="error" />
+                              </IconButton>
+                            </Box>
+                          </Box>
+                        </Box>
+                      ))}
                     </Box>
                   </CardContent>
                 </Card>
@@ -447,9 +472,7 @@ const Subjects = () => {
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle>
-          {selectedSubject ? "Edit Subject" : "Add Subject"}
-        </DialogTitle>
+        <DialogTitle>Add Subject</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 0.5 }}>
             <Grid size={{ xs: 12, sm: 6 }}>
@@ -461,18 +484,26 @@ const Subjects = () => {
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                fullWidth
-                label="Name *"
+              <Autocomplete
+                freeSolo
+                options={SUBJECT_OPTIONS}
                 value={form.name || ""}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                onChange={(_, newValue) =>
+                  setForm({ ...form, name: newValue || "" })
+                }
+                onInputChange={(_, newInputValue) =>
+                  setForm({ ...form, name: newInputValue })
+                }
+                renderInput={(params) => (
+                  <TextField {...params} label="Name *" fullWidth />
+                )}
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 select
                 fullWidth
-                label="Class / Level"
+                label="Class / Level *"
                 value={form.level || ""}
                 onChange={(e) => setForm({ ...form, level: e.target.value })}
               >
@@ -493,11 +524,7 @@ const Subjects = () => {
                 label="Coefficient"
                 value={form.coefficient || ""}
                 slotProps={{
-                  htmlInput: {
-                    min: 1,
-                    max: 10,
-                    step: 1,
-                  },
+                  htmlInput: { min: 1, max: 10, step: 1 },
                 }}
                 onChange={(e) => {
                   const val = Math.min(
@@ -515,11 +542,7 @@ const Subjects = () => {
                 label="Hours/week"
                 value={form.hours || ""}
                 slotProps={{
-                  htmlInput: {
-                    min: 1,
-                    max: 40,
-                    step: 1,
-                  },
+                  htmlInput: { min: 1, max: 40, step: 1 },
                 }}
                 onChange={(e) => {
                   const val = Math.min(
