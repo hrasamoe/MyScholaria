@@ -21,6 +21,7 @@ import {
   IconButton,
   InputAdornment,
   MenuItem,
+  Skeleton,
   TextField,
   Typography,
 } from "@mui/material";
@@ -44,8 +45,9 @@ interface ClassOption {
 }
 
 const Subjects = () => {
-  const [items, setItems] = useState([]);
+  const [items, setItems] = useState<Subject[]>([]);
   const [classes, setClasses] = useState<ClassOption[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [open, setOpen] = useState(false);
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
@@ -71,9 +73,9 @@ const Subjects = () => {
         setItems(data);
       }
     } catch (error) {
-      enqueueSnackbar(error.message || "Error fetching subject list", {
-        variant: "error",
-      });
+      const msg =
+        error instanceof Error ? error.message : "Error fetching subject list";
+      enqueueSnackbar(msg, { variant: "error" });
     }
   };
 
@@ -82,6 +84,7 @@ const Subjects = () => {
     setForm({});
     setOpen(true);
   };
+
   const handleOpenEdit = (subject: Subject) => {
     setSelectedSubject(subject);
     setForm(subject);
@@ -99,13 +102,13 @@ const Subjects = () => {
       return;
     }
     if (form.code.length < 3) {
-      enqueueSnackbar("Subject code must be at least 3 charachters", {
+      enqueueSnackbar("Subject code must be at least 3 characters", {
         variant: "warning",
       });
       return;
     }
     if (form.name.length < 3) {
-      enqueueSnackbar("Subject name must be at least 3 charachters", {
+      enqueueSnackbar("Subject name must be at least 3 characters", {
         variant: "warning",
       });
       return;
@@ -114,7 +117,9 @@ const Subjects = () => {
       enqueueSnackbar("We must provide the class for new subject", {
         variant: "warning",
       });
+      return;
     }
+
     if (selectedSubject) {
       setItems(
         items.map((item) =>
@@ -122,6 +127,7 @@ const Subjects = () => {
         ),
       );
       enqueueSnackbar("Subject updated", { variant: "success" });
+      setOpen(false);
     } else {
       try {
         const response = await apiRequest("/api/subject/create", {
@@ -153,17 +159,19 @@ const Subjects = () => {
           enqueueSnackbar("Subject added", { variant: "success" });
         }
       } catch (error) {
-        enqueueSnackbar(error.message || "Error creating subject", {
-          variant: "error",
-        });
+        const msg =
+          error instanceof Error ? error.message : "Error creating subject";
+        enqueueSnackbar(msg, { variant: "error" });
       } finally {
         setOpen(false);
         setForm({});
       }
     }
   };
+
   useEffect(() => {
-    const fetchClasses = async () => {
+    const fetchData = async () => {
+      setLoading(true);
       try {
         const response = await apiRequest(`/api/establishment/classes-list`, {
           credentials: "include",
@@ -175,11 +183,11 @@ const Subjects = () => {
       } catch (error) {
         enqueueSnackbar("Error loading classes from API", { variant: "error" });
       }
+      await getSubjectList();
+      setLoading(false);
     };
-    fetchClasses();
-    getSubjectList();
+    fetchData();
   }, [establishmentID]);
-
 
   const filteredItems = items.filter(
     (item) =>
@@ -191,13 +199,16 @@ const Subjects = () => {
     <>
       <PageHeader
         title="Subjects and Syllabus"
-        subtitle={`${items.length} subjects defined`}
+        subtitle={
+          loading ? "Loading subjects..." : `${items.length} subjects defined`
+        }
         action={
           <Button
             variant="contained"
             color="success"
             startIcon={<AddIcon />}
             onClick={handleOpenCreate}
+            disabled={loading}
           >
             Add Subject
           </Button>
@@ -211,6 +222,7 @@ const Subjects = () => {
           placeholder="Search subjects by name or code..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
+          disabled={loading}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
@@ -228,110 +240,167 @@ const Subjects = () => {
       </Box>
 
       <Grid container spacing={3} sx={{ mt: 1 }}>
-        {filteredItems.map((item) => (
-          <Grid size={{ xs: 12, sm: 6, md: 4 }} key={item.id}>
-            <Card
-              variant="outlined"
-              sx={{
-                borderRadius: 2,
-                border: "1px solid #2a2f3d",
-                position: "relative",
-                transition: "transform 0.2s",
-                "&:hover": { transform: "translateY(-2px)" },
-              }}
-            >
-              <CardContent sx={{ p: 3 }}>
-                <Box
-                  sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}
+        {loading
+          ? Array.from(new Array(6)).map((_, index) => (
+              <Grid size={{ xs: 12, sm: 6, md: 4 }} key={index}>
+                <Card
+                  variant="outlined"
+                  sx={{ borderRadius: 2, border: "1px solid #2a2f3d" }}
                 >
-                  <Box
-                    sx={{
-                      p: 1,
-                      borderRadius: 1,
-                      bgcolor: "primary.shades",
-                      color: "primary.main",
-                      display: "flex",
-                    }}
-                  >
-                    <BookIcon sx={{ height: "34px", width: "34px" }} />
-                  </Box>
-                  <Box sx={{ minWidth: 0, flexGrow: 1 }}>
-                    <Typography variant="h6" fontWeight="600" noWrap>
-                      {item.name}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Class:{" "}
-                      {classes.find((cls) => cls.id === item.level)?.name ||
-                        "N/A"}
-                    </Typography>
-                  </Box>
-                  <Chip
-                    size="small"
-                    label={item.code}
-                    color="primary"
-                    variant="outlined"
-                  />
-                </Box>
-
-                <Box
+                  <CardContent sx={{ p: 3 }}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 2,
+                        mb: 2,
+                      }}
+                    >
+                      <Skeleton variant="rounded" width={50} height={50} />
+                      <Box sx={{ flexGrow: 1 }}>
+                        <Skeleton variant="text" width="60%" height={24} />
+                        <Skeleton variant="text" width="40%" height={20} />
+                      </Box>
+                      <Skeleton variant="rounded" width={60} height={24} />
+                    </Box>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 1,
+                        mb: 1,
+                      }}
+                    >
+                      <Skeleton variant="text" width="50%" />
+                      <Skeleton variant="text" width="40%" />
+                    </Box>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "flex-end",
+                        gap: 1,
+                        mt: 2,
+                      }}
+                    >
+                      <Skeleton variant="circular" width={28} height={28} />
+                      <Skeleton variant="circular" width={28} height={28} />
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))
+          : filteredItems.map((item) => (
+              <Grid size={{ xs: 12, sm: 6, md: 4 }} key={item.id}>
+                <Card
+                  variant="outlined"
                   sx={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 1,
-                    mb: 1,
+                    borderRadius: 2,
+                    border: "1px solid #2a2f3d",
+                    position: "relative",
+                    transition: "transform 0.2s",
+                    "&:hover": { transform: "translateY(-2px)" },
                   }}
                 >
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 1,
-                      color: "text.secondary",
-                    }}
-                  >
-                    <StarBorderIcon fontSize="small" color="action" />
-                    <Typography variant="body2">
-                      Coefficient: <strong>{item.coefficient}</strong>
-                    </Typography>
-                  </Box>
+                  <CardContent sx={{ p: 3 }}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 2,
+                        mb: 2,
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          p: 1,
+                          borderRadius: 1,
+                          bgcolor: "primary.shades",
+                          color: "primary.main",
+                          display: "flex",
+                        }}
+                      >
+                        <BookIcon sx={{ height: "34px", width: "34px" }} />
+                      </Box>
+                      <Box sx={{ minWidth: 0, flexGrow: 1 }}>
+                        <Typography variant="h6" fontWeight="600" noWrap>
+                          {item.name}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Class:{" "}
+                          {classes.find((cls) => cls.id === item.level)?.name ||
+                            "N/A"}
+                        </Typography>
+                      </Box>
+                      <Chip
+                        size="small"
+                        label={item.code}
+                        color="primary"
+                        variant="outlined"
+                      />
+                    </Box>
 
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 1,
-                      color: "text.secondary",
-                    }}
-                  >
-                    <AccessTimeIcon fontSize="small" color="action" />
-                    <Typography variant="body2">
-                      Hours / week: <strong>{item.hours}h</strong>
-                    </Typography>
-                  </Box>
-                </Box>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 1,
+                        mb: 1,
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 1,
+                          color: "text.secondary",
+                        }}
+                      >
+                        <StarBorderIcon fontSize="small" color="action" />
+                        <Typography variant="body2">
+                          Coefficient: <strong>{item.coefficient}</strong>
+                        </Typography>
+                      </Box>
 
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "flex-end",
-                    gap: 1,
-                    mt: 2,
-                  }}
-                >
-                  <IconButton size="small" onClick={() => handleOpenEdit(item)}>
-                    <EditIcon fontSize="small" color="primary" />
-                  </IconButton>
-                  <IconButton
-                    size="small"
-                    onClick={() => handleDelete(item.id)}
-                  >
-                    <DeleteIcon fontSize="small" color="error" />
-                  </IconButton>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 1,
+                          color: "text.secondary",
+                        }}
+                      >
+                        <AccessTimeIcon fontSize="small" color="action" />
+                        <Typography variant="body2">
+                          Hours / week: <strong>{item.hours}h</strong>
+                        </Typography>
+                      </Box>
+                    </Box>
+
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "flex-end",
+                        gap: 1,
+                        mt: 2,
+                      }}
+                    >
+                      <IconButton
+                        size="small"
+                        onClick={() => handleOpenEdit(item)}
+                      >
+                        <EditIcon fontSize="small" color="primary" />
+                      </IconButton>
+                      <IconButton
+                        size="small"
+                        onClick={() => handleDelete(item.id)}
+                      >
+                        <DeleteIcon fontSize="small" color="error" />
+                      </IconButton>
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
       </Grid>
 
       <Dialog
