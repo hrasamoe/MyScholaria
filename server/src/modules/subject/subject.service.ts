@@ -9,7 +9,7 @@ export async function createSubject(
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
-    const queryText = `INSERT INTO subject 
+    const queryText = `INSERT INTO subjects 
     (
       code,
       name,
@@ -79,7 +79,12 @@ export async function getSubjectList(establishmentID: string) {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
+    const result = await client.query(
+      "SELECT *, hours_per_week as hours FROM subjects WHERE establishment_id = $1",
+      [establishmentID],
+    );
     await client.query("COMMIT");
+    return result.rows;
   } catch (error: any) {
     console.error(error);
     await client.query("ROLLBACK");
