@@ -46,7 +46,6 @@ export async function editSubject(
   userID: string,
   subjectData: SubjectInfo,
   subjectID: string,
-  classID: string,
 ) {
   const client = await pool.connect();
   try {
@@ -128,6 +127,7 @@ export async function getSubjectList(establishmentID: string) {
         s.name,
         jsonb_agg(
           jsonb_build_object(
+            'id', s.id::text,
             'class_id', s.level,
             'class_name', c.name,
             'code', s.code,

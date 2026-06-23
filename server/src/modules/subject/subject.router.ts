@@ -4,6 +4,7 @@ import { SubjectSchema } from "./subject.schema";
 import {
   createSubject,
   deleteSubject,
+  editSubject,
   getSubjectList,
 } from "./subject.service";
 
@@ -32,11 +33,21 @@ subjectRouter.post(
 );
 
 subjectRouter.put(
-  "/edit/:subjectID/:classID",
+  "/edit/:subjectID",
   RequireAuth,
   async (req: AuthRequest, res: Response) => {
     try {
-    } catch {}
+      const userID = req.userId as string;
+      const subjectID = req.params.subjectID as string;
+      const parsed = SubjectSchema.safeParse(req.body);
+      if (!parsed.success) {
+        throw new Error(JSON.stringify(parsed.error.flatten().fieldErrors));
+      }
+      const result = await editSubject(userID, parsed.data, subjectID);
+      res.status(200).json(result);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message, message: error.message });
+    }
   },
 );
 
