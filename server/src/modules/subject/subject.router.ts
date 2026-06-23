@@ -1,20 +1,36 @@
-import { Request, Response, Router } from "express";
-import { RequireAuth } from "../../middleware/auth.middleware";
+import { Response, Router } from "express";
+import { AuthRequest, RequireAuth } from "../../middleware/auth.middleware";
+import { SubjectSchema } from "./subject.schema";
+import { createSubject } from "./subject.service";
 export const subjectRouter = Router();
 
 subjectRouter.post(
   "/create",
   RequireAuth,
-  async (req: Request, res: Response) => {
+  async (req: AuthRequest, res: Response) => {
+    const userID = req.userId as string;
+    const establishmentID = req.establishmentID as string;
     try {
-    } catch {}
+      const parsed = SubjectSchema.safeParse(req.body);
+      if (!parsed.success) {
+        console.log(parsed.error);
+        throw new Error(JSON.stringify(parsed.error.flatten().fieldErrors));
+      }
+      const result = await createSubject(userID, establishmentID, parsed.data);
+      res.status(201).json(result);
+    } catch (error: any) {
+      res.status(500).json({
+        message: error.message,
+        error: error.message,
+      });
+    }
   },
 );
 
 subjectRouter.put(
   "/edit/:subjectID",
   RequireAuth,
-  async (req: Request, res: Response) => {
+  async (req: AuthRequest, res: Response) => {
     try {
     } catch {}
   },
@@ -23,7 +39,7 @@ subjectRouter.put(
 subjectRouter.delete(
   "/delete/:subjectID",
   RequireAuth,
-  async (req: Request, res: Response) => {
+  async (req: AuthRequest, res: Response) => {
     try {
     } catch {}
   },
@@ -31,7 +47,7 @@ subjectRouter.delete(
 subjectRouter.get(
   "/list",
   RequireAuth,
-  async (req: Request, res: Response) => {
+  async (req: AuthRequest, res: Response) => {
     try {
     } catch {}
   },
