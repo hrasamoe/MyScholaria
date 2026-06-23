@@ -6,6 +6,7 @@ import {
   deleteSubject,
   getSubjectList,
 } from "./subject.service";
+
 export const subjectRouter = Router();
 
 subjectRouter.post(
@@ -17,7 +18,6 @@ subjectRouter.post(
     try {
       const parsed = SubjectSchema.safeParse(req.body);
       if (!parsed.success) {
-        console.log(parsed.error);
         throw new Error(JSON.stringify(parsed.error.flatten().fieldErrors));
       }
       const result = await createSubject(userID, establishmentID, parsed.data);
@@ -32,7 +32,7 @@ subjectRouter.post(
 );
 
 subjectRouter.put(
-  "/edit/:subjectID",
+  "/edit/:subjectID/:classID",
   RequireAuth,
   async (req: AuthRequest, res: Response) => {
     try {
@@ -41,15 +41,16 @@ subjectRouter.put(
 );
 
 subjectRouter.delete(
-  "/delete/:subjectID",
+  "/delete/:classID/:subjectID",
   RequireAuth,
   async (req: AuthRequest, res: Response) => {
     const userID = req.userId as string;
-    const subjectID = req.establishmentID as string;
+    const classID = req.params.classID as string;
+    const subjectID = req.params.subjectID as string;
     try {
-      await deleteSubject(userID, subjectID);
+      await deleteSubject(userID, subjectID, classID);
       res.status(200).json({
-        message: "The subject have been deleted successfully",
+        message: "The subject has been deleted successfully",
       });
     } catch (error: any) {
       res.status(500).json({
@@ -59,6 +60,7 @@ subjectRouter.delete(
     }
   },
 );
+
 subjectRouter.get(
   "/list",
   RequireAuth,

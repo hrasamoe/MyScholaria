@@ -46,6 +46,7 @@ export async function editSubject(
   userID: string,
   subjectData: SubjectInfo,
   subjectID: string,
+  classID: string,
 ) {
   const client = await pool.connect();
   try {
@@ -79,13 +80,17 @@ export async function editSubject(
   }
 }
 
-export async function deleteSubject(userID: string, subjectID: string) {
+export async function deleteSubject(
+  userID: string,
+  subjectID: string,
+  classID: string,
+) {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
     const subjetToDelete = await client.query(
-      `SELECT * FROM subjects WHERE id = $1`,
-      [subjectID],
+      `SELECT * FROM subjects WHERE level = $1 AND id = $2`,
+      [classID, subjectID],
     );
 
     if (!subjetToDelete.rows || subjetToDelete.rows.length === 0) {
@@ -100,8 +105,8 @@ export async function deleteSubject(userID: string, subjectID: string) {
 
     await client.query(
       `DELETE FROM subjects
-      WHERE id = $1`,
-      [subjectID],
+      WHERE id = $1 AND level = $2`,
+      [subjectID, classID],
     );
     await client.query("COMMIT");
   } catch (error: any) {
