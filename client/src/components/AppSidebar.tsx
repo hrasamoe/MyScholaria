@@ -218,7 +218,7 @@ const AppSidebar = ({ collapsed, onToggleCollapsed }: AppSidebarProps) => {
 
   useEffect(() => {
     fetchAlerts();
-    const interval = setInterval(fetchAlerts, 3000);
+    const interval = setInterval(fetchAlerts, 60000);
     return () => clearInterval(interval);
   }, []);
 

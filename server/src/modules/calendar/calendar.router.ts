@@ -30,7 +30,7 @@ calendarRouter.post(
   },
 );
 
-calendarRouter.post(
+calendarRouter.delete(
   "/delete/:id",
   RequireAuth,
   async (req: AuthRequest, res: Response) => {

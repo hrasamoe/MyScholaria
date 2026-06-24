@@ -22,6 +22,7 @@ import { staffRouter } from "./modules/staff/staff.router";
 import { studentRouter } from "./modules/students/students.router";
 import { teacherRouter } from "./modules/teacher/teacher.router";
 import { initWebSocketServer } from "./services/websocket/ws-server";
+import { subjectRouter } from "./modules/subject/subject.router";
 
 setDefaultResultOrder("ipv4first");
 
@@ -58,6 +59,7 @@ app.use("/api/staff", staffRouter);
 app.use("/api/announcement", announcementRouter);
 app.use("/api/notification", notificationROuter);
 app.use("/api/calendar", calendarRouter);
+app.use("/api/subject", subjectRouter);
 
 app.get("/api/health", (_, res) => {
   res.json({ status: "ok", project: "MyScholaria" });
