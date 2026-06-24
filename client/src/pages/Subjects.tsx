@@ -4,9 +4,11 @@ import { useAuth } from "@/hooks/Authcontext";
 import { apiRequest } from "@/services/api.service";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import AddIcon from "@mui/icons-material/Add";
+import AssignmentIndIcon from "@mui/icons-material/AssignmentInd";
 import BookIcon from "@mui/icons-material/Book";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
+import PersonIcon from "@mui/icons-material/Person";
 import SearchIcon from "@mui/icons-material/Search";
 import StarBorderIcon from "@mui/icons-material/StarBorder";
 import {
@@ -23,7 +25,6 @@ import {
   Divider,
   IconButton,
   InputAdornment,
-  MenuItem,
   Skeleton,
   TextField,
   Typography,
@@ -93,6 +94,7 @@ interface SubjectClassDetails {
   code: string;
   coefficient: number;
   hours: number;
+  teacher_id: string | null;
 }
 
 interface GroupedSubject {
@@ -107,15 +109,35 @@ interface ClassOption {
   level: string | null;
 }
 
+interface TeacherOption {
+  id: string;
+  first_name: string;
+  last_name: string;
+  gender: string;
+  contractType: string;
+  subject: string;
+  pid: string;
+}
+
 const Subjects = () => {
   const [items, setItems] = useState<GroupedSubject[]>([]);
   const [classes, setClasses] = useState<ClassOption[]>([]);
+  const [teachers, setTeachers] = useState<TeacherOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [operationLoading, setOperationLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [open, setOpen] = useState(false);
   const theme = useTheme();
   const [openEdit, setOpenEdit] = useState(false);
+  const [openAssignTeacher, setOpenAssignTeacher] = useState(false);
+  const [selectedSubjectClass, setSelectedSubjectClass] =
+    useState<SubjectClassDetails | null>(null);
+  const [selectedSubject, setSelectedSubject] = useState<GroupedSubject | null>(
+    null,
+  );
+  const [selectedTeacher, setSelectedTeacher] = useState<TeacherOption | null>(
+    null,
+  );
   const [editingRow, setEditingRow] = useState<{
     subjectID: string;
     classID: string;
@@ -185,6 +207,58 @@ const Subjects = () => {
       hours: cls.hours,
     });
     setOpenEdit(true);
+  };
+
+  const handleOpenAssignTeacher = (
+    cls: SubjectClassDetails,
+    subject: GroupedSubject,
+  ) => {
+    setSelectedSubjectClass(cls);
+    setSelectedSubject(subject);
+    const existingTeacher =
+      teachers.find((t) => t.id === cls.teacher_id) || null;
+    setSelectedTeacher(existingTeacher);
+    setOpenAssignTeacher(true);
+  };
+
+  const handleAssignTeacher = async () => {
+    if (!selectedTeacher || !selectedSubjectClass) {
+      enqueueSnackbar("Please select a teacher", { variant: "error" });
+      return;
+    }
+
+    setOperationLoading(true);
+    try {
+      const response = await apiRequest("/api/subject/assign-teacher", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          subjectClassId: selectedSubjectClass.id,
+          teacherId: selectedTeacher.pid,
+        }),
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        const errorMessage = await response.json().catch(() => ({}));
+        throw new Error(errorMessage.message || "Failed to assign teacher");
+      } else {
+        enqueueSnackbar("Teacher assigned successfully", {
+          variant: "success",
+        });
+        await getSubjectList();
+      }
+    } catch (error) {
+      const msg =
+        error instanceof Error ? error.message : "Error assigning teacher";
+      enqueueSnackbar(msg, { variant: "error" });
+    } finally {
+      setOpenAssignTeacher(false);
+      setSelectedSubjectClass(null);
+      setOperationLoading(false);
+    }
   };
 
   const handleUpdate = async () => {
@@ -338,20 +412,47 @@ const Subjects = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const response = await apiRequest(`/api/establishment/classes-list`, {
-          credentials: "include",
-        });
-        if (response.ok) {
-          const data = await response.json();
+        const [classesRes, teachersRes, subjectsRes] = await Promise.all([
+          apiRequest(`/api/establishment/classes-list`, {
+            credentials: "include",
+          }),
+          apiRequest(`/api/teachers/get-list`, { credentials: "include" }),
+          apiRequest("/api/subject/list", {
+            method: "GET",
+            credentials: "include",
+          }),
+        ]);
+
+        if (classesRes.ok) {
+          const data = await classesRes.json();
           setClasses(data);
+        } else {
+          enqueueSnackbar("Failed to load classes", { variant: "error" });
+        }
+
+        if (teachersRes.ok) {
+          const data = await teachersRes.json();
+          setTeachers(data);
+        } else {
+          enqueueSnackbar("Failed to load teachers", { variant: "error" });
+        }
+
+        if (subjectsRes.ok) {
+          const data = await subjectsRes.json();
+          setItems(data);
+        } else {
+          enqueueSnackbar("Failed to load subjects", { variant: "error" });
         }
       } catch (error) {
-        enqueueSnackbar("Error loading classes from API", { variant: "error" });
+        enqueueSnackbar("Error loading data from API", { variant: "error" });
+      } finally {
+        setLoading(false);
       }
-      await getSubjectList();
-      setLoading(false);
     };
-    fetchData();
+
+    if (establishmentID) {
+      fetchData();
+    }
   }, [establishmentID]);
 
   const filteredItems = items.filter(
@@ -363,6 +464,11 @@ const Subjects = () => {
           c.class_name.toLowerCase().includes(searchTerm.toLowerCase()),
       ),
   );
+
+  const currentClassOption =
+    classes.find((cls) => cls.id === form.level) || null;
+  const currentEditClassOption =
+    classes.find((cls) => cls.id === editForm.level) || null;
 
   return (
     <>
@@ -462,7 +568,7 @@ const Subjects = () => {
                         display: "flex",
                         alignItems: "flex-start",
                         flexDirection: "column",
-                        width: "100%", 
+                        width: "100%",
                         gap: 1,
                         mb: 1,
                       }}
@@ -494,7 +600,7 @@ const Subjects = () => {
                         size="small"
                         label={`${item.classes.length} classes`}
                         color="primary"
-                        sx={{ fontWeight: "600" }} 
+                        sx={{ fontWeight: "600" }}
                       />
                     </Box>
 
@@ -515,101 +621,148 @@ const Subjects = () => {
                         },
                       }}
                     >
-                      {item.classes.map((cls) => (
-                        <Box
-                          key={cls.id}
-                          sx={{
-                            position: "relative",
-                            p: 1.5,
-                            borderRadius: 1,
-                            bgcolor: "background.neutral",
-                            border: "1px solid rgba(255,255,255,0.05)",
-                          }}
-                        >
+                      {item.classes.map((cls) => {
+                        const assignedTeacher = teachers.find(
+                          (t) => t.id === cls.teacher_id,
+                        );
+                        return (
                           <Box
+                            key={cls.id}
                             sx={{
-                              display: "flex",
-                              justifyContent: "space-between",
-                              alignItems: "center",
-                              mb: 1,
-                            }}
-                          >
-                            <Typography
-                              variant="subtitle2"
-                              fontWeight="600"
-                              color="primary.main"
-                            >
-                              {cls.class_name}
-                            </Typography>
-                            <Chip
-                              size="small"
-                              label={cls.code}
-                              variant="outlined"
-                            />
-                          </Box>
-                          <Box
-                            sx={{
-                              display: "flex",
-                              gap: 2,
-                              color: "text.secondary",
-                              alignItems: "center",
+                              position: "relative",
+                              p: 1.5,
+                              borderRadius: 1,
+                              bgcolor: "background.neutral",
+                              border: "1px solid rgba(255,255,255,0.05)",
                             }}
                           >
                             <Box
                               sx={{
                                 display: "flex",
+                                justifyContent: "space-between",
                                 alignItems: "center",
-                                gap: 0.5,
+                                mb: 1,
                               }}
                             >
-                              <StarBorderIcon fontSize="inherit" />
-                              <Typography variant="caption">
-                                Coef: <strong>{cls.coefficient}</strong>
-                              </Typography>
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: 1,
+                                }}
+                              >
+                                <Typography
+                                  variant="subtitle2"
+                                  fontWeight="600"
+                                  color="primary.main"
+                                >
+                                  {cls.class_name}
+                                </Typography>
+                                <IconButton
+                                  size="small"
+                                  onClick={() =>
+                                    handleOpenAssignTeacher(cls, item)
+                                  }
+                                >
+                                  <AssignmentIndIcon
+                                    fontSize="small"
+                                    color={
+                                      cls.teacher_id ? "success" : "inherit"
+                                    }
+                                  />
+                                </IconButton>
+                              </Box>
+
+                              <Chip
+                                size="small"
+                                label={cls.code}
+                                variant="outlined"
+                              />
+                            </Box>
+
+                            {assignedTeacher && (
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: 0.5,
+                                  mb: 1,
+                                  color: "success.main",
+                                }}
+                              >
+                                <PersonIcon sx={{ fontSize: "1rem" }} />
+                                <Typography variant="caption" fontWeight="500">
+                                  {assignedTeacher.first_name}{" "}
+                                  {assignedTeacher.last_name}
+                                </Typography>
+                              </Box>
+                            )}
+
+                            <Box
+                              sx={{
+                                display: "flex",
+                                gap: 2,
+                                color: "text.secondary",
+                                alignItems: "center",
+                                mb: assignedTeacher ? 1.5 : 0,
+                              }}
+                            >
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: 0.5,
+                                }}
+                              >
+                                <StarBorderIcon fontSize="inherit" />
+                                <Typography variant="caption">
+                                  Coef: <strong>{cls.coefficient}</strong>
+                                </Typography>
+                              </Box>
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: 0.5,
+                                }}
+                              >
+                                <AccessTimeIcon fontSize="inherit" />
+                                <Typography variant="caption">
+                                  Hours: <strong>{cls.hours}h</strong>
+                                </Typography>
+                              </Box>
                             </Box>
                             <Box
                               sx={{
                                 display: "flex",
-                                alignItems: "center",
-                                gap: 0.5,
+                                position: "absolute",
+                                bottom: "3px",
+                                right: "0px",
                               }}
                             >
-                              <AccessTimeIcon fontSize="inherit" />
-                              <Typography variant="caption">
-                                Hours: <strong>{cls.hours}h</strong>
-                              </Typography>
+                              <IconButton
+                                size="small"
+                                onClick={() => handleOpenEdit(item, cls)}
+                              >
+                                <EditIcon fontSize="inherit" color="primary" />
+                              </IconButton>
+                              <IconButton
+                                size="small"
+                                onClick={() =>
+                                  handleDeleteClassRelation(
+                                    cls.class_id,
+                                    cls.class_name,
+                                    item.name,
+                                    cls.id,
+                                  )
+                                }
+                              >
+                                <DeleteIcon fontSize="inherit" color="error" />
+                              </IconButton>
                             </Box>
                           </Box>
-                          <Box
-                            sx={{
-                              display: "flex",
-                              position: "absolute",
-                              bottom: "3px",
-                              right: "0px",
-                            }}
-                          >
-                            <IconButton
-                              size="small"
-                              onClick={() => handleOpenEdit(item, cls)}
-                            >
-                              <EditIcon fontSize="inherit" color="primary" />
-                            </IconButton>
-                            <IconButton
-                              size="small"
-                              onClick={() =>
-                                handleDeleteClassRelation(
-                                  cls.class_id,
-                                  cls.class_name,
-                                  item.name,
-                                  cls.id,
-                                )
-                              }
-                            >
-                              <DeleteIcon fontSize="inherit" color="error" />
-                            </IconButton>
-                          </Box>
-                        </Box>
-                      ))}
+                        );
+                      })}
                     </Box>
                   </CardContent>
                 </Card>
@@ -651,22 +804,19 @@ const Subjects = () => {
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                select
-                fullWidth
-                label="Class / Level *"
-                value={form.level || ""}
-                onChange={(e) => setForm({ ...form, level: e.target.value })}
-              >
-                <MenuItem value="" disabled>
-                  <em>Select a class</em>
-                </MenuItem>
-                {classes.map((cls) => (
-                  <MenuItem key={cls.id} value={cls.id}>
-                    {cls.name} {cls.level ? `(${cls.level})` : ""}
-                  </MenuItem>
-                ))}
-              </TextField>
+              <Autocomplete
+                options={classes}
+                getOptionLabel={(option) =>
+                  `${option.name} ${option.level ? `(${option.level})` : ""}`
+                }
+                value={currentClassOption}
+                onChange={(_, newValue) =>
+                  setForm({ ...form, level: newValue?.id || "" })
+                }
+                renderInput={(params) => (
+                  <TextField {...params} label="Class / Level *" fullWidth />
+                )}
+              />
             </Grid>
             <Grid size={{ xs: 6, sm: 3 }}>
               <TextField
@@ -748,21 +898,19 @@ const Subjects = () => {
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                select
-                fullWidth
-                label="Class / Level *"
-                value={editForm.level}
-                onChange={(e) =>
-                  setEditForm({ ...editForm, level: e.target.value })
+              <Autocomplete
+                options={classes}
+                getOptionLabel={(option) =>
+                  `${option.name} ${option.level ? `(${option.level})` : ""}`
                 }
-              >
-                {classes.map((cls) => (
-                  <MenuItem key={cls.id} value={cls.id}>
-                    {cls.name} {cls.level ? `(${cls.level})` : ""}
-                  </MenuItem>
-                ))}
-              </TextField>
+                value={currentEditClassOption}
+                onChange={(_, newValue) =>
+                  setEditForm({ ...editForm, level: newValue?.id || "" })
+                }
+                renderInput={(params) => (
+                  <TextField {...params} label="Class / Level *" fullWidth />
+                )}
+              />
             </Grid>
             <Grid size={{ xs: 6, sm: 3 }}>
               <TextField
@@ -810,6 +958,49 @@ const Subjects = () => {
             disabled={operationLoading}
           >
             Save Changes
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={openAssignTeacher}
+        onClose={() => setOpenAssignTeacher(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          Assign Teacher to {selectedSubject?.name} for class{" "}
+          {selectedSubjectClass?.class_name}
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ mt: 1.5 }}>
+            <Autocomplete
+              options={teachers}
+              getOptionLabel={(option) =>
+                `${option.first_name} ${option.last_name} ${option.subject ? `(${option.subject})` : ""}`
+              }
+              value={selectedTeacher}
+              onChange={(_, newValue) => setSelectedTeacher(newValue)}
+              renderInput={(params) => (
+                <TextField {...params} label="Select Teacher *" fullWidth />
+              )}
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button
+            disabled={operationLoading}
+            onClick={() => setOpenAssignTeacher(false)}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color="success"
+            onClick={handleAssignTeacher}
+            disabled={operationLoading}
+          >
+            Assign
           </Button>
         </DialogActions>
       </Dialog>
