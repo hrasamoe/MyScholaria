@@ -834,7 +834,7 @@ const CreateTimetable = () => {
 
             {selectedClassDetails?.classroom_name && (
               <Alert severity="info" icon={false}>
-                Assigned Classroom:{" "}
+                Located on room:{" "}
                 <strong>{selectedClassDetails.classroom_name}</strong>
               </Alert>
             )}
@@ -861,7 +861,7 @@ const CreateTimetable = () => {
 
             {form.subject && (
               <Alert severity="info" icon={false}>
-                Linked Teacher: <strong>{currentTeacherName}</strong>
+                Taught by: <strong>{currentTeacherName}</strong>
               </Alert>
             )}
 

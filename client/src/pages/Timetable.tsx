@@ -1,18 +1,21 @@
 import PageHeader from "@/components/PageHeader";
+import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+import AddIcon from "@mui/icons-material/Add";
+import { useNavigate } from "react-router-dom";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import {
+  Box,
+  Button,
   Card,
   FormControl,
+  IconButton,
   InputLabel,
   MenuItem,
-  Select,
-  Box,
   Paper,
+  Select,
   Typography,
-  IconButton,
 } from "@mui/material";
-import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
-import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-import { useState, useMemo } from "react";
+import { useMemo, useState } from "react";
 
 const days = [
   "Monday",
@@ -717,7 +720,7 @@ const MobileView = ({ byDay }: { byDay: Record<string, LayoutCourse[]> }) => {
 const Timetable = () => {
   const [klass, setKlass] = useState("Class 6A");
   const currentCourses = sampleData[klass] || [];
-
+  const navigate = useNavigate();
   const byDay = useMemo(() => {
     const map: Record<string, LayoutCourse[]> = {};
     days.forEach((d) => {
@@ -735,7 +738,16 @@ const Timetable = () => {
     <>
       <PageHeader title="Timetable" subtitle="Weekly schedule per class" />
 
-      <Card sx={{ p: 2, mb: 2 }}>
+      <Card
+        sx={{
+          p: 2,
+          mb: 2,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 2,
+        }}
+      >
         <FormControl size="small" sx={{ minWidth: 200 }}>
           <InputLabel>Class</InputLabel>
           <Select
@@ -750,18 +762,28 @@ const Timetable = () => {
             ))}
           </Select>
         </FormControl>
+
+        <Button
+          variant="contained"
+          onClick={() => {
+            navigate("/timetable/create");
+          }}
+          color="success"
+          startIcon={<AddIcon />}
+        >
+          Create schedule
+        </Button>
       </Card>
 
       {/* Desktop : visible à partir de md */}
+
       <Box sx={{ display: { xs: "none", md: "block" } }}>
         <DesktopView byDay={byDay} />
       </Box>
 
-
       <Box sx={{ display: { xs: "block", md: "none" } }}>
         <MobileView byDay={byDay} />
       </Box>
-
 
       <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 1.5 }}>
         {usedSubjects.map((s) => {
