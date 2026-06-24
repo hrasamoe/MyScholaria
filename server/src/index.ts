@@ -23,6 +23,7 @@ import { studentRouter } from "./modules/students/students.router";
 import { teacherRouter } from "./modules/teacher/teacher.router";
 import { initWebSocketServer } from "./services/websocket/ws-server";
 import { subjectRouter } from "./modules/subject/subject.router";
+import { timetableRouter } from "./modules/timetable/timetable.router";
 
 setDefaultResultOrder("ipv4first");
 
@@ -53,6 +54,7 @@ app.use("/api/messages", messageRouter);
 app.use("/api/teachers", teacherRouter);
 app.use("/api/utils", utilschemaRouter);
 app.use("/api/auth", authRouter);
+app.use("/api/timetable", timetableRouter);
 app.use("/api/establishment", establishementRouter);
 app.use("/api/students", studentRouter);
 app.use("/api/staff", staffRouter);
