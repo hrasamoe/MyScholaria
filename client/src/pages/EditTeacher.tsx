@@ -1,7 +1,10 @@
 import PageHeader from "@/components/PageHeader";
+import { TEACHER_SUBJECTS, TeacherSubject } from "@/data/type";
+import { apiRequest } from "@/services/api.service";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import SaveIcon from "@mui/icons-material/Save";
 import {
+  Autocomplete,
   Box,
   Button,
   Checkbox,
@@ -23,8 +26,6 @@ import Grid from "@mui/material/Grid";
 import { useSnackbar } from "notistack";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { TeacherSubject } from "./Teachers";
-import { apiRequest } from "@/services/api.service";
 
 export type ContractType = "permanent" | "contract" | "vacation";
 
@@ -42,21 +43,6 @@ interface TeacherForm {
   contractType: ContractType | "";
   hoursPerDay: string;
 }
-
-const TEACHER_SUBJECTS: TeacherSubject[] = [
-  "Mathematics",
-  "Physics",
-  "Chemistry",
-  "Biology",
-  "English",
-  "French",
-  "Malagasy",
-  "Phylosophy",
-  "History & Geography",
-  "Computer Science",
-  "Physical Education",
-  "Art & Music",
-];
 
 const CONTRACT_TYPES: ContractType[] = ["permanent", "contract", "vacation"];
 
@@ -89,13 +75,10 @@ const EditTeacher = () => {
     const fetchTeacherDetails = async () => {
       try {
         setFetching(true);
-        const response = await apiRequest(
-          `/api/teachers/details/${id}`,
-          {
-            method: "GET",
-            credentials: "include",
-          },
-        );
+        const response = await apiRequest(`/api/teachers/details/${id}`, {
+          method: "GET",
+          credentials: "include",
+        });
         const result = await response.json();
 
         if (!response.ok) {
@@ -162,6 +145,15 @@ const EditTeacher = () => {
         variant: "error",
       });
       return;
+    }if (
+      form.subject &&
+      !TEACHER_SUBJECTS.includes(form.subject as TeacherSubject)
+    ) {
+      enqueueSnackbar(
+        `This ${form.subject} is not in the standard list, please select a valid option`,
+        { variant: "warning" },
+      );
+      return;
     }
 
     if (!rgpdAccepted) {
@@ -173,30 +165,27 @@ const EditTeacher = () => {
 
     setLoading(true);
     try {
-      const response = await apiRequest(
-        `/api/teachers/update/${id}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({
-            IDNumber: form.idNumber,
-            firstName: form.firstName,
-            lastName: form.lastName,
-            email: form.email,
-            gender: form.gender,
-            subject: form.subject,
-            phone: form.phone,
-            address: form.address,
-            hire_date: form.hire_date,
-            qualification: form.qualification,
-            contractType: form.contractType,
-            hpw: form.hoursPerDay ? parseInt(form.hoursPerDay) : 0,
-          }),
+      const response = await apiRequest(`/api/teachers/update/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
         },
-      );
+        credentials: "include",
+        body: JSON.stringify({
+          IDNumber: form.idNumber,
+          firstName: form.firstName,
+          lastName: form.lastName,
+          email: form.email,
+          gender: form.gender,
+          subject: form.subject,
+          phone: form.phone,
+          address: form.address,
+          hire_date: form.hire_date,
+          qualification: form.qualification,
+          contractType: form.contractType,
+          hpw: form.hoursPerDay ? parseInt(form.hoursPerDay) : 0,
+        }),
+      });
 
       const result = await response.json();
 
@@ -396,27 +385,32 @@ const EditTeacher = () => {
             {fetching ? (
               <Skeleton variant="rounded" height={56} />
             ) : (
-              <TextField
-                select
-                fullWidth
-                label="Main Subject *"
+              <Autocomplete
+                freeSolo
+                options={TEACHER_SUBJECTS}
                 value={form.subject || ""}
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    subject: e.target.value as TeacherSubject,
-                  })
-                }
-                disabled={loading}
-                error={!!errors.subject}
-                helperText={errors.subject}
-              >
-                {TEACHER_SUBJECTS.map((subject) => (
-                  <MenuItem key={subject} value={subject}>
-                    {subject}
-                  </MenuItem>
-                ))}
-              </TextField>
+                onChange={(_, newValue) => {
+                  setForm((prev) => ({
+                    ...prev,
+                    subject: (newValue as TeacherSubject) || "",
+                  }));
+                }}
+                onInputChange={(_, newInputValue) => {
+                  setForm((prev) => ({
+                    ...prev,
+                    subject: newInputValue as TeacherSubject,
+                  }));
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Main Subject *"
+                    fullWidth
+                    error={!!errors.subject}
+                    helperText={errors.subject}
+                  />
+                )}
+              />
             )}
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }}>

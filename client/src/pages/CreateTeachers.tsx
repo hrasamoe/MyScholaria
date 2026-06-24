@@ -1,18 +1,22 @@
 import PageHeader from "@/components/PageHeader";
+import { TEACHER_SUBJECTS, TeacherSubject } from "@/data/type";
 import { useAuth } from "@/hooks/Authcontext";
+import { apiRequest } from "@/services/api.service";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import SaveIcon from "@mui/icons-material/Save";
 import {
+  Autocomplete,
   Box,
   Button,
   Checkbox,
+  Container,
   Divider,
   FormControl,
   FormControlLabel,
   FormHelperText,
   FormLabel,
   MenuItem,
-  Paper,Container,
+  Paper,
   Radio,
   RadioGroup,
   TextField,
@@ -22,8 +26,6 @@ import Grid from "@mui/material/Grid";
 import { useSnackbar } from "notistack";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { TeacherSubject } from "./Teachers";
-import { apiRequest } from "@/services/api.service";
 
 export type ContractType = "permanent" | "contract" | "vacation";
 
@@ -42,27 +44,12 @@ interface TeacherForm {
   hoursPerDay: string;
 }
 
-const TEACHER_SUBJECTS: TeacherSubject[] = [
-  "Mathematics",
-  "Physics",
-  "Chemistry",
-  "Biology",
-  "English",
-  "French",
-  "Malagasy",
-  "Phylosophy",
-  "History & Geography",
-  "Computer Science",
-  "Physical Education",
-  "Art & Music",
-];
-
 const CONTRACT_TYPES: ContractType[] = ["permanent", "contract", "vacation"];
 
 const CreateTeacher = () => {
   const [form, setForm] = useState<Partial<TeacherForm>>({
     idNumber: "",
-    gender: "",
+    gender: "male",
     firstName: "",
     lastName: "",
     email: "",
@@ -119,7 +106,19 @@ const CreateTeacher = () => {
       });
       return;
     }
-
+    if (
+      form.subject &&
+      !TEACHER_SUBJECTS.includes(form.subject as TeacherSubject)
+    ) {
+      enqueueSnackbar(
+        `This ${form.subject} is not in the standard list, please select a valid option`,
+        {
+          variant: "warning",
+        },
+      );
+  
+      return;
+    }
     if (!rgpdAccepted) {
       enqueueSnackbar("You must acknowledge the data protection notice", {
         variant: "warning",
@@ -129,30 +128,28 @@ const CreateTeacher = () => {
 
     setLoading(true);
     try {
-      const response = await apiRequest(`/api/teachers/create-teacher`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({
-            IDNumber: form.idNumber,
-            firstName: form.firstName,
-            lastName: form.lastName,
-            email: form.email,
-            gender: form.gender,
-            hire_date: form.hire_date,
-            subject: form.subject,
-            phone: form.phone,
-            address: form.address,
-            qualification: form.qualification,
-            contractType: form.contractType,
-            hpw: form.hoursPerDay ? parseInt(form.hoursPerDay) : 0,
-            fullname: form.firstName + " " + form.lastName,
-          }),
+      const response = await apiRequest(`/api/teachers/create-teacher`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-      );
+        credentials: "include",
+        body: JSON.stringify({
+          IDNumber: form.idNumber,
+          firstName: form.firstName,
+          lastName: form.lastName,
+          email: form.email,
+          gender: form.gender,
+          hire_date: form.hire_date,
+          subject: form.subject,
+          phone: form.phone,
+          address: form.address,
+          qualification: form.qualification,
+          contractType: form.contractType,
+          hpw: form.hoursPerDay ? parseInt(form.hoursPerDay) : 0,
+          fullname: form.firstName + " " + form.lastName,
+        }),
+      });
 
       const result = await response.json();
 
@@ -322,24 +319,29 @@ const CreateTeacher = () => {
             />
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }}>
-            <TextField
-              select
-              fullWidth
-              label="Main Subject *"
+            <Autocomplete
+              freeSolo
+              options={TEACHER_SUBJECTS}
               value={form.subject || ""}
-              onChange={(e) =>
-                setForm({ ...form, subject: e.target.value as TeacherSubject })
-              }
-              disabled={loading}
-              error={!!errors.subject}
-              helperText={errors.subject}
-            >
-              {TEACHER_SUBJECTS.map((subject) => (
-                <MenuItem key={subject} value={subject}>
-                  {subject}
-                </MenuItem>
-              ))}
-            </TextField>
+              onChange={(_, newValue) => {
+                setForm({
+                  ...form,
+                  subject: (newValue as TeacherSubject) || "",
+                });
+              }}
+              onInputChange={(_, newInputValue) => {
+                setForm({ ...form, subject: newInputValue as TeacherSubject });
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Main Subject *"
+                  fullWidth
+                  error={!!errors.subject}
+                  helperText={errors.subject}
+                />
+              )}
+            />
           </Grid>
           <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
