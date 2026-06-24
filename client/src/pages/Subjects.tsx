@@ -614,13 +614,14 @@ const Subjects = () => {
                         maxHeight: "220px",
                         overflowY: "auto",
                         pr: 0.5,
-                        "::-webkit-scrollbar": { width: "7px" },
+                        "::-webkit-scrollbar": { width: "5px" },
                         "::-webkit-scrollbar-thumb": {
                           bgcolor: "rgba(255,255,255,0.1)",
                           borderRadius: "4px",
                         },
                       }}
                     >
+                      
                       {item.classes.map((cls) => {
                         const assignedTeacher = teachers.find(
                           (t) => t.id === cls.teacher_id,
