@@ -123,11 +123,11 @@ const SchoolCalendar = () => {
             title: form.title,
             description: form.description,
             type: form.event_type,
-            is_multiple_day: true,
-            start_date: form.start_date,
-            end_date: form.end_date,
-            start_time: form.start_time,
-            end_time: form.end_time,
+            isMultiDay: true,
+            startDate: form.start_date,
+            endDate: form.end_date,
+            startTime: form.start_time,
+            endTime: form.end_time,
           }),
         });
         if (reponse.ok) {
@@ -161,10 +161,10 @@ const SchoolCalendar = () => {
             title: form.title,
             description: form.description,
             type: form.event_type,
-            is_multiple_day: false,
+            isMultiDay: false,
             date: form.date,
-            start_time: form.start_time,
-            end_time: form.end_time,
+            startTime: form.start_time,
+            endTime: form.end_time,
           }),
         });
         if (reponse.ok) {
