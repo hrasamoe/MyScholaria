@@ -460,8 +460,10 @@ const Subjects = () => {
                     <Box
                       sx={{
                         display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
+                        alignItems: "flex-start",
+                        flexDirection: "column",
+                        width: "100%", 
+                        gap: 1,
                         mb: 1,
                       }}
                     >
@@ -492,7 +494,7 @@ const Subjects = () => {
                         size="small"
                         label={`${item.classes.length} classes`}
                         color="primary"
-                        sx={{ ml: "auto", fontWeight: "600" }}
+                        sx={{ fontWeight: "600" }} 
                       />
                     </Box>
 
