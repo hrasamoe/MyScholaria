@@ -14,6 +14,7 @@ import { AppThemeProvider } from "./hooks/Themecontext";
 import Announcements from "./pages/Announcements";
 import Attendance from "./pages/Attendance";
 import Budget from "./pages/Budget";
+import CreateTimetable from "./pages/CreateTimeTable";
 import ChangePassword from "./pages/ChangePassword";
 import Classes from "./pages/Classes";
 import Classrooms from "./pages/Classrooms";
@@ -147,6 +148,7 @@ const App = () => (
 
                 <Route element={<RoleRoute roles={["admin", "staff"]} />}>
                   <Route path="/parents" element={<ParentsList />} />
+                  <Route path="/timetable/create" element={<CreateTimetable />} />
                   <Route path="/parents/create" element={<CreateParent />} />
                   <Route path="/parents/edit/:id" element={<EditParent />} />
                   <Route path="/users" element={<Users />} />
