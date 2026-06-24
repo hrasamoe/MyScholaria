@@ -2,6 +2,7 @@ import { Response, Router } from "express";
 import { AuthRequest, RequireAuth } from "../../middleware/auth.middleware";
 import { SubjectSchema } from "./subject.schema";
 import {
+  AssignSubjectToTeacher,
   createSubject,
   deleteSubject,
   editSubject,
@@ -88,3 +89,18 @@ subjectRouter.get(
     }
   },
 );
+
+subjectRouter.put("/assign-teacher", RequireAuth, async (req: AuthRequest, res: Response) => {
+  try {
+    const subjectID = req.body.subjectClassId as string;
+    const teacherID = req.body.teacherId as string;
+    await AssignSubjectToTeacher(subjectID, teacherID);
+    res.status(200).json({ message: "Teacher assigned successfully" });
+  } catch (error: any) {
+    console.log(error);
+    res.status(500).json({
+      error: error.message,
+      message: error.message,
+    } )
+  }
+})

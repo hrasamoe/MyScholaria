@@ -132,17 +132,40 @@ export async function getSubjectList(establishmentID: string) {
             'class_name', c.name,
             'code', s.code,
             'coefficient', s.coefficient,
-            'hours', s.hours_per_week
+            'hours', s.hours_per_week,
+            'teacher_id', t.profile_id
           )
         ) as classes
       FROM subjects s
       LEFT JOIN classes c ON s.level = c.id
+      LEFT JOIN teachers t ON s.teacher_id = t.id
       WHERE s.establishment_id = $1
       GROUP BY s.name
     `;
     const result = await client.query(queryText, [establishmentID]);
     await client.query("COMMIT");
     return result.rows;
+  } catch (error: any) {
+    console.error(error);
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+export async function AssignSubjectToTeacher(
+  subjectID: string,
+  teacherID: string,
+) {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const queryText = `UPDATE subjects SET teacher_id = $1 WHERE id = $2 RETURNING *`;
+    const value = [teacherID, subjectID];
+    const result = await client.query(queryText, value);
+    await client.query("COMMIT");
+    return result.rows[0];
   } catch (error: any) {
     console.error(error);
     await client.query("ROLLBACK");
