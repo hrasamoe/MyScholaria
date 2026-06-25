@@ -599,7 +599,7 @@ const CreateTimetable = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [formError, setFormError] = useState("");
-const [subjectInputValue, setSubjectInputValue] = useState("");
+  const [subjectInputValue, setSubjectInputValue] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState<SlotForm>(emptyForm("Monday"));
   const [saving, setSaving] = useState(false);
@@ -774,18 +774,39 @@ const [subjectInputValue, setSubjectInputValue] = useState("");
       return setFormError("This class has no assigned classroom");
     if (form.startTime >= form.endTime)
       return setFormError("End time must be after start time");
-const matchedSubject = availableSubjects.find(
-  (sub) => sub.id === form.subject_id,
-);
-if (
-  subjectInputValue &&
-  (!matchedSubject || subjectInputValue !== matchedSubject.name)
-) {
-  enqueueSnackbar("Please select a valid subject from the list", {
-    variant: "error",
-  });
-  return;
-}
+
+    const matchedSubject = availableSubjects.find(
+      (sub) => sub.id === form.subject_id,
+    );
+    if (
+      subjectInputValue &&
+      (!matchedSubject || subjectInputValue !== matchedSubject.name)
+    ) {
+      enqueueSnackbar("Please select a valid subject from the list", {
+        variant: "error",
+      });
+      return;
+    }
+
+    const newStart = timeToMinutes(form.startTime);
+    const newEnd = timeToMinutes(form.endTime);
+
+    const hasOverlap = slots.some((slot) => {
+      if (form.id && slot.id === form.id) return false;
+      if (slot.day !== form.day) return false;
+
+      const existingStart = timeToMinutes(slot.start_time);
+      const existingEnd = timeToMinutes(slot.end_time);
+
+      return newStart < existingEnd && newEnd > existingStart;
+    });
+
+    if (hasOverlap) {
+      return setFormError(
+        "This timeslot overlaps with an existing course on this day.",
+      );
+    }
+
     setSaving(true);
     const payload = {
       classID,
@@ -967,7 +988,6 @@ if (
             )}
 
             <FormControl size="small" fullWidth>
-             
               <Autocomplete
                 freeSolo
                 options={availableSubjects}
@@ -1019,7 +1039,6 @@ if (
                   />
                 )}
               />
-            
             </FormControl>
 
             {form.subject_id && (
