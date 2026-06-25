@@ -1,38 +1,33 @@
 import { Request, Response, Router } from "express";
 import {
+  getSlotsByClass,
+  createSlot,
+  deleteSlot,
+  updateSlot,
+} from "./timetable.service";
+import {
   AuthRequest,
   RequireAuth,
   RequireAuthOnly,
 } from "../../middleware/auth.middleware";
-import {
-  scheduleSlotSchema,
-  updateScheduleSlotSchema,
-} from "./timetable.schema";
-import {
-  createScheduleSlot,
-  deleteScheduleSlot,
-  getClassSchedule,
-  updateScheduleSlot,
-} from "./timetable.service";
-
+import { slotSchema } from "./timetable.schema";
 export const timetableRouter = Router();
 
 timetableRouter.post(
   "/create",
   RequireAuth,
   async (req: AuthRequest, res: Response) => {
-    const establishmentID = req.establishmentID as string;
-    const parsed = scheduleSlotSchema.safeParse(req.body);
-    if (!parsed.success) {
-      return res.status(400).json({ message: parsed.error.message });
-    }
+    const userID = req.userId as string;
+
     try {
-      const slot = await createScheduleSlot(establishmentID, parsed.data);
-      res.status(201).json({ message: "Schedule slot created", data: slot });
+      const parsed = slotSchema.safeParse(req.body);
+      if (parsed.error) {
+        throw new Error(JSON.stringify(parsed.error));
+      }
+      const result = await createSlot(userID, parsed.data);
+      res.status(201).json(result);
     } catch (error: any) {
-      res
-        .status(400)
-        .json({ message: error.message || "Internal server error" });
+      res.status(500).json({ error: error.message, message: error.message });
     }
   },
 );
@@ -40,56 +35,47 @@ timetableRouter.post(
 timetableRouter.get(
   "/class/:classID",
   RequireAuth,
-  async (req: Request, res: Response) => {
-    const classID = req.params.classID as string;
-    try {
-      const schedule = await getClassSchedule(classID);
-      res.status(200).json(schedule);
-    } catch (error: any) {
-      res
-        .status(500)
-        .json({ message: error.message || "Internal server error" });
-    }
-  },
-);
-
-timetableRouter.put(
-  "/update/:id",
-  RequireAuth,
   async (req: AuthRequest, res: Response) => {
-    const slotID = req.params.id as string;
-    const establishmentID = req.establishmentID as string;
-    const parsed = updateScheduleSlotSchema.safeParse(req.body);
-    if (!parsed.success) {
-      return res.status(400).json({ message: parsed.error.message });
-    }
     try {
-      const slot = await updateScheduleSlot(
-        slotID,
-        establishmentID,
-        parsed.data,
-      );
-      res.status(200).json({ message: "Schedule slot updated", data: slot });
+      const classID = req.params.classID as string;
+      const slots = await getSlotsByClass(classID);
+      res.status(200).json(slots);
     } catch (error: any) {
-      res
-        .status(400)
-        .json({ message: error.message || "Internal server error" });
+      res.status(500).json({ error: error.message, message: error.message });
     }
   },
 );
 
 timetableRouter.delete(
-  "/delete/:id",
-  RequireAuthOnly,
-  async (req: Request, res: Response) => {
-    const slotID = req.params.id as string;
+  "/delete/:slotID",
+  RequireAuth,
+  async (req: AuthRequest, res: Response) => {
+    const userID = req.userId as string;
+    const slotID = req.params.slotID as string;
     try {
-      await deleteScheduleSlot(slotID);
-      res.status(200).json({ message: "Schedule slot deleted" });
+      await deleteSlot(slotID, userID);
+      res.status(200).json({ message: "Slot deleted successfully" });
     } catch (error: any) {
-      res
-        .status(500)
-        .json({ message: error.message || "Internal server error" });
+      res.status(500).json({ error: error.message, message: error.message });
+    }
+  },
+);
+
+timetableRouter.put(
+  "/update/:slotID",
+  RequireAuth,
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const parsed = slotSchema.safeParse(req.body);
+      if (parsed.error) {
+        throw new Error(JSON.stringify(parsed.error));
+      }
+      const slotID = req.params.slotID as string;
+      const userID = req.userId as string;
+      const result = await updateSlot(slotID, userID, parsed.data);
+      res.status(200).json(result);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message, message: error.message });
     }
   },
 );

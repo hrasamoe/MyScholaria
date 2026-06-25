@@ -1,18 +1,30 @@
 import PageHeader from "@/components/PageHeader";
+import { apiRequest } from "@/services/api.service";
+import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+import AddIcon from "@mui/icons-material/Add";
+import { useNavigate } from "react-router-dom";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import {
+  Box,
+  Button,
   Card,
   FormControl,
+  IconButton,
   InputLabel,
   MenuItem,
-  Select,
-  Box,
   Paper,
+  Select,
   Typography,
-  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Stack,
+  useTheme,
+  Skeleton,
 } from "@mui/material";
-import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
-import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-import { useState, useMemo } from "react";
+import { useSnackbar } from "notistack";
+import { useMemo, useState, useEffect, useCallback } from "react";
 
 const days = [
   "Monday",
@@ -21,7 +33,8 @@ const days = [
   "Thursday",
   "Friday",
   "Saturday",
-];
+] as const;
+type Day = (typeof days)[number];
 
 const DAY_START_MIN = 6 * 60 + 30;
 const DAY_END_MIN = 18 * 60 + 30;
@@ -48,209 +61,66 @@ const generateGridLines = () => {
 };
 const gridLines = generateGridLines();
 
-interface Course {
-  subject: string;
-  teacher: string;
-  room: string;
-  day: string;
-  startTime: string;
-  endTime: string;
+interface ClassOption {
+  id: string;
+  name: string;
+  room_id: string;
+  classroom_name?: string;
 }
 
-const sampleData: Record<string, Course[]> = {
-  "Class 6A": [
-    {
-      subject: "Math",
-      teacher: "Mr. Dupont",
-      room: "A101",
-      day: "Monday",
-      startTime: "07:30",
-      endTime: "09:30",
-    },
-    {
-      subject: "French",
-      teacher: "Ms. Martin",
-      room: "A102",
-      day: "Monday",
-      startTime: "10:00",
-      endTime: "11:30",
-    },
-    {
-      subject: "Physics",
-      teacher: "Mrs. Bernard",
-      room: "B203",
-      day: "Monday",
-      startTime: "13:30",
-      endTime: "14:00",
-    },
-    {
-      subject: "English",
-      teacher: "Ms. Martin",
-      room: "A105",
-      day: "Tuesday",
-      startTime: "06:30",
-      endTime: "08:30",
-    },
-    {
-      subject: "Biology",
-      teacher: "Mrs. Moreau",
-      room: "B102",
-      day: "Tuesday",
-      startTime: "09:00",
-      endTime: "12:00",
-    },
-    {
-      subject: "History",
-      teacher: "Mr. Leclerc",
-      room: "C301",
-      day: "Tuesday",
-      startTime: "14:00",
-      endTime: "15:30",
-    },
-    {
-      subject: "Sport",
-      teacher: "Mr. Said",
-      room: "Gym",
-      day: "Wednesday",
-      startTime: "08:00",
-      endTime: "09:14",
-    },
-    {
-      subject: "Art",
-      teacher: "Mrs. Karim",
-      room: "D101",
-      day: "Wednesday",
-      startTime: "09:25",
-      endTime: "12:00",
-    },
-    {
-      subject: "Music",
-      teacher: "Mr. Ali",
-      room: "D202",
-      day: "Thursday",
-      startTime: "10:30",
-      endTime: "12:00",
-    },
-    {
-      subject: "Math",
-      teacher: "Mr. Dupont",
-      room: "A101",
-      day: "Thursday",
-      startTime: "13:00",
-      endTime: "14:30",
-    },
-    {
-      subject: "French",
-      teacher: "Ms. Martin",
-      room: "A102",
-      day: "Friday",
-      startTime: "08:30",
-      endTime: "10:00",
-    },
-    {
-      subject: "Physics",
-      teacher: "Mrs. Bernard",
-      room: "B203",
-      day: "Friday",
-      startTime: "14:30",
-      endTime: "17:30",
-    },
-    {
-      subject: "History",
-      teacher: "Mr. Leclerc",
-      room: "C301",
-      day: "Saturday",
-      startTime: "07:30",
-      endTime: "09:30",
-    },
-    {
-      subject: "English",
-      teacher: "Ms. Martin",
-      room: "A105",
-      day: "Saturday",
-      startTime: "10:00",
-      endTime: "12:00",
-    },
-  ],
-  "Class 7B": [
-    {
-      subject: "French",
-      teacher: "Ms. Martin",
-      room: "A102",
-      day: "Monday",
-      startTime: "08:00",
-      endTime: "10:00",
-    },
-    {
-      subject: "Math",
-      teacher: "Mr. Dupont",
-      room: "A101",
-      day: "Monday",
-      startTime: "11:00",
-      endTime: "12:30",
-    },
-    {
-      subject: "Physics",
-      teacher: "Mrs. Bernard",
-      room: "B203",
-      day: "Tuesday",
-      startTime: "07:00",
-      endTime: "09:00",
-    },
-    {
-      subject: "History",
-      teacher: "Mr. Leclerc",
-      room: "C301",
-      day: "Wednesday",
-      startTime: "09:30",
-      endTime: "11:00",
-    },
-    {
-      subject: "SES",
-      teacher: "Ms. Martin",
-      room: "A102",
-      day: "Wednesday",
-      startTime: "11:20",
-      endTime: "16:00",
-    },
-    {
-      subject: "Sport",
-      teacher: "Mr. Said",
-      room: "Gym",
-      day: "Thursday",
-      startTime: "14:00",
-      endTime: "16:00",
-    },
-    {
-      subject: "Biology",
-      teacher: "Mrs. Moreau",
-      room: "B102",
-      day: "Friday",
-      startTime: "10:00",
-      endTime: "13:00",
-    },
-    {
-      subject: "English",
-      teacher: "Ms. Martin",
-      room: "A105",
-      day: "Saturday",
-      startTime: "08:30",
-      endTime: "10:30",
-    },
-  ],
-};
+interface SubjectClassDetails {
+  id: string;
+  class_id: string;
+  class_name: string;
+  code: string;
+  coefficient: number;
+  hours: number;
+  teacher_id: string | null;
+}
 
-const SUBJECT_STYLES: Record<string, { bg: string; text: string }> = {
-  Math: { bg: "#1565c0", text: "#ffffff" },
-  French: { bg: "#c2185b", text: "#ffffff" },
-  Physics: { bg: "#00838f", text: "#ffffff" },
-  English: { bg: "#ef6c00", text: "#ffffff" },
-  Biology: { bg: "#2e7d32", text: "#ffffff" },
-  History: { bg: "#c62828", text: "#ffffff" },
-  Sport: { bg: "#6a1b9a", text: "#ffffff" },
-  Art: { bg: "#4e342e", text: "#ffffff" },
-  Music: { bg: "#558b2f", text: "#ffffff" },
-  SES: { bg: "#f57f17", text: "#ffffff" },
+interface GroupedSubject {
+  id: string;
+  name: string;
+  classes: SubjectClassDetails[];
+}
+
+interface Slot {
+  id: string;
+  subject_id: string;
+  day: Day;
+  start_time: string;
+  end_time: string;
+  subject?: string;
+  teacher?: string;
+  room?: string;
+}
+
+interface Option {
+  id: string;
+  label: string;
+}
+
+const getDynamicSubjectStyle = (subjectName: string, isDarkMode: boolean) => {
+  let hash = 0;
+  const saltedName = subjectName + "timetable-salt-xyz-123";
+  for (let i = 0; i < saltedName.length; i++) {
+    hash = saltedName.charCodeAt(i) + ((hash << 7) - hash);
+  }
+  const hue = Math.abs(hash * 13) % 360;
+
+  if (isDarkMode) {
+    return {
+      bg: `hsl(${hue}, 65%, 22%)`,
+      text: "#ffffff",
+      border: `hsl(${hue}, 70%, 38%)`,
+    };
+  } else {
+    return {
+      bg: `hsl(${hue}, 80%, 93%)`,
+      text: `hsl(${hue}, 85%, 16%)`,
+      border: `hsl(${hue}, 55%, 78%)`,
+    };
+  }
 };
 
 const timeToMinutes = (t: string) => {
@@ -258,19 +128,19 @@ const timeToMinutes = (t: string) => {
   return h * 60 + m;
 };
 
-interface LayoutCourse extends Course {
+interface LayoutSlot extends Slot {
   startMin: number;
   endMin: number;
   col: number;
   totalCols: number;
 }
 
-const layoutDay = (courses: Course[]): LayoutCourse[] => {
-  const items = courses
-    .map((c) => ({
-      ...c,
-      startMin: timeToMinutes(c.startTime),
-      endMin: timeToMinutes(c.endTime),
+const layoutDay = (slots: Slot[]): LayoutSlot[] => {
+  const items = slots
+    .map((s) => ({
+      ...s,
+      startMin: timeToMinutes(s.start_time),
+      endMin: timeToMinutes(s.end_time),
     }))
     .sort((a, b) => a.startMin - b.startMin);
 
@@ -289,7 +159,7 @@ const layoutDay = (courses: Course[]): LayoutCourse[] => {
   });
   if (current.length) clusters.push(current);
 
-  const result: LayoutCourse[] = [];
+  const result: LayoutSlot[] = [];
   clusters.forEach((cluster) => {
     const columnEnds: number[] = [];
     const assigned: { item: (typeof items)[0]; col: number }[] = [];
@@ -311,42 +181,17 @@ const layoutDay = (courses: Course[]): LayoutCourse[] => {
   return result;
 };
 
-// ─── Shared: grille d'un jour ────────────────────────────────────────────────
+const DayColumn = ({
+  slots,
+  onSlotClick,
+}: {
+  slots: LayoutSlot[];
+  onSlotClick: (slot: LayoutSlot) => void;
+}) => {
+  const theme = useTheme();
+  const isDarkMode = theme.palette.mode === "dark";
 
-const DayGrid = ({ courses }: { courses: LayoutCourse[] }) => (
-  <Box sx={{ display: "flex" }}>
-    {/* Time gutter */}
-    <Box
-      sx={{
-        width: 64,
-        flexShrink: 0,
-        position: "relative",
-        height: TOTAL_HEIGHT,
-      }}
-    >
-      {gridLines
-        .filter((l) => !l.isHalf)
-        .map((line) => (
-          <Typography
-            key={line.label}
-            variant="caption"
-            sx={{
-              position: "absolute",
-              top: line.top,
-              right: 8,
-              transform: "translateY(-50%)",
-              color: "text.disabled",
-              fontFamily: "monospace",
-              fontSize: "0.68rem",
-              lineHeight: 1,
-            }}
-          >
-            {line.label}
-          </Typography>
-        ))}
-    </Box>
-
-    {/* Column */}
+  return (
     <Box
       sx={{
         flex: 1,
@@ -367,26 +212,22 @@ const DayGrid = ({ courses }: { courses: LayoutCourse[] }) => (
             borderTop: "0.5px solid",
             borderColor: line.isHalf ? "rgba(0,0,0,0.06)" : "rgba(0,0,0,0.12)",
             borderStyle: line.isHalf ? "dashed" : "solid",
+            pointerEvents: "none",
           }}
         />
       ))}
 
-      {courses.map((course, i) => {
-        const st = SUBJECT_STYLES[course.subject] || {
-          bg: "#888",
-          text: "#fff",
-        };
-        const top = (course.startMin - DAY_START_MIN) * PX_PER_MIN;
-        const height = Math.max(
-          (course.endMin - course.startMin) * PX_PER_MIN,
-          20,
-        );
-        const wPct = 100 / course.totalCols;
-        const lPct = course.col * wPct;
+      {slots.map((slot) => {
+        const st = getDynamicSubjectStyle(slot.subject || "", isDarkMode);
+        const top = (slot.startMin - DAY_START_MIN) * PX_PER_MIN;
+        const height = Math.max((slot.endMin - slot.startMin) * PX_PER_MIN, 20);
+        const wPct = 100 / slot.totalCols;
+        const lPct = slot.col * wPct;
 
         return (
           <Box
-            key={`${course.subject}-${course.startTime}-${i}`}
+            key={slot.id}
+            onClick={() => onSlotClick(slot)}
             sx={{
               position: "absolute",
               top,
@@ -395,10 +236,13 @@ const DayGrid = ({ courses }: { courses: LayoutCourse[] }) => (
               width: `calc(${wPct}% - 4px)`,
               bgcolor: st.bg,
               color: st.text,
+              border: `1px solid ${st.border}`,
               borderRadius: "5px",
               px: 0.75,
               py: 0.5,
               overflow: "hidden",
+              cursor: "pointer",
+              boxShadow: "0px 1px 3px rgba(0,0,0,0.05)",
               "&:hover": { opacity: 0.88 },
             }}
           >
@@ -413,7 +257,7 @@ const DayGrid = ({ courses }: { courses: LayoutCourse[] }) => (
                 textOverflow: "ellipsis",
               }}
             >
-              {course.subject}
+              {slot.subject}
             </Typography>
             {height > 32 && (
               <Typography
@@ -428,10 +272,10 @@ const DayGrid = ({ courses }: { courses: LayoutCourse[] }) => (
                   textOverflow: "ellipsis",
                 }}
               >
-                {course.teacher}
+                {slot.teacher || "Unassigned"}
               </Typography>
             )}
-            {height > 54 && (
+            {height > 54 && slot.room && (
               <Box
                 component="span"
                 sx={{
@@ -446,21 +290,56 @@ const DayGrid = ({ courses }: { courses: LayoutCourse[] }) => (
                   lineHeight: 1.6,
                 }}
               >
-                {course.room}
+                {slot.room}
               </Box>
             )}
           </Box>
         );
       })}
     </Box>
+  );
+};
+
+const TimeGutter = () => (
+  <Box
+    sx={{
+      width: 64,
+      flexShrink: 0,
+      position: "relative",
+      height: TOTAL_HEIGHT,
+    }}
+  >
+    {gridLines
+      .filter((l) => !l.isHalf)
+      .map((line) => (
+        <Typography
+          key={line.label}
+          variant="caption"
+          sx={{
+            position: "absolute",
+            top: line.top,
+            right: 8,
+            transform: "translateY(-50%)",
+            color: "text.disabled",
+            fontFamily: "monospace",
+            fontSize: "0.68rem",
+            lineHeight: 1,
+          }}
+        >
+          {line.label}
+        </Typography>
+      ))}
   </Box>
 );
 
-// ─── Vue desktop : toutes les colonnes ───────────────────────────────────────
-
-const DesktopView = ({ byDay }: { byDay: Record<string, LayoutCourse[]> }) => (
+const DesktopView = ({
+  byDay,
+  onSlotClick,
+}: {
+  byDay: Record<Day, LayoutSlot[]>;
+  onSlotClick: (slot: LayoutSlot) => void;
+}) => (
   <Paper variant="outlined" sx={{ overflow: "hidden", borderRadius: 2 }}>
-    {/* Day headers */}
     <Box
       sx={{
         display: "flex",
@@ -492,163 +371,27 @@ const DesktopView = ({ byDay }: { byDay: Record<string, LayoutCourse[]> }) => (
         </Box>
       ))}
     </Box>
-
-    {/* Body */}
     <Box sx={{ display: "flex" }}>
-      {/* Time gutter */}
-      <Box
-        sx={{
-          width: 64,
-          flexShrink: 0,
-          position: "relative",
-          height: TOTAL_HEIGHT,
-        }}
-      >
-        {gridLines
-          .filter((l) => !l.isHalf)
-          .map((line) => (
-            <Typography
-              key={line.label}
-              variant="caption"
-              sx={{
-                position: "absolute",
-                top: line.top,
-                right: 8,
-                transform: "translateY(-50%)",
-                color: "text.disabled",
-                fontFamily: "monospace",
-                fontSize: "0.68rem",
-                lineHeight: 1,
-              }}
-            >
-              {line.label}
-            </Typography>
-          ))}
-      </Box>
-
+      <TimeGutter />
       {days.map((day) => (
-        <Box
-          key={day}
-          sx={{
-            flex: 1,
-            position: "relative",
-            height: TOTAL_HEIGHT,
-            borderLeft: "0.5px solid",
-            borderColor: "divider",
-          }}
-        >
-          {gridLines.map((line) => (
-            <Box
-              key={line.label}
-              sx={{
-                position: "absolute",
-                top: line.top,
-                left: 0,
-                right: 0,
-                borderTop: "0.5px solid",
-                borderColor: line.isHalf
-                  ? "rgba(0,0,0,0.06)"
-                  : "rgba(0,0,0,0.12)",
-                borderStyle: line.isHalf ? "dashed" : "solid",
-              }}
-            />
-          ))}
-
-          {byDay[day].map((course, i) => {
-            const st = SUBJECT_STYLES[course.subject] || {
-              bg: "#888",
-              text: "#fff",
-            };
-            const top = (course.startMin - DAY_START_MIN) * PX_PER_MIN;
-            const height = Math.max(
-              (course.endMin - course.startMin) * PX_PER_MIN,
-              20,
-            );
-            const wPct = 100 / course.totalCols;
-            const lPct = course.col * wPct;
-            return (
-              <Box
-                key={`${course.subject}-${course.startTime}-${i}`}
-                sx={{
-                  position: "absolute",
-                  top,
-                  height,
-                  left: `calc(${lPct}% + 2px)`,
-                  width: `calc(${wPct}% - 4px)`,
-                  bgcolor: st.bg,
-                  color: st.text,
-                  borderRadius: "5px",
-                  px: 0.75,
-                  py: 0.5,
-                  overflow: "hidden",
-                  "&:hover": { opacity: 0.88 },
-                }}
-              >
-                <Typography
-                  sx={{
-                    fontSize: "0.7rem",
-                    fontWeight: 600,
-                    color: st.text,
-                    lineHeight: 1.3,
-                    whiteSpace: "nowrap",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                  }}
-                >
-                  {course.subject}
-                </Typography>
-                {height > 32 && (
-                  <Typography
-                    sx={{
-                      fontSize: "0.62rem",
-                      color: st.text,
-                      opacity: 0.85,
-                      lineHeight: 1.3,
-                      mt: "2px",
-                      whiteSpace: "nowrap",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                    }}
-                  >
-                    {course.teacher}
-                  </Typography>
-                )}
-                {height > 54 && (
-                  <Box
-                    component="span"
-                    sx={{
-                      display: "inline-block",
-                      mt: "3px",
-                      fontSize: "0.58rem",
-                      color: st.text,
-                      opacity: 0.8,
-                      border: `1px solid ${st.text}`,
-                      borderRadius: "3px",
-                      px: "4px",
-                      lineHeight: 1.6,
-                    }}
-                  >
-                    {course.room}
-                  </Box>
-                )}
-              </Box>
-            );
-          })}
-        </Box>
+        <DayColumn key={day} slots={byDay[day]} onSlotClick={onSlotClick} />
       ))}
     </Box>
   </Paper>
 );
 
-// ─── Vue mobile : 1 jour + nav prev/next ─────────────────────────────────────
-
-const MobileView = ({ byDay }: { byDay: Record<string, LayoutCourse[]> }) => {
+const MobileView = ({
+  byDay,
+  onSlotClick,
+}: {
+  byDay: Record<Day, LayoutSlot[]>;
+  onSlotClick: (slot: LayoutSlot) => void;
+}) => {
   const [dayIndex, setDayIndex] = useState(0);
   const currentDay = days[dayIndex];
 
   return (
     <Paper variant="outlined" sx={{ overflow: "hidden", borderRadius: 2 }}>
-      {/* Nav header */}
       <Box
         sx={{
           display: "flex",
@@ -668,7 +411,6 @@ const MobileView = ({ byDay }: { byDay: Record<string, LayoutCourse[]> }) => {
         >
           <ChevronLeftIcon fontSize="small" />
         </IconButton>
-
         <Typography
           variant="subtitle2"
           fontWeight={600}
@@ -676,7 +418,6 @@ const MobileView = ({ byDay }: { byDay: Record<string, LayoutCourse[]> }) => {
         >
           {currentDay}
         </Typography>
-
         <IconButton
           size="small"
           onClick={() => setDayIndex((i) => Math.min(days.length - 1, i + 1))}
@@ -686,7 +427,6 @@ const MobileView = ({ byDay }: { byDay: Record<string, LayoutCourse[]> }) => {
         </IconButton>
       </Box>
 
-      {/* Indicateur de jour (points) */}
       <Box
         sx={{ display: "flex", justifyContent: "center", gap: 0.5, py: 0.75 }}
       >
@@ -706,91 +446,378 @@ const MobileView = ({ byDay }: { byDay: Record<string, LayoutCourse[]> }) => {
         ))}
       </Box>
 
-      {/* Grille du jour */}
-      <DayGrid courses={byDay[currentDay]} />
+      <Box sx={{ display: "flex" }}>
+        <TimeGutter />
+        <DayColumn
+          key={currentDay}
+          slots={byDay[currentDay]}
+          onSlotClick={onSlotClick}
+        />
+      </Box>
     </Paper>
   );
 };
 
-// ─── Composant principal ──────────────────────────────────────────────────────
+const TimetableSkeleton = () => (
+  <Paper variant="outlined" sx={{ overflow: "hidden", borderRadius: 2 }}>
+    <Box
+      sx={{
+        display: "flex",
+        borderBottom: "1px solid",
+        borderColor: "divider",
+        bgcolor: "action.hover",
+        py: 1,
+      }}
+    >
+      <Box sx={{ width: 64 }} />
+      {days.map((d) => (
+        <Box
+          key={d}
+          sx={{ flex: 1, display: "flex", justifyContent: "center" }}
+        >
+          <Skeleton width="50%" height={20} />
+        </Box>
+      ))}
+    </Box>
+    <Box sx={{ display: "flex", height: TOTAL_HEIGHT, position: "relative" }}>
+      <Box
+        sx={{
+          width: 64,
+          p: 1,
+          display: "flex",
+          flexDirection: "column",
+          gap: 5,
+        }}
+      >
+        {Array.from({ length: 6 }).map((_, i) => (
+          <Skeleton key={i} width="80%" height={15} />
+        ))}
+      </Box>
+      {days.map((d) => (
+        <Box
+          key={d}
+          sx={{
+            flex: 1,
+            borderLeft: "0.5px solid",
+            borderColor: "divider",
+            p: 1,
+            position: "relative",
+          }}
+        >
+          <Skeleton
+            variant="rounded"
+            sx={{
+              position: "absolute",
+              top: 40,
+              left: 4,
+              right: 4,
+              height: 80,
+              borderRadius: "5px",
+            }}
+          />
+          <Skeleton
+            variant="rounded"
+            sx={{
+              position: "absolute",
+              top: 160,
+              left: 4,
+              right: 4,
+              height: 120,
+              borderRadius: "5px",
+            }}
+          />
+          <Skeleton
+            variant="rounded"
+            sx={{
+              position: "absolute",
+              top: 320,
+              left: 4,
+              right: 4,
+              height: 60,
+              borderRadius: "5px",
+            }}
+          />
+        </Box>
+      ))}
+    </Box>
+  </Paper>
+);
 
 const Timetable = () => {
-  const [klass, setKlass] = useState("Class 6A");
-  const currentCourses = sampleData[klass] || [];
+  const [classes, setClasses] = useState<ClassOption[]>([]);
+  const [teachers, setTeachers] = useState<Option[]>([]);
+  const [groupedSubjects, setGroupedSubjects] = useState<GroupedSubject[]>([]);
+  const [classID, setClassID] = useState("");
+  const [slots, setSlots] = useState<Slot[]>([]);
+  const [loadingInitial, setLoadingInitial] = useState(true);
+  const [loading, setLoading] = useState(false);
+
+  const [selectedSlot, setSelectedSlot] = useState<LayoutSlot | null>(null);
+  const [infoOpen, setInfoOpen] = useState(false);
+
+  const navigate = useNavigate();
+  const { enqueueSnackbar } = useSnackbar();
+  const theme = useTheme();
+  const isDarkMode = theme.palette.mode === "dark";
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const [classesRes, teachersRes, subjectsRes] = await Promise.all([
+          apiRequest("/api/establishment/classes-list", {
+            credentials: "include",
+          }),
+          apiRequest("/api/teachers/get-list", { credentials: "include" }),
+          apiRequest("/api/subject/list", {
+            method: "GET",
+            credentials: "include",
+          }),
+        ]);
+
+        if (classesRes.ok) {
+          const data = await classesRes.json();
+          setClasses(
+            data.map((c: any) => ({
+              id: c.id,
+              name: c.name,
+              room_id: c.room_id,
+              classroom_name: c.classroom_name,
+            })),
+          );
+          if (data.length > 0) setClassID(data[0].id);
+        }
+        if (teachersRes.ok) {
+          const data = await teachersRes.json();
+          setTeachers(
+            data.map((t: any) => ({
+              id: t.id,
+              label: `${t.first_name} ${t.last_name}`,
+            })),
+          );
+        }
+        if (subjectsRes.ok) {
+          const data = await subjectsRes.json();
+          setGroupedSubjects(data as GroupedSubject[]);
+        }
+      } catch {
+        enqueueSnackbar("Error loading initial data", { variant: "error" });
+      } finally {
+        setLoadingInitial(false);
+      }
+    })();
+  }, [enqueueSnackbar]);
+
+  const loadSchedule = useCallback(
+    async (id: string) => {
+      if (!id) return;
+      setLoading(true);
+      try {
+        const response = await apiRequest(`/api/timetable/class/${id}`, {
+          credentials: "include",
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setSlots(data as Slot[]);
+        }
+      } catch {
+        enqueueSnackbar("Error loading the timetable", { variant: "error" });
+      } finally {
+        setLoading(false);
+      }
+    },
+    [enqueueSnackbar],
+  );
+
+  useEffect(() => {
+    if (classID) loadSchedule(classID);
+  }, [classID, loadSchedule]);
+
+  const selectedClassDetails = useMemo(() => {
+    return classes.find((c) => c.id === classID) || null;
+  }, [classes, classID]);
 
   const byDay = useMemo(() => {
-    const map: Record<string, LayoutCourse[]> = {};
+    const map = {} as Record<Day, LayoutSlot[]>;
+
+    const enrichedSlots = slots.map((slot) => {
+      const foundSubject = groupedSubjects.find(
+        (s) => s.id === slot.subject_id,
+      );
+      const classDetails = foundSubject?.classes.find(
+        (cls) => cls.class_id === classID,
+      );
+      const foundTeacher = teachers.find(
+        (t) => t.id === classDetails?.teacher_id,
+      );
+
+      return {
+        ...slot,
+        subject: foundSubject ? foundSubject.name : "Unknown",
+        teacher: foundTeacher ? foundTeacher.label : "Unassigned",
+        room: selectedClassDetails?.classroom_name,
+      };
+    });
+
     days.forEach((d) => {
-      map[d] = layoutDay(currentCourses.filter((c) => c.day === d));
+      map[d] = layoutDay(enrichedSlots.filter((s) => s.day === d));
     });
     return map;
-  }, [currentCourses]);
+  }, [slots, groupedSubjects, classID, teachers, selectedClassDetails]);
 
-  const usedSubjects = useMemo(
-    () => [...new Set(currentCourses.map((c) => c.subject))].sort(),
-    [currentCourses],
-  );
+  const usedSubjects = useMemo(() => {
+    const uniqueIds = [...new Set(slots.map((s) => s.subject_id))];
+    return uniqueIds
+      .map((id) => groupedSubjects.find((gs) => gs.id === id)?.name)
+      .filter((name): name is string => !!name)
+      .sort();
+  }, [slots, groupedSubjects]);
+
+  const handleOpenInfo = (slot: LayoutSlot) => {
+    setSelectedSlot(slot);
+    setInfoOpen(true);
+  };
+
+  const handleCloseInfo = () => {
+    setInfoOpen(false);
+    setSelectedSlot(null);
+  };
 
   return (
     <>
       <PageHeader title="Timetable" subtitle="Weekly schedule per class" />
 
-      <Card sx={{ p: 2, mb: 2 }}>
+      <Card
+        sx={{
+          p: 2,
+          mb: 2,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 2,
+        }}
+      >
         <FormControl size="small" sx={{ minWidth: 200 }}>
           <InputLabel>Class</InputLabel>
-          <Select
-            value={klass}
-            label="Class"
-            onChange={(e) => setKlass(e.target.value)}
-          >
-            {Object.keys(sampleData).map((k) => (
-              <MenuItem key={k} value={k}>
-                {k}
-              </MenuItem>
-            ))}
-          </Select>
+          {loadingInitial ? (
+            <Skeleton variant="rounded" height={40} />
+          ) : (
+            <Select
+              value={classID}
+              label="Class"
+              onChange={(e) => setClassID(e.target.value)}
+            >
+              {classes.map((c) => (
+                <MenuItem key={c.id} value={c.id}>
+                  {c.name} {c.classroom_name ? `(${c.classroom_name})` : ""}
+                </MenuItem>
+              ))}
+            </Select>
+          )}
         </FormControl>
+
+        <Button
+          variant="contained"
+          onClick={() => {
+            navigate("/timetable/create");
+          }}
+          color="success"
+          startIcon={<AddIcon />}
+        >
+          Create schedule
+        </Button>
       </Card>
 
-      {/* Desktop : visible à partir de md */}
-      <Box sx={{ display: { xs: "none", md: "block" } }}>
-        <DesktopView byDay={byDay} />
-      </Box>
-
-
-      <Box sx={{ display: { xs: "block", md: "none" } }}>
-        <MobileView byDay={byDay} />
-      </Box>
-
-
-      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 1.5 }}>
-        {usedSubjects.map((s) => {
-          const st = SUBJECT_STYLES[s] || { bg: "#888" };
-          return (
-            <Box
-              key={s}
-              sx={{ display: "flex", alignItems: "center", gap: 0.75 }}
-            >
-              <Box
-                sx={{
-                  width: 10,
-                  height: 10,
-                  borderRadius: "3px",
-                  bgcolor: st.bg,
-                  flexShrink: 0,
-                }}
-              />
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ fontSize: "0.72rem" }}
-              >
-                {s}
-              </Typography>
+      {loadingInitial || loading ? (
+        <TimetableSkeleton />
+      ) : (
+        classID && (
+          <>
+            <Box sx={{ display: { xs: "none", md: "block" } }}>
+              <DesktopView byDay={byDay} onSlotClick={handleOpenInfo} />
             </Box>
-          );
-        })}
-      </Box>
+
+            <Box sx={{ display: { xs: "block", md: "none" } }}>
+              <MobileView byDay={byDay} onSlotClick={handleOpenInfo} />
+            </Box>
+
+            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 1.5 }}>
+              {usedSubjects.map((s) => {
+                const st = getDynamicSubjectStyle(s, isDarkMode);
+                return (
+                  <Box
+                    key={s}
+                    sx={{ display: "flex", alignItems: "center", gap: 0.75 }}
+                  >
+                    <Box
+                      sx={{
+                        width: 10,
+                        height: 10,
+                        borderRadius: "3px",
+                        bgcolor: st.bg,
+                        border: `1px solid ${st.border}`,
+                        flexShrink: 0,
+                      }}
+                    />
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ fontSize: "0.72rem" }}
+                    >
+                      {s}
+                    </Typography>
+                  </Box>
+                );
+              })}
+            </Box>
+          </>
+        )
+      )}
+
+      <Dialog open={infoOpen} onClose={handleCloseInfo} fullWidth maxWidth="xs">
+        <DialogTitle>Course Details</DialogTitle>
+        <DialogContent dividers>
+          {selectedSlot && (
+            <Stack spacing={2}>
+              <Box>
+                <Typography variant="caption" color="text.secondary">
+                  Subject
+                </Typography>
+                <Typography variant="body1" fontWeight={600}>
+                  {selectedSlot.subject}
+                </Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary">
+                  Teacher
+                </Typography>
+                <Typography variant="body1">{selectedSlot.teacher}</Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary">
+                  Classroom / Room
+                </Typography>
+                <Typography variant="body1">
+                  {selectedSlot.room || "No room assigned"}
+                </Typography>
+              </Box>
+              <Box>
+                <Typography variant="caption" color="text.secondary">
+                  Schedule
+                </Typography>
+                <Typography variant="body1">
+                  {selectedSlot.day}, {selectedSlot.start_time} -{" "}
+                  {selectedSlot.end_time}
+                </Typography>
+              </Box>
+            </Stack>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={handleCloseInfo} variant="outlined">
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 };
