@@ -610,11 +610,24 @@ const CreateTimetable = () => {
 
   const byDay = useMemo(() => {
     const map = {} as Record<Day, LayoutSlot[]>;
+    
+    const enrichedSlots = slots.map((slot) => {
+      const foundSubject = groupedSubjects.find((s) => s.name === slot.subject);
+      const classDetails = foundSubject?.classes.find((cls) => cls.class_id === classID);
+      const targetTeacherId = slot.teacherID || classDetails?.teacher_id;
+      const foundTeacher = teachers.find((t) => t.id === targetTeacherId);
+      
+      return {
+        ...slot,
+        teacher: foundTeacher ? foundTeacher.label : "Unassigned",
+      };
+    });
+
     days.forEach((d) => {
-      map[d] = layoutDay(slots.filter((s) => s.day === d));
+      map[d] = layoutDay(enrichedSlots.filter((s) => s.day === d));
     });
     return map;
-  }, [slots]);
+  }, [slots, groupedSubjects, classID, teachers]);
 
   const availableSubjects = useMemo(() => {
     if (!classID) return [];
@@ -661,7 +674,7 @@ const CreateTimetable = () => {
 
   const closeDialog = () => setDialogOpen(false);
 
-  const handleSave = async () => {
+const handleSave = async () => {
     setFormError("");
     if (!form.subject.trim()) return setFormError("Subject is required");
     if (!selectedClassDetails?.room_id)
@@ -669,15 +682,16 @@ const CreateTimetable = () => {
     if (form.startTime >= form.endTime)
       return setFormError("End time must be after start time");
 
+    const foundGroup = groupedSubjects.find((s) => s.name === form.subject);
+    if (!foundGroup) return setFormError("Subject not found");
+
     setSaving(true);
     const payload = {
       classID,
-      subject: form.subject.trim(),
+      subjectID: foundGroup.id,
       day: form.day,
       startTime: form.startTime,
       endTime: form.endTime,
-      teacherID: selectedSubjectDetails?.teacher_id || null,
-      roomID: selectedClassDetails.room_id,
     };
 
     try {
@@ -707,7 +721,6 @@ const CreateTimetable = () => {
       setSaving(false);
     }
   };
-
   const handleDelete = async () => {
     if (!form.id) return;
     setSaving(true);
