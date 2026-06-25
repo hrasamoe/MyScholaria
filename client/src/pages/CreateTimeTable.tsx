@@ -8,6 +8,7 @@ import {
   Select,
   Box,
   Paper,
+  useTheme,
   Typography,
   IconButton,
   Button,
@@ -18,6 +19,7 @@ import {
   TextField,
   Stack,
   Alert,
+  Skeleton,
 } from "@mui/material";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
@@ -88,12 +90,11 @@ interface GroupedSubject {
 
 interface Slot {
   id: string;
-  subject: string;
+  subject_id: string;
   day: Day;
-  startTime: string;
-  endTime: string;
-  teacherID: string | null;
-  roomID: string;
+  start_time: string;
+  end_time: string;
+  subject?: string;
   teacher?: string;
   room?: string;
 }
@@ -103,20 +104,28 @@ interface Option {
   label: string;
 }
 
-const SUBJECT_STYLES: Record<string, { bg: string; text: string }> = {
-  Math: { bg: "#1565c0", text: "#ffffff" },
-  French: { bg: "#c2185b", text: "#ffffff" },
-  Physics: { bg: "#00838f", text: "#ffffff" },
-  English: { bg: "#ef6c00", text: "#ffffff" },
-  Biology: { bg: "#2e7d32", text: "#ffffff" },
-  History: { bg: "#c62828", text: "#ffffff" },
-  Sport: { bg: "#6a1b9a", text: "#ffffff" },
-  Art: { bg: "#4e342e", text: "#ffffff" },
-  Music: { bg: "#558b2f", text: "#ffffff" },
-  SES: { bg: "#f57f17", text: "#ffffff" },
+const getDynamicSubjectStyle = (subjectName: string, isDarkMode: boolean) => {
+  let hash = 0;
+  const saltedName = subjectName + "timetable-salt-xyz-123";
+  for (let i = 0; i < saltedName.length; i++) {
+    hash = saltedName.charCodeAt(i) + ((hash << 7) - hash);
+  }
+  const hue = Math.abs(hash * 13) % 360;
+
+  if (isDarkMode) {
+    return {
+      bg: `hsl(${hue}, 65%, 22%)`,
+      text: "#ffffff",
+      border: `hsl(${hue}, 70%, 38%)`,
+    };
+  } else {
+    return {
+      bg: `hsl(${hue}, 80%, 93%)`,
+      text: `hsl(${hue}, 85%, 16%)`,
+      border: `hsl(${hue}, 55%, 78%)`,
+    };
+  }
 };
-const FALLBACK_STYLE = { bg: "#546e7a", text: "#ffffff" };
-const subjectStyle = (s: string) => SUBJECT_STYLES[s] || FALLBACK_STYLE;
 
 const timeToMinutes = (t: string) => {
   const [h, m] = t.split(":").map(Number);
@@ -143,8 +152,8 @@ const layoutDay = (slots: Slot[]): LayoutSlot[] => {
   const items = slots
     .map((s) => ({
       ...s,
-      startMin: timeToMinutes(s.startTime),
-      endMin: timeToMinutes(s.endTime),
+      startMin: timeToMinutes(s.start_time),
+      endMin: timeToMinutes(s.end_time),
     }))
     .sort((a, b) => a.startMin - b.startMin);
 
@@ -187,7 +196,7 @@ const layoutDay = (slots: Slot[]): LayoutSlot[] => {
 
 interface SlotForm {
   id: string | null;
-  subject: string;
+  subject_id: string;
   day: Day;
   startTime: string;
   endTime: string;
@@ -195,7 +204,7 @@ interface SlotForm {
 
 const emptyForm = (day: Day, startTime = "08:00"): SlotForm => ({
   id: null,
-  subject: "",
+  subject_id: "",
   day,
   startTime,
   endTime: minutesToTime(timeToMinutes(startTime) + DEFAULT_DURATION_MIN),
@@ -248,7 +257,10 @@ const DayColumn = ({
       ))}
 
       {slots.map((slot) => {
-        const st = subjectStyle(slot.subject);
+        const st = getDynamicSubjectStyle(
+          slot.subject || "",
+          useTheme().palette.mode === "dark",
+        );
         const top = (slot.startMin - DAY_START_MIN) * PX_PER_MIN;
         const height = Math.max((slot.endMin - slot.startMin) * PX_PER_MIN, 20);
         const wPct = 100 / slot.totalCols;
@@ -269,6 +281,7 @@ const DayColumn = ({
               width: `calc(${wPct}% - 4px)`,
               bgcolor: st.bg,
               color: st.text,
+              border: `1px solid ${st.border}`,
               borderRadius: "5px",
               px: 0.75,
               py: 0.5,
@@ -501,12 +514,87 @@ const MobileGrid = ({
   );
 };
 
+const TimetableSkeleton = () => (
+  <Paper variant="outlined" sx={{ overflow: "hidden", borderRadius: 2 }}>
+    <Box
+      sx={{
+        display: "flex",
+        borderBottom: "1px solid",
+        borderColor: "divider",
+        bgcolor: "action.hover",
+        py: 1,
+      }}
+    >
+      <Box sx={{ width: 64 }} />
+      {days.map((d) => (
+        <Box
+          key={d}
+          sx={{ flex: 1, display: "flex", justifyContent: "center" }}
+        >
+          <Skeleton width="50%" height={20} />
+        </Box>
+      ))}
+    </Box>
+    <Box sx={{ display: "flex", height: TOTAL_HEIGHT, position: "relative" }}>
+      <Box
+        sx={{
+          width: 64,
+          p: 1,
+          display: "flex",
+          flexDirection: "column",
+          gap: 5,
+        }}
+      >
+        {Array.from({ length: 6 }).map((_, i) => (
+          <Skeleton key={i} width="80%" height={15} />
+        ))}
+      </Box>
+      {days.map((d) => (
+        <Box
+          key={d}
+          sx={{
+            flex: 1,
+            borderLeft: "0.5px solid",
+            borderColor: "divider",
+            p: 1,
+            position: "relative",
+          }}
+        >
+          <Skeleton
+            variant="rounded"
+            sx={{
+              position: "absolute",
+              top: 60,
+              left: 4,
+              right: 4,
+              height: 100,
+              borderRadius: "5px",
+            }}
+          />
+          <Skeleton
+            variant="rounded"
+            sx={{
+              position: "absolute",
+              top: 220,
+              left: 4,
+              right: 4,
+              height: 70,
+              borderRadius: "5px",
+            }}
+          />
+        </Box>
+      ))}
+    </Box>
+  </Paper>
+);
+
 const CreateTimetable = () => {
   const [classes, setClasses] = useState<ClassOption[]>([]);
   const [teachers, setTeachers] = useState<Option[]>([]);
   const [groupedSubjects, setGroupedSubjects] = useState<GroupedSubject[]>([]);
   const [classID, setClassID] = useState("");
   const [slots, setSlots] = useState<Slot[]>([]);
+  const [loadingInitial, setLoadingInitial] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [formError, setFormError] = useState("");
@@ -515,17 +603,27 @@ const CreateTimetable = () => {
   const [form, setForm] = useState<SlotForm>(emptyForm("Monday"));
   const [saving, setSaving] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
+  const theme = useTheme();
+  const isDarkMode = theme.palette.mode === "dark";
 
   useEffect(() => {
     (async () => {
       try {
-        const classesRes = await apiRequest("/api/establishment/classes-list", {
-          credentials: "include",
-        });
+        const [classesRes, teachersRes, subjectsRes] = await Promise.all([
+          apiRequest("/api/establishment/classes-list", {
+            credentials: "include",
+          }),
+          apiRequest("/api/teachers/get-list", { credentials: "include" }),
+          apiRequest("/api/subject/list", {
+            method: "GET",
+            credentials: "include",
+          }),
+        ]);
+
         if (classesRes.ok) {
           const data = await classesRes.json();
           setClasses(
-            (data as any[]).map((c) => ({
+            data.map((c: any) => ({
               id: c.id,
               name: c.name,
               room_id: c.room_id,
@@ -536,18 +634,11 @@ const CreateTimetable = () => {
         } else {
           enqueueSnackbar("Failed to load classes", { variant: "error" });
         }
-      } catch {
-        enqueueSnackbar("Error loading classes", { variant: "error" });
-      }
 
-      try {
-        const teachersRes = await apiRequest("/api/teachers/get-list", {
-          credentials: "include",
-        });
         if (teachersRes.ok) {
           const data = await teachersRes.json();
           setTeachers(
-            (data as any[]).map((t) => ({
+            data.map((t: any) => ({
               id: t.id,
               label: `${t.first_name} ${t.last_name}`,
             })),
@@ -555,15 +646,7 @@ const CreateTimetable = () => {
         } else {
           enqueueSnackbar("Failed to load teachers", { variant: "error" });
         }
-      } catch {
-        enqueueSnackbar("Error loading teachers", { variant: "error" });
-      }
 
-      try {
-        const subjectsRes = await apiRequest("/api/subject/list", {
-          method: "GET",
-          credentials: "include",
-        });
         if (subjectsRes.ok) {
           const data = await subjectsRes.json();
           setGroupedSubjects(data as GroupedSubject[]);
@@ -571,7 +654,11 @@ const CreateTimetable = () => {
           enqueueSnackbar("Failed to load subjects list", { variant: "error" });
         }
       } catch {
-        enqueueSnackbar("Error loading subjects list", { variant: "error" });
+        enqueueSnackbar("Error loading initial configuration", {
+          variant: "error",
+        });
+      } finally {
+        setLoadingInitial(false);
       }
     })();
   }, [enqueueSnackbar]);
@@ -610,16 +697,23 @@ const CreateTimetable = () => {
 
   const byDay = useMemo(() => {
     const map = {} as Record<Day, LayoutSlot[]>;
-    
+
     const enrichedSlots = slots.map((slot) => {
-      const foundSubject = groupedSubjects.find((s) => s.name === slot.subject);
-      const classDetails = foundSubject?.classes.find((cls) => cls.class_id === classID);
-      const targetTeacherId = slot.teacherID || classDetails?.teacher_id;
-      const foundTeacher = teachers.find((t) => t.id === targetTeacherId);
-      
+      const foundSubject = groupedSubjects.find(
+        (s) => s.id === slot.subject_id,
+      );
+      const classDetails = foundSubject?.classes.find(
+        (cls) => cls.class_id === classID,
+      );
+      const foundTeacher = teachers.find(
+        (t) => t.id === classDetails?.teacher_id,
+      );
+
       return {
         ...slot,
+        subject: foundSubject ? foundSubject.name : "Unknown",
         teacher: foundTeacher ? foundTeacher.label : "Unassigned",
+        room: selectedClassDetails?.classroom_name,
       };
     });
 
@@ -627,22 +721,20 @@ const CreateTimetable = () => {
       map[d] = layoutDay(enrichedSlots.filter((s) => s.day === d));
     });
     return map;
-  }, [slots, groupedSubjects, classID, teachers]);
+  }, [slots, groupedSubjects, classID, teachers, selectedClassDetails]);
 
   const availableSubjects = useMemo(() => {
     if (!classID) return [];
-    return groupedSubjects
-      .filter((subject) =>
-        subject.classes.some((cls) => cls.class_id === classID),
-      )
-      .map((subject) => subject.name);
+    return groupedSubjects.filter((subject) =>
+      subject.classes.some((cls) => cls.class_id === classID),
+    );
   }, [groupedSubjects, classID]);
 
   const selectedSubjectDetails = useMemo(() => {
-    if (!form.subject || !classID) return null;
-    const foundGroup = groupedSubjects.find((s) => s.name === form.subject);
+    if (!form.subject_id || !classID) return null;
+    const foundGroup = groupedSubjects.find((s) => s.id === form.subject_id);
     return foundGroup?.classes.find((cls) => cls.class_id === classID) || null;
-  }, [form.subject, groupedSubjects, classID]);
+  }, [form.subject_id, groupedSubjects, classID]);
 
   const currentTeacherName = useMemo(() => {
     if (!selectedSubjectDetails?.teacher_id) return "Unassigned";
@@ -664,31 +756,28 @@ const CreateTimetable = () => {
     setFormError("");
     setForm({
       id: slot.id,
-      subject: slot.subject,
+      subject_id: slot.subject_id,
       day: slot.day,
-      startTime: slot.startTime,
-      endTime: slot.endTime,
+      startTime: slot.start_time,
+      endTime: slot.end_time,
     });
     setDialogOpen(true);
   };
 
   const closeDialog = () => setDialogOpen(false);
 
-const handleSave = async () => {
+  const handleSave = async () => {
     setFormError("");
-    if (!form.subject.trim()) return setFormError("Subject is required");
+    if (!form.subject_id) return setFormError("Subject is required");
     if (!selectedClassDetails?.room_id)
       return setFormError("This class has no assigned classroom");
     if (form.startTime >= form.endTime)
       return setFormError("End time must be after start time");
 
-    const foundGroup = groupedSubjects.find((s) => s.name === form.subject);
-    if (!foundGroup) return setFormError("Subject not found");
-
     setSaving(true);
     const payload = {
       classID,
-      subjectID: foundGroup.id,
+      subjectID: form.subject_id,
       day: form.day,
       startTime: form.startTime,
       endTime: form.endTime,
@@ -721,6 +810,7 @@ const handleSave = async () => {
       setSaving(false);
     }
   };
+
   const handleDelete = async () => {
     if (!form.id) return;
     setSaving(true);
@@ -745,10 +835,13 @@ const handleSave = async () => {
     }
   };
 
-  const usedSubjects = useMemo(
-    () => [...new Set(slots.map((s) => s.subject))].sort(),
-    [slots],
-  );
+  const usedSubjects = useMemo(() => {
+    const uniqueIds = [...new Set(slots.map((s) => s.subject_id))];
+    return uniqueIds
+      .map((id) => groupedSubjects.find((gs) => gs.id === id)?.name)
+      .filter((name): name is string => !!name)
+      .sort();
+  }, [slots, groupedSubjects]);
 
   return (
     <>
@@ -761,23 +854,27 @@ const handleSave = async () => {
         <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
           <FormControl size="small" sx={{ minWidth: 220 }}>
             <InputLabel>Class</InputLabel>
-            <Select
-              value={classID}
-              label="Class"
-              onChange={(e) => setClassID(e.target.value)}
-            >
-              {classes.map((c) => (
-                <MenuItem key={c.id} value={c.id}>
-                  {c.name} {c.classroom_name ? `(${c.classroom_name})` : ""}
-                </MenuItem>
-              ))}
-            </Select>
+            {loadingInitial ? (
+              <Skeleton variant="rounded" height={40} />
+            ) : (
+              <Select
+                value={classID}
+                label="Class"
+                onChange={(e) => setClassID(e.target.value)}
+              >
+                {classes.map((c) => (
+                  <MenuItem key={c.id} value={c.id}>
+                    {c.name} {c.classroom_name ? `(${c.classroom_name})` : ""}
+                  </MenuItem>
+                ))}
+              </Select>
+            )}
           </FormControl>
 
           <Button
             variant="contained"
             startIcon={<AddIcon />}
-            disabled={!classID}
+            disabled={!classID || loadingInitial}
             onClick={() => openCreateDialog("Monday")}
           >
             Add course
@@ -791,52 +888,57 @@ const handleSave = async () => {
         </Alert>
       )}
 
-      {!loading && classID && (
-        <>
-          <Box sx={{ display: { xs: "none", md: "block" } }}>
-            <DesktopGrid
-              byDay={byDay}
-              onBackgroundClick={openCreateDialog}
-              onSlotClick={openEditDialog}
-            />
-          </Box>
-          <Box sx={{ display: { xs: "block", md: "none" } }}>
-            <MobileGrid
-              byDay={byDay}
-              onBackgroundClick={openCreateDialog}
-              onSlotClick={openEditDialog}
-            />
-          </Box>
+      {loadingInitial || loading ? (
+        <TimetableSkeleton />
+      ) : (
+        classID && (
+          <>
+            <Box sx={{ display: { xs: "none", md: "block" } }}>
+              <DesktopGrid
+                byDay={byDay}
+                onBackgroundClick={openCreateDialog}
+                onSlotClick={openEditDialog}
+              />
+            </Box>
+            <Box sx={{ display: { xs: "block", md: "none" } }}>
+              <MobileGrid
+                byDay={byDay}
+                onBackgroundClick={openCreateDialog}
+                onSlotClick={openEditDialog}
+              />
+            </Box>
 
-          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 1.5 }}>
-            {usedSubjects.map((s) => {
-              const st = subjectStyle(s);
-              return (
-                <Box
-                  key={s}
-                  sx={{ display: "flex", alignItems: "center", gap: 0.75 }}
-                >
+            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 1.5 }}>
+              {usedSubjects.map((s) => {
+                const st = getDynamicSubjectStyle(s, isDarkMode);
+                return (
                   <Box
-                    sx={{
-                      width: 10,
-                      height: 10,
-                      borderRadius: "3px",
-                      bgcolor: st.bg,
-                      flexShrink: 0,
-                    }}
-                  />
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    sx={{ fontSize: "0.72rem" }}
+                    key={s}
+                    sx={{ display: "flex", alignItems: "center", gap: 0.75 }}
                   >
-                    {s}
-                  </Typography>
-                </Box>
-              );
-            })}
-          </Box>
-        </>
+                    <Box
+                      sx={{
+                        width: 10,
+                        height: 10,
+                        borderRadius: "3px",
+                        bgcolor: st.bg,
+                        border: `1px solid ${st.border}`,
+                        flexShrink: 0,
+                      }}
+                    />
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ fontSize: "0.72rem" }}
+                    >
+                      {s}
+                    </Typography>
+                  </Box>
+                );
+              })}
+            </Box>
+          </>
+        )
       )}
 
       <Dialog open={dialogOpen} onClose={closeDialog} fullWidth maxWidth="xs">
@@ -855,13 +957,15 @@ const handleSave = async () => {
             <FormControl size="small" fullWidth>
               <InputLabel>Subject</InputLabel>
               <Select
-                value={form.subject}
+                value={form.subject_id}
                 label="Subject"
-                onChange={(e) => setForm({ ...form, subject: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, subject_id: e.target.value })
+                }
               >
-                {availableSubjects.map((name) => (
-                  <MenuItem key={name} value={name}>
-                    {name}
+                {availableSubjects.map((sub) => (
+                  <MenuItem key={sub.id} value={sub.id}>
+                    {sub.name}
                   </MenuItem>
                 ))}
                 {availableSubjects.length === 0 && (
@@ -872,7 +976,7 @@ const handleSave = async () => {
               </Select>
             </FormControl>
 
-            {form.subject && (
+            {form.subject_id && (
               <Alert severity="info" icon={false}>
                 Taught by: <strong>{currentTeacherName}</strong>
               </Alert>
