@@ -7,6 +7,7 @@ import {
   MenuItem,
   Select,
   Box,
+  Autocomplete,
   Paper,
   useTheme,
   Typography,
@@ -598,7 +599,7 @@ const CreateTimetable = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [formError, setFormError] = useState("");
-
+const [subjectInputValue, setSubjectInputValue] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState<SlotForm>(emptyForm("Monday"));
   const [saving, setSaving] = useState(false);
@@ -773,7 +774,18 @@ const CreateTimetable = () => {
       return setFormError("This class has no assigned classroom");
     if (form.startTime >= form.endTime)
       return setFormError("End time must be after start time");
-
+const matchedSubject = availableSubjects.find(
+  (sub) => sub.id === form.subject_id,
+);
+if (
+  subjectInputValue &&
+  (!matchedSubject || subjectInputValue !== matchedSubject.name)
+) {
+  enqueueSnackbar("Please select a valid subject from the list", {
+    variant: "error",
+  });
+  return;
+}
     setSaving(true);
     const payload = {
       classID,
@@ -955,25 +967,59 @@ const CreateTimetable = () => {
             )}
 
             <FormControl size="small" fullWidth>
-              <InputLabel>Subject</InputLabel>
-              <Select
-                value={form.subject_id}
-                label="Subject"
-                onChange={(e) =>
-                  setForm({ ...form, subject_id: e.target.value })
+             
+              <Autocomplete
+                freeSolo
+                options={availableSubjects}
+                value={
+                  availableSubjects.find((sub) => sub.id === form.subject_id) ||
+                  null
                 }
-              >
-                {availableSubjects.map((sub) => (
-                  <MenuItem key={sub.id} value={sub.id}>
-                    {sub.name}
-                  </MenuItem>
-                ))}
-                {availableSubjects.length === 0 && (
-                  <MenuItem disabled value="">
-                    <em>No subjects available for this class</em>
-                  </MenuItem>
+                inputValue={subjectInputValue}
+                onInputChange={(_, newInputValue) => {
+                  setSubjectInputValue(newInputValue);
+                  const matched = availableSubjects.find(
+                    (sub) => sub.name === newInputValue,
+                  );
+                  if (!matched) {
+                    setForm((prev) => ({ ...prev, subject_id: "" }));
+                  }
+                }}
+                getOptionLabel={(option) =>
+                  typeof option === "string" ? option : option.name
+                }
+                isOptionEqualToValue={(option, value) => option.id === value.id}
+                disabled={loading}
+                onChange={(_, newValue) => {
+                  if (typeof newValue === "string" || !newValue) {
+                    setForm((prev) => ({ ...prev, subject_id: "" }));
+                  } else {
+                    setForm((prev) => ({ ...prev, subject_id: newValue.id }));
+                  }
+                }}
+                noOptionsText="No subjects available"
+                renderOption={(props, option) => {
+                  const { key, ...optionProps } = props;
+                  return (
+                    <Box component="li" key={option.id} {...optionProps}>
+                      <Typography variant="body2">{option.name}</Typography>
+                    </Box>
+                  );
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Subject"
+                    placeholder={
+                      availableSubjects.length === 0
+                        ? "No subjects available for this class"
+                        : "Select subject..."
+                    }
+                    fullWidth
+                  />
                 )}
-              </Select>
+              />
+            
             </FormControl>
 
             {form.subject_id && (
