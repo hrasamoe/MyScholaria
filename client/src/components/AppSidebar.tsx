@@ -100,7 +100,7 @@ const navGroups = [
       { label: "School Calendar", path: "/calendar", icon: <EventNoteIcon /> },
       { label: "Timetable", path: "/timetable", icon: <CalendarMonthIcon /> },
       { label: "Subjects", path: "/subjects", icon: <ClassIcon /> },
-      { label: "Coursebook", path: "/coursebook", icon: <HistoryEduIcon /> },
+      // { label: "Coursebook", path: "/coursebook", icon: <HistoryEduIcon /> },
       { label: "Internships", path: "/internships", icon: <WorkIcon /> },
       { label: "Library", path: "/library", icon: <LibraryBooksIcon /> },
     ],
