@@ -20,7 +20,6 @@ import {
   DialogContent,
   DialogTitle,
   IconButton,
-  MenuItem,
   Skeleton,
   TextField,
   Typography,
@@ -81,6 +80,9 @@ const Classes = () => {
   const [selectedClass, setSelectedClass] = useState<ClassItem | null>(null);
   const [form, setForm] = useState<Record<string, string>>({});
 
+  const [teacherInputValue, setTeacherInputValue] = useState("");
+  const [roomInputValue, setRoomInputValue] = useState("");
+
   const formatFirstName = (firstName: string) => {
     if (!firstName) return "";
     const parts = firstName.trim().split(/\s+/);
@@ -96,6 +98,12 @@ const Classes = () => {
     teacher: TeacherOption | { first_name: string; last_name: string },
   ) => {
     return `${formatFirstName(teacher.first_name)} ${teacher.last_name}`;
+  };
+
+  const formatRoomName = (room: ClassroomOption) => {
+    const bld = room.building ? ` (${room.building})` : "";
+    const cap = room.capacity ? ` - Max: ${room.capacity} seats` : "";
+    return `${room.name}${bld}${cap}`;
   };
 
   const fetchAllData = async () => {
@@ -148,6 +156,8 @@ const Classes = () => {
       main_teacher_id: "",
       room_id: "",
     });
+    setTeacherInputValue("");
+    setRoomInputValue("");
     setOpen(true);
   };
 
@@ -160,6 +170,15 @@ const Classes = () => {
       main_teacher_id: item.main_teacher_id || "",
       room_id: item.room_id,
     });
+
+    const currentTeacher = teachers.find((t) => t.pid === item.main_teacher_id);
+    setTeacherInputValue(
+      currentTeacher ? formatTeacherName(currentTeacher) : "",
+    );
+
+    const currentRoom = classrooms.find((r) => r.id === item.room_id);
+    setRoomInputValue(currentRoom ? formatRoomName(currentRoom) : "");
+
     setOpen(true);
   };
 
@@ -174,6 +193,21 @@ const Classes = () => {
         "Please fill required fields (Name, Academic Year, Classroom)",
         { variant: "error" },
       );
+      return;
+    }
+
+    if (teacherInputValue && !form.main_teacher_id) {
+      enqueueSnackbar("Please select a valid teacher from the list", {
+        variant: "error",
+      });
+      return;
+    }
+
+    const matchedRoom = classrooms.find((r) => r.id === form.room_id);
+    if (!matchedRoom || roomInputValue !== formatRoomName(matchedRoom)) {
+      enqueueSnackbar("Please select a valid classroom from the list", {
+        variant: "error",
+      });
       return;
     }
 
@@ -246,6 +280,9 @@ const Classes = () => {
 
   const selectedTeacherOption =
     teachers.find((t) => t.pid === form.main_teacher_id) || null;
+
+  const selectedClassroomOption =
+    classrooms.find((r) => r.id === form.room_id) || null;
 
   return (
     <Container sx={{ p: 2 }}>
@@ -486,18 +523,37 @@ const Classes = () => {
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
               <Autocomplete
+                freeSolo
                 options={teachers}
                 value={selectedTeacherOption}
-                getOptionLabel={(option) => formatTeacherName(option)}
+                inputValue={teacherInputValue}
+                onInputChange={(_, newInputValue) => {
+                  setTeacherInputValue(newInputValue);
+                  const matched = teachers.find(
+                    (t) => formatTeacherName(t) === newInputValue,
+                  );
+                  if (!matched) {
+                    setForm((prev) => ({ ...prev, main_teacher_id: "" }));
+                  }
+                }}
+                getOptionLabel={(option) =>
+                  typeof option === "string"
+                    ? option
+                    : formatTeacherName(option)
+                }
                 isOptionEqualToValue={(option, value) =>
                   option.pid === value.pid
                 }
                 disabled={actionLoading}
                 onChange={(_, newValue) => {
-                  setForm({
-                    ...form,
-                    main_teacher_id: newValue ? newValue.pid : "",
-                  });
+                  if (typeof newValue === "string" || !newValue) {
+                    setForm((prev) => ({ ...prev, main_teacher_id: "" }));
+                  } else {
+                    setForm((prev) => ({
+                      ...prev,
+                      main_teacher_id: newValue.pid,
+                    }));
+                  }
                 }}
                 renderOption={(props, option) => {
                   const { key, ...optionProps } = props;
@@ -567,24 +623,63 @@ const Classes = () => {
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
-                select
-                fullWidth
-                label="Classroom *"
-                value={form.room_id || ""}
+              <Autocomplete
+                freeSolo
+                options={classrooms}
+                value={selectedClassroomOption}
+                inputValue={roomInputValue}
+                onInputChange={(_, newInputValue) => {
+                  setRoomInputValue(newInputValue);
+                  const matched = classrooms.find(
+                    (r) => formatRoomName(r) === newInputValue,
+                  );
+                  if (!matched) {
+                    setForm((prev) => ({ ...prev, room_id: "" }));
+                  }
+                }}
+                getOptionLabel={(option) =>
+                  typeof option === "string" ? option : formatRoomName(option)
+                }
+                isOptionEqualToValue={(option, value) => option.id === value.id}
                 disabled={actionLoading}
-                onChange={(e) => setForm({ ...form, room_id: e.target.value })}
-              >
-                <MenuItem value="" disabled>
-                  <em>Select a room</em>
-                </MenuItem>
-                {classrooms.map((room) => (
-                  <MenuItem key={room.id} value={room.id}>
-                    {room.name} {room.building ? `(${room.building})` : ""}
-                    {room.capacity ? ` - Max: ${room.capacity} seats` : ""}
-                  </MenuItem>
-                ))}
-              </TextField>
+                onChange={(_, newValue) => {
+                  if (typeof newValue === "string" || !newValue) {
+                    setForm((prev) => ({ ...prev, room_id: "" }));
+                  } else {
+                    setForm((prev) => ({ ...prev, room_id: newValue.id }));
+                  }
+                }}
+                renderOption={(props, option) => {
+                  const { key, ...optionProps } = props;
+                  return (
+                    <Box component="li" key={option.id} {...optionProps}>
+                      <Typography variant="body2">
+                        {formatRoomName(option)}
+                      </Typography>
+                    </Box>
+                  );
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Classroom *"
+                    placeholder="Select classroom..."
+                    fullWidth
+                    InputProps={{
+                      ...params.InputProps,
+                      startAdornment: (
+                        <>
+                          <MeetingRoomIcon
+                            color="action"
+                            sx={{ mr: 0.5, fontSize: 20 }}
+                          />
+                          {params.InputProps.startAdornment}
+                        </>
+                      ),
+                    }}
+                  />
+                )}
+              />
             </Grid>
           </Grid>
         </DialogContent>
