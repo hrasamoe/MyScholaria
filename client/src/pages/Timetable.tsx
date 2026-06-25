@@ -1,5 +1,6 @@
 import PageHeader from "@/components/PageHeader";
 import { apiRequest } from "@/services/api.service";
+import AddIcon from "@mui/icons-material/Add";
 import {
   Card,
   FormControl,
@@ -8,17 +9,25 @@ import {
   Select,
   Box,
   Paper,
+  TextField,
   useTheme,
   Typography,
   IconButton,
   Stack,
   Alert,
   Skeleton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  Divider,
 } from "@mui/material";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-import { useSnackbar } from "notistack";
+import { useNavigate } from "react-router-dom";
 import { useState, useMemo, useEffect, useCallback } from "react";
+import { useSnackbar } from "notistack";  
 
 const days = [
   "Monday",
@@ -87,6 +96,8 @@ interface Slot {
   subject?: string;
   teacher?: string;
   room?: string;
+  coefficient?: number;
+  code?: string;
 }
 
 interface Option {
@@ -175,7 +186,15 @@ const layoutDay = (slots: Slot[]): LayoutSlot[] => {
   return result;
 };
 
-const DayColumn = ({ day, slots }: { day: Day; slots: LayoutSlot[] }) => {
+const DayColumn = ({
+  day,
+  slots,
+  onSlotClick,
+}: {
+  day: Day;
+  slots: LayoutSlot[];
+  onSlotClick: (slot: LayoutSlot) => void;
+}) => {
   return (
     <Box
       sx={{
@@ -215,6 +234,7 @@ const DayColumn = ({ day, slots }: { day: Day; slots: LayoutSlot[] }) => {
         return (
           <Box
             key={slot.id}
+            onClick={() => onSlotClick(slot)}
             sx={{
               position: "absolute",
               top,
@@ -228,6 +248,8 @@ const DayColumn = ({ day, slots }: { day: Day; slots: LayoutSlot[] }) => {
               px: 0.75,
               py: 0.5,
               overflow: "hidden",
+              cursor: "pointer",
+              "&:hover": { opacity: 0.88 },
             }}
           >
             <Typography
@@ -316,7 +338,13 @@ const TimeGutter = () => (
   </Box>
 );
 
-const DesktopGrid = ({ byDay }: { byDay: Record<Day, LayoutSlot[]> }) => (
+const DesktopGrid = ({
+  byDay,
+  onSlotClick,
+}: {
+  byDay: Record<Day, LayoutSlot[]>;
+  onSlotClick: (slot: LayoutSlot) => void;
+}) => (
   <Paper variant="outlined" sx={{ overflow: "hidden", borderRadius: 2 }}>
     <Box
       sx={{
@@ -352,13 +380,24 @@ const DesktopGrid = ({ byDay }: { byDay: Record<Day, LayoutSlot[]> }) => (
     <Box sx={{ display: "flex" }}>
       <TimeGutter />
       {days.map((day) => (
-        <DayColumn key={day} day={day} slots={byDay[day]} />
+        <DayColumn
+          key={day}
+          day={day}
+          slots={byDay[day]}
+          onSlotClick={onSlotClick}
+        />
       ))}
     </Box>
   </Paper>
 );
 
-const MobileGrid = ({ byDay }: { byDay: Record<Day, LayoutSlot[]> }) => {
+const MobileGrid = ({
+  byDay,
+  onSlotClick,
+}: {
+  byDay: Record<Day, LayoutSlot[]>;
+  onSlotClick: (slot: LayoutSlot) => void;
+}) => {
   const [dayIndex, setDayIndex] = useState(0);
   const currentDay = days[dayIndex];
 
@@ -424,6 +463,7 @@ const MobileGrid = ({ byDay }: { byDay: Record<Day, LayoutSlot[]> }) => {
           key={currentDay}
           day={currentDay}
           slots={byDay[currentDay]}
+          onSlotClick={onSlotClick}
         />
       </Box>
     </Paper>
@@ -487,17 +527,6 @@ const TimetableSkeleton = () => (
               borderRadius: "5px",
             }}
           />
-          <Skeleton
-            variant="rounded"
-            sx={{
-              position: "absolute",
-              top: 220,
-              left: 4,
-              right: 4,
-              height: 70,
-              borderRadius: "5px",
-            }}
-          />
         </Box>
       ))}
     </Box>
@@ -513,6 +542,9 @@ const Timetable = () => {
   const [loadingInitial, setLoadingInitial] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [selectedSlot, setSelectedSlot] = useState<LayoutSlot | null>(null);
+  const [infoDialogOpen, setInfoDialogOpen] = useState(false);
+  const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
@@ -626,6 +658,8 @@ const Timetable = () => {
         subject: foundSubject ? foundSubject.name : "Unknown",
         teacher: foundTeacher ? foundTeacher.label : "Unassigned",
         room: selectedClassDetails?.classroom_name,
+        coefficient: classDetails?.coefficient,
+        code: classDetails?.code,
       };
     });
 
@@ -645,6 +679,16 @@ const Timetable = () => {
       .sort();
   }, [slots, groupedSubjects]);
 
+  const handleOpenInfoDialog = (slot: LayoutSlot) => {
+    setSelectedSlot(slot);
+    setInfoDialogOpen(true);
+  };
+
+  const handleCloseInfoDialog = () => {
+    setInfoDialogOpen(false);
+    setSelectedSlot(null);
+  };
+
   return (
     <>
       <PageHeader
@@ -653,7 +697,13 @@ const Timetable = () => {
       />
 
       <Card sx={{ p: 2, mb: 2 }}>
-        <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
+        <Stack
+          direction="row"
+          spacing={2}
+          alignItems="center"
+          sx={{ display: "flex", justifyContent: "space-between" }}
+          flexWrap="wrap"
+        >
           <FormControl size="small" sx={{ minWidth: 220 }}>
             <InputLabel>Class</InputLabel>
             {loadingInitial ? (
@@ -672,6 +722,16 @@ const Timetable = () => {
               </Select>
             )}
           </FormControl>
+          <Button
+            startIcon={<AddIcon />}
+            color="success"
+            variant="contained"
+            onClick={() => {
+              navigate("/timetable/create");
+            }}
+          >
+            Create schedule
+          </Button>
         </Stack>
       </Card>
 
@@ -687,10 +747,10 @@ const Timetable = () => {
         classID && (
           <>
             <Box sx={{ display: { xs: "none", md: "block" } }}>
-              <DesktopGrid byDay={byDay} />
+              <DesktopGrid byDay={byDay} onSlotClick={handleOpenInfoDialog} />
             </Box>
             <Box sx={{ display: { xs: "block", md: "none" } }}>
-              <MobileGrid byDay={byDay} />
+              <MobileGrid byDay={byDay} onSlotClick={handleOpenInfoDialog} />
             </Box>
 
             <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 1.5 }}>
@@ -725,6 +785,84 @@ const Timetable = () => {
           </>
         )
       )}
+
+      <Dialog
+        open={infoDialogOpen}
+        onClose={handleCloseInfoDialog}
+        fullWidth
+        maxWidth="xs"
+      >
+        <DialogTitle>Course Details</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            {selectedSlot?.room && (
+              <Alert severity="info" icon={false}>
+                Located on room: <strong>{selectedSlot.room}</strong>
+              </Alert>
+            )}
+
+            <TextField
+              label="Subject"
+              value={
+                selectedSlot
+                  ? `${selectedSlot.subject} ${selectedSlot.code ? `(${selectedSlot.code})` : ""}`
+                  : ""
+              }
+              size="small"
+              fullWidth
+              slotProps={{ input: { readOnly: true } }}
+            />
+
+            {selectedSlot?.teacher && (
+              <Alert severity="info" icon={false}>
+                Taught by: <strong>{selectedSlot.teacher}</strong>
+              </Alert>
+            )}
+
+            <TextField
+              label="Day"
+              value={selectedSlot?.day || ""}
+              size="small"
+              fullWidth
+              slotProps={{ input: { readOnly: true } }}
+            />
+
+            <Stack direction="row" spacing={2}>
+              <TextField
+                label="Start"
+                type="time"
+                value={selectedSlot?.start_time || ""}
+                size="small"
+                fullWidth
+                slotProps={{ input: { readOnly: true } }}
+              />
+              <TextField
+                label="End"
+                type="time"
+                value={selectedSlot?.end_time || ""}
+                size="small"
+                fullWidth
+                slotProps={{ input: { readOnly: true } }}
+              />
+            </Stack>
+
+            {selectedSlot?.coefficient !== undefined && (
+              <TextField
+                label="Coefficient"
+                value={selectedSlot.coefficient}
+                size="small"
+                fullWidth
+                slotProps={{ input: { readOnly: true } }}
+              />
+            )}
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ justifyContent: "flex-end", px: 3, pb: 2 }}>
+          <Button onClick={handleCloseInfoDialog} variant="contained">
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 };
