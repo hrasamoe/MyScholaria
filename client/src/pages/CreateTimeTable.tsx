@@ -607,62 +607,62 @@ const CreateTimetable = () => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === "dark";
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const [classesRes, teachersRes, subjectsRes] = await Promise.all([
-          apiRequest("/api/establishment/classes-list", {
-            credentials: "include",
-          }),
-          apiRequest("/api/teachers/get-list", { credentials: "include" }),
-          apiRequest("/api/subject/list", {
-            method: "GET",
-            credentials: "include",
-          }),
-        ]);
+  const loadDataConfig = useCallback(async () => {
+    try {
+      const [classesRes, teachersRes, subjectsRes] = await Promise.all([
+        apiRequest("/api/establishment/classes-list", {
+          credentials: "include",
+        }),
+        apiRequest("/api/teachers/get-list", { credentials: "include" }),
+        apiRequest("/api/subject/list", {
+          method: "GET",
+          credentials: "include",
+        }),
+      ]);
 
-        if (classesRes.ok) {
-          const data = await classesRes.json();
-          setClasses(
-            data.map((c: any) => ({
-              id: c.id,
-              name: c.name,
-              room_id: c.room_id,
-              classroom_name: c.classroom_name,
-            })),
-          );
-          if (data.length > 0) setClassID(data[0].id);
-        } else {
-          enqueueSnackbar("Failed to load classes", { variant: "error" });
-        }
-
-        if (teachersRes.ok) {
-          const data = await teachersRes.json();
-          setTeachers(
-            data.map((t: any) => ({
-              id: t.id,
-              label: `${t.first_name} ${t.last_name}`,
-            })),
-          );
-        } else {
-          enqueueSnackbar("Failed to load teachers", { variant: "error" });
-        }
-
-        if (subjectsRes.ok) {
-          const data = await subjectsRes.json();
-          setGroupedSubjects(data as GroupedSubject[]);
-        } else {
-          enqueueSnackbar("Failed to load subjects list", { variant: "error" });
-        }
-      } catch {
-        enqueueSnackbar("Error loading initial configuration", {
-          variant: "error",
-        });
-      } finally {
-        setLoadingInitial(false);
+      if (classesRes.ok) {
+        const data = await classesRes.json();
+        setClasses(
+          data.map((c: any) => ({
+            id: c.id,
+            name: c.name,
+            room_id: c.room_id,
+            classroom_name: c.classroom_name,
+          })),
+        );
+        if (data.length > 0 && !classID) setClassID(data[0].id);
+      } else {
+        enqueueSnackbar("Failed to load classes", { variant: "error" });
       }
-    })();
-  }, [enqueueSnackbar]);
+
+      if (teachersRes.ok) {
+        const data = await teachersRes.json();
+        setTeachers(
+          data.map((t: any) => ({
+            id: t.id,
+            label: `${t.first_name} ${t.last_name}`,
+          })),
+        );
+      } else {
+        enqueueSnackbar("Failed to load teachers", { variant: "error" });
+      }
+
+      if (subjectsRes.ok) {
+        const data = await subjectsRes.json();
+        setGroupedSubjects(data as GroupedSubject[]);
+      } else {
+        enqueueSnackbar("Failed to load subjects list", { variant: "error" });
+      }
+    } catch {
+      enqueueSnackbar("Error loading configuration", { variant: "error" });
+    } finally {
+      setLoadingInitial(false);
+    }
+  }, [enqueueSnackbar, classID]);
+
+  useEffect(() => {
+    loadDataConfig();
+  }, [loadDataConfig]);
 
   const loadSchedule = useCallback(
     async (id: string) => {
@@ -700,8 +700,9 @@ const CreateTimetable = () => {
     const map = {} as Record<Day, LayoutSlot[]>;
 
     const enrichedSlots = slots.map((slot) => {
+      const targetSubjectId = (slot as any).subjectID || slot.subject_id;
       const foundSubject = groupedSubjects.find(
-        (s) => s.id === slot.subject_id,
+        (s) => s.id === targetSubjectId,
       );
       const classDetails = foundSubject?.classes.find(
         (cls) => cls.class_id === classID,
@@ -755,9 +756,10 @@ const CreateTimetable = () => {
 
   const openEditDialog = (slot: Slot) => {
     setFormError("");
+    const actualSubjectId = (slot as any).subjectID || slot.subject_id;
     setForm({
       id: slot.id,
-      subject_id: slot.subject_id,
+      subject_id: actualSubjectId,
       day: slot.day,
       startTime: slot.start_time,
       endTime: slot.end_time,
@@ -835,6 +837,7 @@ const CreateTimetable = () => {
       }
 
       setDialogOpen(false);
+      await loadDataConfig();
       await loadSchedule(classID);
       enqueueSnackbar("Course saved successfully", { variant: "success" });
     } catch (err: any) {
@@ -859,6 +862,7 @@ const CreateTimetable = () => {
       }
 
       setDialogOpen(false);
+      await loadDataConfig();
       await loadSchedule(classID);
       enqueueSnackbar("Course deleted successfully", { variant: "success" });
     } catch (err: any) {
@@ -869,7 +873,9 @@ const CreateTimetable = () => {
   };
 
   const usedSubjects = useMemo(() => {
-    const uniqueIds = [...new Set(slots.map((s) => s.subject_id))];
+    const uniqueIds = [
+      ...new Set(slots.map((s) => (s as any).subjectID || s.subject_id)),
+    ];
     return uniqueIds
       .map((id) => groupedSubjects.find((gs) => gs.id === id)?.name)
       .filter((name): name is string => !!name)
