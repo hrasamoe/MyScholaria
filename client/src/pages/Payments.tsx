@@ -1,89 +1,378 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import PageHeader from "@/components/PageHeader";
 import DataTable from "@/components/DataTable";
+import { useAuth } from "@/hooks/Authcontext";
+import { apiRequest } from "@/services/api.service";
 import {
-  Button, TextField, Dialog, DialogTitle, DialogContent, DialogActions,
-  MenuItem, Select, FormControl, InputLabel, Chip,
+  Button,
+  TextField,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  MenuItem,
+  Select,
+  FormControl,
+  InputLabel,
+  Box,
+  Typography,
+  IconButton,
+  Tabs,
+  Tab,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import AddIcon from "@mui/icons-material/Add";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
 import { useSnackbar } from "notistack";
 
-const initialPayments = [
-  { id: 1, student: "Ahmed Ben Ali", amount: "1,500 DT", method: "Cash", date: "2026-03-15", status: "Paid" },
-  { id: 2, student: "Sarah Bouazizi", amount: "1,500 DT", method: "Bank Transfer", date: "2026-03-14", status: "Pending" },
-  { id: 3, student: "Youssef Trabelsi", amount: "750 DT", method: "Cash", date: "2026-03-13", status: "Paid" },
-  { id: 4, student: "Fatma Chaari", amount: "1,500 DT", method: "Check", date: "2026-03-10", status: "Overdue" },
-];
+interface ClassItem {
+  id: string;
+  name: string;
+  room_name: string | null;
+  teacher_full_name: string | null;
+}
 
-const statusColor = (s: string) => s === "Paid" ? "success" : s === "Pending" ? "warning" : "error";
+interface FinancialConfigItem {
+  id: string;
+  class_id: string;
+  class_name: string;
+  room_name: string | null;
+  teacher_full_name: string | null;
+  tuition_fee: number;
+  registration_fee: number;
+  academic_year: string;
+}
 
 const Payments = () => {
-  const [payments, setPayments] = useState(initialPayments);
-  const [open, setOpen] = useState(false);
-  const [search, setSearch] = useState("");
-  const [form, setForm] = useState<Record<string, string>>({});
+  const { user } = useAuth();
+  const establishmentID = user?.establishment_id || "";
   const { enqueueSnackbar } = useSnackbar();
 
-  const filtered = payments.filter((p) => p.student.toLowerCase().includes(search.toLowerCase()));
+  const [tabIndex, setTabIndex] = useState(0);
+  const [classes, setClasses] = useState<ClassItem[]>([]);
+  const [configs, setConfigs] = useState<FinancialConfigItem[]>([]);
 
-  const handleAdd = () => {
-    if (!form.student || !form.amount) { enqueueSnackbar("Please fill required fields", { variant: "error" }); return; }
-    setPayments([...payments, { id: payments.length + 1, student: form.student, amount: form.amount, method: form.method || "Cash", date: form.date || new Date().toISOString().split("T")[0], status: form.status || "Pending" }]);
-    setForm({}); setOpen(false);
-    enqueueSnackbar("Payment recorded", { variant: "success" });
+  const [loading, setLoading] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [search, setSearch] = useState("");
+
+  const [openDialog, setOpenDialog] = useState(false);
+  const [openDelete, setOpenDelete] = useState(false);
+  const [selectedConfig, setSelectedConfig] =
+    useState<FinancialConfigItem | null>(null);
+
+  const [form, setForm] = useState({
+    class_id: "",
+    tuition_fee: "",
+    registration_fee: "",
+    academic_year: "",
+  });
+
+  const fetchData = async () => {
+    if (!establishmentID) return;
+    try {
+      setLoading(true);
+      const [resClasses, resConfigs] = await Promise.all([
+        apiRequest(`/api/establishment/classes-list`, {
+          credentials: "include",
+        }),
+        apiRequest(`/api/finance/tuition-rules`, { credentials: "include" }),
+      ]);
+
+      if (resClasses.ok) setClasses(await resClasses.json());
+      if (resConfigs.ok) setConfigs(await resConfigs.json());
+    } catch (error) {
+      enqueueSnackbar("Error loading data", { variant: "error" });
+    } finally {
+      setLoading(false);
+    }
   };
 
+  useEffect(() => {
+    fetchData();
+  }, [establishmentID]);
+
+  const handleOpenCreate = () => {
+    setSelectedConfig(null);
+    setForm({
+      class_id: "",
+      tuition_fee: "",
+      registration_fee: "",
+      academic_year: "",
+    });
+    setOpenDialog(true);
+  };
+
+  const handleOpenEdit = (item: FinancialConfigItem) => {
+    setSelectedConfig(item);
+    setForm({
+      class_id: item.class_id,
+      tuition_fee: item.tuition_fee.toString(),
+      registration_fee: item.registration_fee.toString(),
+      academic_year: item.academic_year,
+    });
+    setOpenDialog(true);
+  };
+
+  const handleSave = async () => {
+    if (
+      !form.class_id ||
+      !form.tuition_fee ||
+      !form.registration_fee ||
+      !form.academic_year
+    ) {
+      enqueueSnackbar("Please fill all required fields", { variant: "error" });
+      return;
+    }
+
+    const payload = {
+      classID: form.class_id,
+      tuitionFee: parseFloat(form.tuition_fee),
+      registrationFee: parseFloat(form.registration_fee),
+      academicYear: form.academic_year,
+      establishmentID,
+    };
+
+    try {
+      setActionLoading(true);
+      const url = selectedConfig
+        ? `/api/finance/tuition-rules/${selectedConfig.id}`
+        : `/api/finance/tuition-rules`;
+      const method = selectedConfig ? "PUT" : "POST";
+
+      const res = await apiRequest(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) throw new Error();
+      enqueueSnackbar(
+        selectedConfig ? "Configuration updated" : "Configuration created",
+        { variant: "success" },
+      );
+      setOpenDialog(false);
+      fetchData();
+    } catch {
+      enqueueSnackbar("Error saving configuration", { variant: "error" });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!selectedConfig) return;
+    try {
+      setActionLoading(true);
+      const res = await apiRequest(
+        `/api/finance/tuition-rules/${selectedConfig.id}`,
+        {
+          method: "DELETE",
+          credentials: "include",
+        },
+      );
+      if (!res.ok) throw new Error();
+      enqueueSnackbar("Configuration deleted successfully", {
+        variant: "success",
+      });
+      setOpenDelete(false);
+      fetchData();
+    } catch {
+      enqueueSnackbar("Error deleting configuration", { variant: "error" });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const filteredConfigs = (configs || []).filter((c) =>
+    c.class_name?.toLowerCase().includes(search.toLowerCase()),
+  );
+
   const columns = [
-    { key: "student", label: "Student" },
-    { key: "amount", label: "Amount" },
-    { key: "method", label: "Method", hideOnMobile: true },
-    { key: "date", label: "Date" },
+    { key: "class_name", label: "Class Name" },
     {
-      key: "status", label: "Status",
-      render: (row: typeof initialPayments[0]) => <Chip label={row.status} size="small" color={statusColor(row.status) as any} />,
+      key: "room_name",
+      label: "Room",
+      render: (row: FinancialConfigItem) => row.room_name || "N/A",
+    },
+    {
+      key: "teacher_full_name",
+      label: "Main Teacher",
+      render: (row: FinancialConfigItem) => row.teacher_full_name || "None",
+    },
+    {
+      key: "tuition_fee",
+      label: "Tuition Fee (Écolage)",
+      render: (row: FinancialConfigItem) => `${row.tuition_fee} AR`,
+    },
+    {
+      key: "registration_fee",
+      label: "Registration Fee",
+      render: (row: FinancialConfigItem) => `${row.registration_fee} AR`,
+    },
+    { key: "academic_year", label: "Academic Year" },
+    {
+      key: "actions",
+      label: "Actions",
+      render: (row: FinancialConfigItem) => (
+        <Box sx={{ display: "flex", gap: 1 }}>
+          <IconButton size="small" onClick={() => handleOpenEdit(row)}>
+            <EditIcon fontSize="small" color="primary" />
+          </IconButton>
+          <IconButton
+            size="small"
+            onClick={() => {
+              setSelectedConfig(row);
+              setOpenDelete(true);
+            }}
+          >
+            <DeleteIcon fontSize="small" color="error" />
+          </IconButton>
+        </Box>
+      ),
     },
   ];
 
   return (
     <>
-      <PageHeader title="Payments" subtitle="Track student payments" action={
-        <Button variant="contained" color="success" startIcon={<AddIcon />} onClick={() => setOpen(true)}>Record Payment</Button>
-      } />
-      <TextField placeholder="Search payments..." size="small" value={search} onChange={(e) => setSearch(e.target.value)} sx={{ mb: 2, maxWidth: 360, width: "100%" }} />
-      <DataTable columns={columns} data={filtered} onView={() => {}} onEdit={() => {}} />
+      <PageHeader
+        title="School Fees Configuration"
+        subtitle="Manage tuition and registration fees per class"
+        action={
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<AddIcon />}
+            onClick={handleOpenCreate}
+          >
+            Configure Fees
+          </Button>
+        }
+      />
 
-      <Dialog open={open} onClose={() => setOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Record Payment</DialogTitle>
+      <Box
+        sx={{
+          mb: 3,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <TextField
+          placeholder="Filter by class..."
+          size="small"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          sx={{ maxWidth: 360, width: "100%" }}
+        />
+      </Box>
+
+      <DataTable columns={columns} data={filteredConfigs} />
+
+      {/* DIALOG ADD / EDIT */}
+      <Dialog
+        open={openDialog}
+        onClose={() => setOpenDialog(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          {selectedConfig ? "Modify Fees Structure" : "New Fees Configuration"}
+        </DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 0.5 }}>
-            <Grid size={{ xs: 12, sm: 6 }}><TextField fullWidth label="Student *" value={form.student || ""} onChange={(e) => setForm({ ...form, student: e.target.value })} /></Grid>
-            <Grid size={{ xs: 12, sm: 6 }}><TextField fullWidth label="Amount *" value={form.amount || ""} onChange={(e) => setForm({ ...form, amount: e.target.value })} /></Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <FormControl fullWidth>
-                <InputLabel>Method</InputLabel>
-                <Select value={form.method || ""} label="Method" onChange={(e) => setForm({ ...form, method: e.target.value })}>
-                  <MenuItem value="Cash">Cash</MenuItem>
-                  <MenuItem value="Bank Transfer">Bank Transfer</MenuItem>
-                  <MenuItem value="Check">Check</MenuItem>
+            <Grid size={{ xs: 12 }}>
+              <FormControl fullWidth disabled={!!selectedConfig}>
+                <InputLabel>Class *</InputLabel>
+                <Select
+                  value={form.class_id}
+                  label="Class *"
+                  onChange={(e) =>
+                    setForm({ ...form, class_id: e.target.value })
+                  }
+                >
+                  {classes.map((c) => (
+                    <MenuItem key={c.id} value={c.id}>
+                      {c.name} {c.room_name ? `[Room: ${c.room_name}]` : ""}{" "}
+                      {c.teacher_full_name
+                        ? `— Prof: ${c.teacher_full_name}`
+                        : ""}
+                    </MenuItem>
+                  ))}
                 </Select>
               </FormControl>
             </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}><TextField fullWidth label="Date" type="date" InputLabelProps={{ shrink: true }} value={form.date || ""} onChange={(e) => setForm({ ...form, date: e.target.value })} /></Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
-              <FormControl fullWidth>
-                <InputLabel>Status</InputLabel>
-                <Select value={form.status || ""} label="Status" onChange={(e) => setForm({ ...form, status: e.target.value })}>
-                  <MenuItem value="Paid">Paid</MenuItem>
-                  <MenuItem value="Pending">Pending</MenuItem>
-                </Select>
-              </FormControl>
+              <TextField
+                fullWidth
+                label="Tuition Fee (AR) *"
+                type="number"
+                value={form.tuition_fee}
+                onChange={(e) =>
+                  setForm({ ...form, tuition_fee: e.target.value })
+                }
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TextField
+                fullWidth
+                label="Registration Fee (AR) *"
+                type="number"
+                value={form.registration_fee}
+                onChange={(e) =>
+                  setForm({ ...form, registration_fee: e.target.value })
+                }
+              />
+            </Grid>
+            <Grid size={{ xs: 12 }}>
+              <TextField
+                fullWidth
+                label="Academic Year *"
+                placeholder="e.g., 2025-2026"
+                value={form.academic_year}
+                onChange={(e) =>
+                  setForm({ ...form, academic_year: e.target.value })
+                }
+              />
             </Grid>
           </Grid>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setOpen(false)}>Cancel</Button>
-          <Button variant="contained" onClick={handleAdd}>Save</Button>
+          <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleSave}
+            disabled={actionLoading}
+          >
+            Save Setup
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* DIALOG DELETE */}
+      <Dialog open={openDelete} onClose={() => setOpenDelete(false)}>
+        <DialogTitle>Delete Fee Configuration</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to remove the financial configurations for{" "}
+            <strong>{selectedConfig?.class_name}</strong>?
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setOpenDelete(false)} color="inherit">
+            No
+          </Button>
+          <Button
+            onClick={handleDelete}
+            color="error"
+            variant="contained"
+            disabled={actionLoading}
+          >
+            Yes, Remove
+          </Button>
         </DialogActions>
       </Dialog>
     </>
