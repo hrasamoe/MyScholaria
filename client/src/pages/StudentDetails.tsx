@@ -5,6 +5,10 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import EditIcon from "@mui/icons-material/Edit";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import SchoolIcon from "@mui/icons-material/School";
+import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import ErrorIcon from "@mui/icons-material/Error";
+import PendingIcon from "@mui/icons-material/Pending";
 import {
   Avatar,
   Box,
@@ -17,10 +21,133 @@ import {
   Skeleton,
   Stack,
   Typography,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  MenuItem,
+  Checkbox,
+  FormControlLabel,
 } from "@mui/material";
 import { useSnackbar } from "notistack";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+
+const MOCK_TUITION_SUMMARY = {
+  total_due: 500000,
+  total_paid: 200000,
+  balance: 300000,
+  overdue: 50000,
+};
+
+const MOCK_SCHED_ITEMS: TuitionScheduleItem[] = [
+  {
+    id: "1",
+    month: "September",
+    due_date: "2025-09-05",
+    amount_due: 50000,
+    amount_paid: 50000,
+    status: "paid",
+  },
+  {
+    id: "2",
+    month: "October",
+    due_date: "2025-10-05",
+    amount_due: 50000,
+    amount_paid: 50000,
+    status: "paid",
+  },
+  {
+    id: "3",
+    month: "November",
+    due_date: "2025-11-05",
+    amount_due: 50000,
+    amount_paid: 50000,
+    status: "paid",
+  },
+  {
+    id: "4",
+    month: "December",
+    due_date: "2025-12-05",
+    amount_due: 50000,
+    amount_paid: 50000,
+    status: "paid",
+  },
+  {
+    id: "5",
+    month: "January",
+    due_date: "2026-01-05",
+    amount_due: 50000,
+    amount_paid: 0,
+    status: "overdue",
+  },
+  {
+    id: "6",
+    month: "February",
+    due_date: "2026-02-05",
+    amount_due: 50000,
+    amount_paid: 0,
+    status: "pending",
+  },
+  {
+    id: "7",
+    month: "March",
+    due_date: "2026-03-05",
+    amount_due: 50000,
+    amount_paid: 0,
+    status: "pending",
+  },
+  {
+    id: "8",
+    month: "April",
+    due_date: "2026-04-05",
+    amount_due: 50000,
+    amount_paid: 0,
+    status: "pending",
+  },
+  {
+    id: "9",
+    month: "May",
+    due_date: "2026-05-05",
+    amount_due: 50000,
+    amount_paid: 0,
+    status: "pending",
+  },
+  {
+    id: "10",
+    month: "June",
+    due_date: "2026-06-05",
+    amount_due: 50000,
+    amount_paid: 0,
+    status: "pending",
+  },
+];
+
+const MOCK_TRANSACTIONS: TuitionTransaction[] = [
+  {
+    id: "t1",
+    amount: 100000,
+    payment_method: "Mvola",
+    reference: "TX-948293",
+    payment_date: "2025-09-04",
+    remarks: "Sept & Oct Tuition",
+  },
+  {
+    id: "t2",
+    amount: 100000,
+    payment_method: "Cash",
+    reference: null,
+    payment_date: "2025-11-02",
+    remarks: "Nov & Dec Tuition",
+  },
+];
 
 interface StudentDetail {
   id: string;
@@ -56,6 +183,24 @@ interface TeacherOption {
   gender: "male" | "female";
 }
 
+interface TuitionScheduleItem {
+  id: string;
+  month: string;
+  due_date: string;
+  amount_due: number;
+  amount_paid: number;
+  status: "paid" | "partial" | "overdue" | "pending";
+}
+
+interface TuitionTransaction {
+  id: string;
+  amount: number;
+  payment_method: string;
+  reference: string | null;
+  payment_date: string;
+  remarks: string | null;
+}
+
 const API_URL = import.meta.env.VITE_API_URL;
 
 const CLASS_COLORS = [
@@ -80,6 +225,36 @@ const STATUS_CONFIG: Record<
   expelled: { label: "Expelled", color: "error" },
   transferred: { label: "Transferred", color: "warning" },
   graduated: { label: "Graduated", color: "default" },
+};
+
+const TUITION_STATUS_CONFIG: Record<
+  string,
+  {
+    label: string;
+    color: "success" | "warning" | "error" | "default";
+    icon: React.ReactNode;
+  }
+> = {
+  paid: {
+    label: "Paid",
+    color: "success",
+    icon: <CheckCircleIcon sx={{ fontSize: 14 }} />,
+  },
+  partial: {
+    label: "Partial",
+    color: "warning",
+    icon: <PendingIcon sx={{ fontSize: 14 }} />,
+  },
+  overdue: {
+    label: "Overdue",
+    color: "error",
+    icon: <ErrorIcon sx={{ fontSize: 14 }} />,
+  },
+  pending: {
+    label: "Pending",
+    color: "default",
+    icon: <PendingIcon sx={{ fontSize: 14 }} />,
+  },
 };
 
 const formatDate = (iso: string | null) => {
@@ -136,6 +311,47 @@ const StudentDetails = () => {
   const [teacher, setTeacher] = useState<TeacherOption | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const [tuitionSummary, setTuitionSummary] = useState(MOCK_TUITION_SUMMARY);
+  const [tuitionSchedule, setTuitionSchedule] =
+    useState<TuitionScheduleItem[]>(MOCK_SCHED_ITEMS);
+  const [transactions, setTransactions] =
+    useState<TuitionTransaction[]>(MOCK_TRANSACTIONS);
+  const [tuitionLoading, setTuitionLoading] = useState(true);
+  const [openPaymentModal, setOpenPaymentModal] = useState(false);
+  const [processingPayment, setProcessingPayment] = useState(false);
+
+  const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
+  const [paymentAmount, setPaymentAmount] = useState<number>(0);
+  const [paymentMethod, setPaymentMethod] = useState<string>("Cash");
+  const [reference, setReference] = useState<string>("");
+  const [remarks, setRemarks] = useState<string>("");
+
+  const fetchTuitionData = async () => {
+    if (!id) return;
+    try {
+      setTuitionLoading(true);
+      const [resSummary, resSchedule, resTransactions] = await Promise.all([
+        apiRequest(`/api/finance/student-tuition-summary/${id}`, {
+          credentials: "include",
+        }),
+        apiRequest(`/api/finance/student-tuition-schedule/${id}`, {
+          credentials: "include",
+        }),
+        apiRequest(`/api/finance/student-tuition-transactions/${id}`, {
+          credentials: "include",
+        }),
+      ]);
+
+      if (resSummary.ok) setTuitionSummary(await resSummary.json());
+      if (resSchedule.ok) setTuitionSchedule(await resSchedule.json());
+      if (resTransactions.ok) setTransactions(await resTransactions.json());
+    } catch {
+      // Fallback
+    } finally {
+      setTuitionLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (!id) return;
     const fetchAll = async () => {
@@ -152,7 +368,6 @@ const StudentDetails = () => {
 
         const data: StudentDetail = await res.json();
         setStudent(data);
-
         setParents(data.parents || []);
 
         try {
@@ -176,7 +391,74 @@ const StudentDetails = () => {
       }
     };
     fetchAll();
+    fetchTuitionData();
   }, [id, enqueueSnackbar]);
+
+  const handleMonthToggle = (item: TuitionScheduleItem) => {
+    const isSelected = selectedMonths.includes(item.id);
+    let updatedMonths = [];
+
+    if (isSelected) {
+      updatedMonths = selectedMonths.filter((mId) => mId !== item.id);
+    } else {
+      updatedMonths = [...selectedMonths, item.id];
+    }
+
+    setSelectedMonths(updatedMonths);
+
+    const calculatedTotal = tuitionSchedule
+      .filter((m) => updatedMonths.includes(m.id))
+      .reduce(
+        (acc, current) => acc + (current.amount_due - current.amount_paid),
+        0,
+      );
+
+    setPaymentAmount(calculatedTotal);
+  };
+
+  const handleProcessPayment = async () => {
+    if (paymentAmount <= 0 || selectedMonths.length === 0) {
+      enqueueSnackbar("Please pick outstanding items to pay.", {
+        variant: "warning",
+      });
+      return;
+    }
+
+    try {
+      setProcessingPayment(true);
+      const res = await apiRequest(`/api/finance/collect-tuition`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          studentId: id,
+          scheduleItemIds: selectedMonths,
+          amountPaid: paymentAmount,
+          paymentMethod,
+          reference,
+          remarks,
+        }),
+      });
+
+      if (!res.ok) throw new Error();
+
+      enqueueSnackbar("Payment successfully captured and matched!", {
+        variant: "success",
+      });
+      setOpenPaymentModal(false);
+      setSelectedMonths([]);
+      setPaymentAmount(0);
+      setReference("");
+      setRemarks("");
+      fetchTuitionData();
+    } catch {
+      enqueueSnackbar("Error executing server payment posting transaction.", {
+        variant: "error",
+      });
+    } finally {
+      setProcessingPayment(false);
+    }
+  };
 
   const statusCfg = STATUS_CONFIG[student?.status ?? "active"];
   const fullName = student ? `${student.first_name} ${student.last_name}` : "";
@@ -288,6 +570,319 @@ const StudentDetails = () => {
                 New Student
               </Button>
             </Stack>
+          </>
+        )}
+      </Paper>
+
+      <Paper
+        variant="outlined"
+        sx={{ p: 3, mt: 2, borderRadius: 2, borderColor: "primary.light" }}
+      >
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 2,
+            flexWrap: "wrap",
+            gap: 1,
+          }}
+        >
+          <Stack direction="row" spacing={2} alignItems="center">
+            <Typography variant="h6" fontWeight={600} color="primary.main">
+              Tuition & School Fees Status
+            </Typography>
+            {!tuitionLoading && (
+              <Chip
+                label={
+                  tuitionSummary.balance === 0
+                    ? "Paid All Year (Soldé)"
+                    : tuitionSchedule.filter((m) => m.status === "paid")
+                          .length > 4
+                      ? "Paid In Advance (En Avance)"
+                      : "Standard Monthly"
+                }
+                color={tuitionSummary.balance === 0 ? "success" : "info"}
+                // variant="contained"
+                size="small"
+                sx={{ fontWeight: 700 }}
+              />
+            )}
+          </Stack>
+          <Button
+            size="small"
+            variant="contained"
+            color="success"
+            startIcon={<ReceiptLongIcon />}
+            onClick={() => setOpenPaymentModal(true)}
+            disabled={tuitionLoading}
+          >
+            Collect Tuition Payment
+          </Button>
+        </Box>
+
+        {tuitionLoading ? (
+          <Skeleton
+            variant="rectangular"
+            width="100%"
+            height={100}
+            sx={{ borderRadius: 1 }}
+          />
+        ) : (
+          <>
+            <Box
+              sx={{
+                mb: 2,
+                p: 1.5,
+                bgcolor: "background.default",
+                borderRadius: 1,
+                borderLeft: "4px solid",
+                borderLeftColor: "primary.main",
+              }}
+            >
+              <Typography variant="body2" color="text.secondary">
+                <strong>Payment Standing:</strong> This student has completely
+                fulfilled{" "}
+                <strong>
+                  {tuitionSchedule.filter((m) => m.status === "paid").length}{" "}
+                  out of {tuitionSchedule.length} months
+                </strong>{" "}
+                for this current academic iteration cycle.
+                {tuitionSummary.balance === 0 &&
+                  " The structural account invoice balances to zero. Complete year cleared."}
+              </Typography>
+            </Box>
+
+            <Grid container spacing={2} sx={{ mb: 3 }}>
+              <Grid size={{ xs: 6, sm: 3 }}>
+                <Box
+                  sx={{
+                    p: 1.5,
+                    // bgcolor: "grey.50",
+                    borderRadius: 1,
+                    border: "1px solid",
+                    borderColor: "divider",
+                    textAlign: "center",
+                  }}
+                >
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    fontWeight={500}
+                  >
+                    Total Expected
+                  </Typography>
+                  <Typography
+                    variant="subtitle1"
+                    fontWeight={700}
+                    color="text.primary"
+                  >
+                    {tuitionSummary.total_due.toLocaleString()} AR
+                  </Typography>
+                </Box>
+              </Grid>
+              <Grid size={{ xs: 6, sm: 3 }}>
+                <Box
+                  sx={{
+                    p: 1.5,
+                    bgcolor: "success.50",
+                    borderRadius: 1,
+                    border: "1px solid",
+                    borderColor: "success.light",
+                    textAlign: "center",
+                  }}
+                >
+                  <Typography
+                    variant="caption"
+                    color="success.dark"
+                    fontWeight={500}
+                  >
+                    Total Paid
+                  </Typography>
+                  <Typography
+                    variant="subtitle1"
+                    fontWeight={700}
+                    color="success.dark"
+                  >
+                    {tuitionSummary.total_paid.toLocaleString()} AR
+                  </Typography>
+                </Box>
+              </Grid>
+              <Grid size={{ xs: 6, sm: 3 }}>
+                <Box
+                  sx={{
+                    p: 1.5,
+                    bgcolor: "info.50",
+                    borderRadius: 1,
+                    border: "1px solid",
+                    borderColor: "info.light",
+                    textAlign: "center",
+                  }}
+                >
+                  <Typography
+                    variant="caption"
+                    color="info.dark"
+                    fontWeight={500}
+                  >
+                    Remaining Balance
+                  </Typography>
+                  <Typography
+                    variant="subtitle1"
+                    fontWeight={700}
+                    color="info.dark"
+                  >
+                    {tuitionSummary.balance.toLocaleString()} AR
+                  </Typography>
+                </Box>
+              </Grid>
+              <Grid size={{ xs: 6, sm: 3 }}>
+                <Box
+                  sx={{
+                    p: 1.5,
+                    bgcolor:
+                      tuitionSummary.overdue > 0 ? "error.50" : "grey.50",
+                    borderRadius: 1,
+                    border: "1px solid",
+                    borderColor:
+                      tuitionSummary.overdue > 0 ? "error.light" : "divider",
+                    textAlign: "center",
+                  }}
+                >
+                  <Typography
+                    variant="caption"
+                    color={
+                      tuitionSummary.overdue > 0
+                        ? "error.dark"
+                        : "text.secondary"
+                    }
+                    fontWeight={500}
+                  >
+                    Arrears (Overdue)
+                  </Typography>
+                  <Typography
+                    variant="subtitle1"
+                    fontWeight={700}
+                    color={
+                      tuitionSummary.overdue > 0 ? "error.main" : "text.primary"
+                    }
+                  >
+                    {tuitionSummary.overdue.toLocaleString()} AR
+                  </Typography>
+                </Box>
+              </Grid>
+            </Grid>
+
+            <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1 }}>
+              Monthly Installments Schedule
+            </Typography>
+            <TableContainer
+              component={Paper}
+              variant="outlined"
+              sx={{ maxHeight: 260, mb: 3 }}
+            >
+              <Table size="small" stickyHeader>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Month</TableCell>
+                    <TableCell>Due Date</TableCell>
+                    <TableCell align="right">Amount Due</TableCell>
+                    <TableCell align="right">Amount Paid</TableCell>
+                    <TableCell align="center">Status</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {tuitionSchedule.map((row) => {
+                    const cfg =
+                      TUITION_STATUS_CONFIG[row.status] ||
+                      TUITION_STATUS_CONFIG.pending;
+                    return (
+                      <TableRow key={row.id} hover>
+                        <TableCell sx={{ fontWeight: 600 }}>
+                          {row.month}
+                        </TableCell>
+                        <TableCell>{formatDate(row.due_date)}</TableCell>
+                        <TableCell align="right">
+                          {row.amount_due.toLocaleString()} AR
+                        </TableCell>
+                        <TableCell align="right">
+                          {row.amount_paid.toLocaleString()} AR
+                        </TableCell>
+                        <TableCell align="center">
+                          <Chip
+                            // icon={cfg.icon}
+                            label={cfg.label}
+                            color={cfg.color}
+                            size="small"
+                            variant="outlined"
+                          />
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </TableContainer>
+
+            <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1 }}>
+              Recent Payments Ledger
+            </Typography>
+            {transactions.length === 0 ? (
+              <Typography
+                variant="body2"
+                color="text.disabled"
+                sx={{ fontStyle: "italic", pb: 1 }}
+              >
+                No previous invoice payments registered.
+              </Typography>
+            ) : (
+              <TableContainer component={Paper} variant="outlined">
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Date</TableCell>
+                      <TableCell>Method</TableCell>
+                      <TableCell>Reference ID</TableCell>
+                      <TableCell align="right">Amount</TableCell>
+                      <TableCell>Remarks</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {transactions.map((tx) => (
+                      <TableRow key={tx.id}>
+                        <TableCell>{formatDate(tx.payment_date)}</TableCell>
+                        <TableCell>
+                          <Chip
+                            label={tx.payment_method}
+                            size="small"
+                            // variant="contained"
+                            color="secondary"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Typography
+                            // variant="fontFamily"
+                            sx={{ fontSize: 12 }}
+                          >
+                            {tx.reference || "—"}
+                          </Typography>
+                        </TableCell>
+                        <TableCell
+                          align="right"
+                          sx={{ fontWeight: 600, color: "success.dark" }}
+                        >
+                          {tx.amount.toLocaleString()} AR
+                        </TableCell>
+                        <TableCell
+                          sx={{ fontSize: 12, color: "text.secondary" }}
+                        >
+                          {tx.remarks || "—"}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            )}
           </>
         )}
       </Paper>
@@ -448,11 +1043,7 @@ const StudentDetails = () => {
                   }
                   label={`${teacher.first_name} ${teacher.last_name} - ${teacher.subject}`}
                   onClick={() => navigate(`/teachers/edit/${teacher.link_id}`)}
-                  sx={{
-                    cursor: "pointer",
-                    color: "white",
-                    fontWeight: 500,
-                  }}
+                  sx={{ cursor: "pointer", color: "white", fontWeight: 500 }}
                 />
               ) : (
                 <Typography
@@ -502,7 +1093,7 @@ const StudentDetails = () => {
         <Box
           sx={{
             display: "flex",
-            justifyContent: "space-between",
+            justifycontent: "space-between",
             alignItems: "center",
             mb: 2,
           }}
@@ -607,6 +1198,121 @@ const StudentDetails = () => {
           Edit Profile
         </Button>
       </Box>
+
+      <Dialog
+        open={openPaymentModal}
+        onClose={() => setOpenPaymentModal(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Process School Fee Collection</DialogTitle>
+        <DialogContent dividers>
+          <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
+            Select Months to Cover:
+          </Typography>
+          <Box
+            sx={{ display: "flex", flexDirection: "column", gap: 0.5, mb: 3 }}
+          >
+            {tuitionSchedule.map((m) => (
+              <FormControlLabel
+                key={m.id}
+                control={
+                  <Checkbox
+                    checked={selectedMonths.includes(m.id)}
+                    disabled={m.status === "paid"}
+                    onChange={() => handleMonthToggle(m)}
+                  />
+                }
+                label={
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      width: 400,
+                      alignItems: "center",
+                    }}
+                  >
+                    <Typography
+                      variant="body2"
+                      sx={{ fontWeight: m.status === "overdue" ? 600 : 400 }}
+                    >
+                      {m.month} (
+                      {m.status === "paid"
+                        ? "Fully Paid"
+                        : `${(m.amount_due - m.amount_paid).toLocaleString()} AR Remaining`}
+                      )
+                    </Typography>
+                    {m.status === "overdue" && (
+                      <Chip label="Overdue" color="error" size="small" />
+                    )}
+                  </Box>
+                }
+              />
+            ))}
+          </Box>
+
+          <Grid container spacing={2}>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TextField
+                fullWidth
+                label="Amount Received (AR)"
+                type="number"
+                value={paymentAmount}
+                onChange={(e) =>
+                  setPaymentAmount(parseFloat(e.target.value) || 0)
+                }
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TextField
+                fullWidth
+                select
+                label="Payment Gateway / Mode"
+                value={paymentMethod}
+                onChange={(e) => setPaymentMethod(e.target.value)}
+              >
+                <MenuItem value="Cash">Cash (Espèces)</MenuItem>
+                <MenuItem value="Mvola">Mvola</MenuItem>
+                <MenuItem value="AirtelMoney">Airtel Money</MenuItem>
+                <MenuItem value="OrangeMoney">Orange Money</MenuItem>
+                <MenuItem value="Bank">Bank Transfer / Check</MenuItem>
+              </TextField>
+            </Grid>
+            <Grid size={{ xs: 12 }}>
+              <TextField
+                fullWidth
+                label="Transaction Reference (if applicable)"
+                placeholder="e.g. Mvola Reference, Check #, ID"
+                value={reference}
+                onChange={(e) => setReference(e.target.value)}
+              />
+            </Grid>
+            <Grid size={{ xs: 12 }}>
+              <TextField
+                fullWidth
+                multiline
+                rows={2}
+                label="Internal Audit Remarks"
+                value={remarks}
+                onChange={(e) => setRemarks(e.target.value)}
+              />
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions sx={{ p: 2.5 }}>
+          <Button onClick={() => setOpenPaymentModal(false)} color="inherit">
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color="success"
+            onClick={handleProcessPayment}
+            disabled={processingPayment || paymentAmount <= 0}
+          >
+            Post Receipt
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };
