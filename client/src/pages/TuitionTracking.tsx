@@ -47,7 +47,6 @@ interface StudentTuitionRow {
   months: MonthlyStatus[];
 }
 
-// Données fictives initiales pour la liste globale
 const MOCK_CLASSES: ClassOption[] = [
   { id: "c1", name: "Grade 11 - A" },
   { id: "c2", name: "Grade 12 - B" },
@@ -144,7 +143,8 @@ const renderMonthIcon = (status: string) => {
             width: 14,
             height: 14,
             borderRadius: "50%",
-            bgcolor: "grey.300",
+            border: "2px solid",
+            borderColor: "action.disabled",
             mx: "auto",
           }}
         />
@@ -175,7 +175,7 @@ const TuitionClassTracking = () => {
           }
         }
       } catch {
-        // Fallback automatique aux données fictives
+        // Fallback automatique aux données initiales
       }
     };
     fetchClasses();
@@ -194,7 +194,7 @@ const TuitionClassTracking = () => {
           setStudents(await res.json());
         }
       } catch {
-        // Garde les données fictives si l'API n'est pas encore en place
+        // Garde les données initiales si l'API n'est pas disponible
       } finally {
         setLoading(false);
       }
@@ -209,7 +209,7 @@ const TuitionClassTracking = () => {
         subtitle="Monitor student accounts, advances, full-year payments and monthly compliance matrices"
       />
 
-      <Paper variant="outlined" sx={{ p: 2, mt: 3, mb: 2, borderRadius: 2 }}>
+      <Paper sx={{ p: 2, mt: 3, mb: 2, borderRadius: 2, border: "1px solid", borderColor: "divider" }}>
         <Stack direction="row" spacing={2} alignItems="center">
           <SchoolIcon color="action" />
           <TextField
@@ -231,16 +231,15 @@ const TuitionClassTracking = () => {
 
       <TableContainer
         component={Paper}
-        variant="outlined"
-        sx={{ borderRadius: 2 }}
+        sx={{ borderRadius: 2, border: "1px solid", borderColor: "divider", overflowX: "auto" }}
       >
-        <Table size="small">
-          <TableHead sx={{ bgcolor: "grey.50" }}>
-            <TableRow>
-              <TableCell>Student</TableCell>
-              <TableCell>Payment Type</TableCell>
-              <TableCell align="right">Total Paid</TableCell>
-              <TableCell align="right">Balance</TableCell>
+        <Table size="small" sx={{ minWidth: 1000 }}>
+          <TableHead>
+            <TableRow sx={{ borderBottom: "2px solid", borderColor: "divider" }}>
+              <TableCell sx={{ fontWeight: 700 }}>Student</TableCell>
+              <TableCell sx={{ fontWeight: 700 }}>Payment Type</TableCell>
+              <TableCell align="right" sx={{ fontWeight: 700 }}>Total Paid</TableCell>
+              <TableCell align="right" sx={{ fontWeight: 700 }}>Balance</TableCell>
               <TableCell
                 align="center"
                 colSpan={10}
@@ -249,20 +248,27 @@ const TuitionClassTracking = () => {
                   fontWeight: 700,
                   textTransform: "uppercase",
                   fontSize: 11,
-                  bgcolor: "grey.100",
+                  borderLeft: "1px solid",
+                  borderColor: "divider",
                 }}
               >
                 Academic Months Grid
               </TableCell>
-              <TableCell align="center">Actions</TableCell>
+              <TableCell align="center" sx={{ fontWeight: 700 }}>Actions</TableCell>
             </TableRow>
-            <TableRow sx={{ bgcolor: "grey.100" }}>
+            <TableRow sx={{ borderBottom: "1px solid", borderColor: "divider" }}>
               <TableCell colSpan={4} />
               {students[0]?.months.map((m, idx) => (
                 <TableCell
                   key={idx}
                   align="center"
-                  sx={{ fontSize: 10, fontWeight: 600, py: 0.5 }}
+                  sx={{ 
+                    fontSize: 10, 
+                    fontWeight: 600, 
+                    py: 1,
+                    borderLeft: idx === 0 ? "1px solid" : "none",
+                    borderColor: "divider"
+                  }}
                 >
                   {m.month}
                 </TableCell>
@@ -274,7 +280,9 @@ const TuitionClassTracking = () => {
             {loading ? (
               <TableRow>
                 <TableCell colSpan={15} sx={{ py: 4, textAlign: "center" }}>
-                  Loading database records...
+                  <Typography variant="body2" color="text.secondary">
+                    Loading database records...
+                  </Typography>
                 </TableCell>
               </TableRow>
             ) : (
@@ -283,7 +291,7 @@ const TuitionClassTracking = () => {
                   PROFILE_CONFIG[student.payment_profile] ||
                   PROFILE_CONFIG.monthly;
                 return (
-                  <TableRow key={student.id} hover>
+                  <TableRow key={student.id} hover sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
                     <TableCell>
                       <Typography variant="body2" fontWeight={600}>
                         {student.first_name} {student.last_name}
@@ -297,7 +305,6 @@ const TuitionClassTracking = () => {
                         label={profile.label}
                         color={profile.color}
                         size="small"
-                        variant="flat"
                       />
                     </TableCell>
                     <TableCell
@@ -319,9 +326,15 @@ const TuitionClassTracking = () => {
                       {student.remaining_balance.toLocaleString()} AR
                     </TableCell>
 
-                    {/* Grille des mois */}
                     {student.months.map((m, idx) => (
-                      <TableCell key={idx} align="center">
+                      <TableCell 
+                        key={idx} 
+                        align="center"
+                        sx={{
+                          borderLeft: idx === 0 ? "1px solid" : "none",
+                          borderColor: "divider"
+                        }}
+                      >
                         <Tooltip
                           title={`${m.month}: ${m.status.toUpperCase()}`}
                           arrow
