@@ -101,7 +101,7 @@ const navGroups = [
       { label: "Timetable", path: "/timetable", icon: <CalendarMonthIcon /> },
       { label: "Subjects", path: "/subjects", icon: <ClassIcon /> },
       // { label: "Coursebook", path: "/coursebook", icon: <HistoryEduIcon /> },
-      { label: "Internships", path: "/internships", icon: <WorkIcon /> },
+      // { label: "Internships", path: "/internships", icon: <WorkIcon /> },
       { label: "Library", path: "/library", icon: <LibraryBooksIcon /> },
     ],
   },
@@ -117,10 +117,26 @@ const navGroups = [
   {
     label: "Financial",
     items: [
-      { label: "Payments", path: "/payments", icon: <PaymentIcon /> },
-      { label: "Facturation", path: "/facturation", icon: <ReceiptIcon /> },
-      { label: "Scholarships", path: "/scholarships", icon: <SavingsIcon /> },
-      { label: "Budget", path: "/budget", icon: <AccountBalanceIcon /> },
+      {
+        label: "Budget & Analytics",
+        path: "/budget",
+        icon: <AccountBalanceIcon />,
+      },
+      {
+        label: "Tuition & Fees",
+        path: "/payments",
+        icon: <PaymentIcon />,
+      },
+      {
+        label: "Invoicing & Events",
+        path: "/facturation",
+        icon: <ReceiptIcon />,
+      },
+      {
+        label: "Expenses",
+        path: "/scholarships",
+        icon: <SavingsIcon />,
+      },
     ],
   },
   {
