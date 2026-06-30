@@ -10,15 +10,11 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  MenuItem,
-  Select,
-  FormControl,
-  InputLabel,
   Box,
   Typography,
   IconButton,
-  Tabs,
-  Tab,
+  Autocomplete,
+  Skeleton,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import AddIcon from "@mui/icons-material/Add";
@@ -49,11 +45,10 @@ const Payments = () => {
   const establishmentID = user?.establishment_id || "";
   const { enqueueSnackbar } = useSnackbar();
 
-  const [tabIndex, setTabIndex] = useState(0);
   const [classes, setClasses] = useState<ClassItem[]>([]);
   const [configs, setConfigs] = useState<FinancialConfigItem[]>([]);
 
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [search, setSearch] = useState("");
 
@@ -68,6 +63,8 @@ const Payments = () => {
     registration_fee: "",
     academic_year: "",
   });
+
+  const [classInputValue, setClassInputValue] = useState("");
 
   const fetchData = async () => {
     if (!establishmentID) return;
@@ -101,6 +98,7 @@ const Payments = () => {
       registration_fee: "",
       academic_year: "",
     });
+    setClassInputValue("");
     setOpenDialog(true);
   };
 
@@ -112,6 +110,8 @@ const Payments = () => {
       registration_fee: item.registration_fee.toString(),
       academic_year: item.academic_year,
     });
+    const currentClass = classes.find((c) => c.id === item.class_id);
+    setClassInputValue(currentClass ? currentClass.name : "");
     setOpenDialog(true);
   };
 
@@ -123,6 +123,15 @@ const Payments = () => {
       !form.academic_year
     ) {
       enqueueSnackbar("Please fill all required fields", { variant: "error" });
+      return;
+    }
+
+    const matchedClass = classes.find((c) => c.id === form.class_id);
+    if (!matchedClass) {
+      enqueueSnackbar(
+        "The selected class is invalid or does not exist in the list",
+        { variant: "error" },
+      );
       return;
     }
 
@@ -149,12 +158,33 @@ const Payments = () => {
       });
 
       if (!res.ok) throw new Error();
-      enqueueSnackbar(
-        selectedConfig ? "Configuration updated" : "Configuration created",
-        { variant: "success" },
-      );
+
+      const responseData = await res.json();
+      const generatedID =
+        responseData?.id || selectedConfig?.id || crypto.randomUUID();
+
+      const updatedItem: FinancialConfigItem = {
+        id: generatedID,
+        class_id: form.class_id,
+        class_name: matchedClass.name,
+        room_name: matchedClass.room_name,
+        teacher_full_name: matchedClass.teacher_full_name,
+        tuition_fee: payload.tuitionFee,
+        registration_fee: payload.registrationFee,
+        academic_year: payload.academicYear,
+      };
+
+      if (selectedConfig) {
+        setConfigs((prev) =>
+          prev.map((c) => (c.id === selectedConfig.id ? updatedItem : c)),
+        );
+        enqueueSnackbar("Configuration updated", { variant: "success" });
+      } else {
+        setConfigs((prev) => [updatedItem, ...prev]);
+        enqueueSnackbar("Configuration created", { variant: "success" });
+      }
+
       setOpenDialog(false);
-      fetchData();
     } catch {
       enqueueSnackbar("Error saving configuration", { variant: "error" });
     } finally {
@@ -174,11 +204,12 @@ const Payments = () => {
         },
       );
       if (!res.ok) throw new Error();
+
+      setConfigs((prev) => prev.filter((c) => c.id !== selectedConfig.id));
       enqueueSnackbar("Configuration deleted successfully", {
         variant: "success",
       });
       setOpenDelete(false);
-      fetchData();
     } catch {
       enqueueSnackbar("Error deleting configuration", { variant: "error" });
     } finally {
@@ -269,7 +300,42 @@ const Payments = () => {
         />
       </Box>
 
-      <DataTable columns={columns} data={filteredConfigs} />
+      {loading ? (
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          <Skeleton
+            variant="rectangular"
+            width="100%"
+            height={50}
+            sx={{ borderRadius: 1 }}
+          />
+          <Skeleton
+            variant="rectangular"
+            width="100%"
+            height={50}
+            sx={{ borderRadius: 1 }}
+          />
+          <Skeleton
+            variant="rectangular"
+            width="100%"
+            height={50}
+            sx={{ borderRadius: 1 }}
+          />
+          <Skeleton
+            variant="rectangular"
+            width="100%"
+            height={50}
+            sx={{ borderRadius: 1 }}
+          />
+          <Skeleton
+            variant="rectangular"
+            width="100%"
+            height={50}
+            sx={{ borderRadius: 1 }}
+          />
+        </Box>
+      ) : (
+        <DataTable columns={columns} data={filteredConfigs} />
+      )}
 
       {/* DIALOG ADD / EDIT */}
       <Dialog
@@ -284,25 +350,36 @@ const Payments = () => {
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 0.5 }}>
             <Grid size={{ xs: 12 }}>
-              <FormControl fullWidth disabled={!!selectedConfig}>
-                <InputLabel>Class *</InputLabel>
-                <Select
-                  value={form.class_id}
-                  label="Class *"
-                  onChange={(e) =>
-                    setForm({ ...form, class_id: e.target.value })
+              <Autocomplete
+                freeSolo
+                disabled={!!selectedConfig}
+                options={classes}
+                getOptionLabel={(option) => {
+                  if (typeof option === "string") return option;
+                  return `${option.name} ${option.room_name ? `[Room: ${option.room_name}]` : ""} ${option.teacher_full_name ? `— Prof: ${option.teacher_full_name}` : ""}`;
+                }}
+                value={classes.find((c) => c.id === form.class_id) || null}
+                onChange={(_, newValue) => {
+                  if (typeof newValue === "string" || !newValue) {
+                    setForm({ ...form, class_id: "" });
+                  } else {
+                    setForm({ ...form, class_id: newValue.id });
                   }
-                >
-                  {classes.map((c) => (
-                    <MenuItem key={c.id} value={c.id}>
-                      {c.name} {c.room_name ? `[Room: ${c.room_name}]` : ""}{" "}
-                      {c.teacher_full_name
-                        ? `— Prof: ${c.teacher_full_name}`
-                        : ""}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+                }}
+                inputValue={classInputValue}
+                onInputChange={(_, newInputValue) => {
+                  setClassInputValue(newInputValue);
+                  const matched = classes.find(
+                    (c) => c.name.toLowerCase() === newInputValue.toLowerCase(),
+                  );
+                  if (matched) {
+                    setForm({ ...form, class_id: matched.id });
+                  }
+                }}
+                renderInput={(params) => (
+                  <TextField {...params} label="Class *" required fullWidth />
+                )}
+              />
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
@@ -356,7 +433,7 @@ const Payments = () => {
       <Dialog open={openDelete} onClose={() => setOpenDelete(false)}>
         <DialogTitle>Delete Fee Configuration</DialogTitle>
         <DialogContent>
-          <Typography>
+          <Typography component="div">
             Are you sure you want to remove the financial configurations for{" "}
             <strong>{selectedConfig?.class_name}</strong>?
           </Typography>
