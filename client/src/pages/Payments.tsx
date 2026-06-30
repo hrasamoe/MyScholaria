@@ -157,7 +157,10 @@ const Payments = () => {
         body: JSON.stringify(payload),
       });
 
-      if (!res.ok) throw new Error();
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || "Error saving configuration");
+      }
 
       const responseData = await res.json();
       const generatedID =
@@ -185,8 +188,10 @@ const Payments = () => {
       }
 
       setOpenDialog(false);
-    } catch {
-      enqueueSnackbar("Error saving configuration", { variant: "error" });
+    } catch (err: any) {
+      enqueueSnackbar(err.message || "Error saving configuration", {
+        variant: "error",
+      });
     } finally {
       setActionLoading(false);
     }
@@ -203,15 +208,20 @@ const Payments = () => {
           credentials: "include",
         },
       );
-      if (!res.ok) throw new Error();
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || "Error deleting configuration");
+      }
 
       setConfigs((prev) => prev.filter((c) => c.id !== selectedConfig.id));
       enqueueSnackbar("Configuration deleted successfully", {
         variant: "success",
       });
       setOpenDelete(false);
-    } catch {
-      enqueueSnackbar("Error deleting configuration", { variant: "error" });
+    } catch (err: any) {
+      enqueueSnackbar(err.message || "Error deleting configuration", {
+        variant: "error",
+      });
     } finally {
       setActionLoading(false);
     }
