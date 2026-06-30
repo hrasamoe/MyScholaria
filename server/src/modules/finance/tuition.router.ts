@@ -4,7 +4,12 @@ import {
   RequireAuth,
   RequireAuthOnly,
 } from "../../middleware/auth.middleware";
-import { createTuition, editTuition, getTuitionList } from "./tuition.service";
+import {
+  createTuition,
+  deleteTuition,
+  editTuition,
+  getTuitionList,
+} from "./tuition.service";
 import { TuitionSchema } from "./tuition.schema";
 export const financeRouter = Router();
 
@@ -71,6 +76,26 @@ financeRouter.put(
       res.status(500).json({
         message: error.message,
         error: error.message,
+      });
+    }
+  },
+);
+
+financeRouter.delete(
+  "/tuition-rules/:id",
+  RequireAuth,
+  async (req: AuthRequest, res: Response) => {
+    const TuitionID = req.params.id as string;
+    const userID = req.userId as string;
+    try {
+      await deleteTuition(TuitionID, userID);
+      res.status(200).json({
+        message: "The tuition data has been deleted successfully",
+      });
+    } catch (error: any) {
+      res.status(500).json({
+        error: error.message,
+        message: error.message,
       });
     }
   },

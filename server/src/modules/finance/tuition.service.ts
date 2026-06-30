@@ -122,6 +122,16 @@ export async function deleteTuition(TuitionID: string, userID: string) {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
+    const rowsToDelete = await client.query(
+      "SELECT FROM fee_configurations WHERE id = $1",
+      [TuitionID],
+    );
+    if (userID != rowsToDelete.rows[0].created_by) {
+      throw new Error("You are not allowed to delte this tuition data");
+    }
+    await client.query("DELETE from fee_configurations WHERE id = $1", [
+      TuitionID,
+    ]);
     await client.query("COMMIT");
   } catch (error: any) {
     console.log(error);
