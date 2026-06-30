@@ -17,10 +17,19 @@ import {
   InputAdornment,
   Divider,
   Alert,
+  FormControlLabel,
+  Checkbox,
 } from "@mui/material";
 import { useSnackbar } from "notistack";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+
+interface TuitionMonthOption {
+  id: string;
+  month: string;
+  amount_due: number;
+  is_paid: boolean;
+}
 
 interface StudentFinanceSettings {
   student_id: string;
@@ -32,6 +41,7 @@ interface StudentFinanceSettings {
   discount_value: number;
   payment_plan: "standard" | "advance" | "full_year";
   notes: string;
+  tuition_months: TuitionMonthOption[];
 }
 
 export default function StudentFinanceSetup() {
@@ -51,6 +61,18 @@ export default function StudentFinanceSetup() {
     discount_value: 0,
     payment_plan: "standard",
     notes: "",
+    tuition_months: [
+      { id: "1", month: "September", amount_due: 50000, is_paid: false },
+      { id: "2", month: "October", amount_due: 50000, is_paid: false },
+      { id: "3", month: "November", amount_due: 50000, is_paid: false },
+      { id: "4", month: "December", amount_due: 50000, is_paid: false },
+      { id: "5", month: "January", amount_due: 50000, is_paid: false },
+      { id: "6", month: "February", amount_due: 50000, is_paid: false },
+      { id: "7", month: "March", amount_due: 50000, is_paid: false },
+      { id: "8", month: "April", amount_due: 50000, is_paid: false },
+      { id: "9", month: "May", amount_due: 50000, is_paid: false },
+      { id: "10", month: "June", amount_due: 50000, is_paid: false },
+    ],
   });
 
   useEffect(() => {
@@ -93,6 +115,15 @@ export default function StudentFinanceSetup() {
     }));
   };
 
+  const handleMonthToggle = (monthId: string) => {
+    setSettings((prev) => ({
+      ...prev,
+      tuition_months: prev.tuition_months.map((m) =>
+        m.id === monthId ? { ...m, is_paid: !m.is_paid } : m,
+      ),
+    }));
+  };
+
   const calculateFinalTuition = () => {
     const base = settings.base_monthly_tuition;
     if (settings.discount_type === "percentage") {
@@ -117,6 +148,7 @@ export default function StudentFinanceSetup() {
           discount_value: settings.discount_value,
           payment_plan: settings.payment_plan,
           notes: settings.notes,
+          tuition_months: settings.tuition_months,
         }),
       });
 
@@ -153,7 +185,15 @@ export default function StudentFinanceSetup() {
         }
       />
 
-      <Paper variant="outlined" sx={{ p: 3, mt: 3, borderRadius: 2 }}>
+      <Paper
+        sx={{
+          p: 3,
+          mt: 3,
+          borderRadius: 2,
+          border: "1px solid",
+          borderColor: "divider",
+        }}
+      >
         {loading ? (
           <Stack spacing={2}>
             <Skeleton variant="text" width="40%" height={32} />
@@ -274,11 +314,42 @@ export default function StudentFinanceSetup() {
               </Grid>
 
               <Grid size={{ xs: 12 }}>
+                <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
+                  Mark Months as Settled / Paid:
+                </Typography>
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 0.5,
+                    p: 2,
+                    border: "1px solid",
+                    borderColor: "divider",
+                    borderRadius: 1,
+                  }}
+                >
+                  {settings.tuition_months.map((m) => (
+                    <FormControlLabel
+                      key={m.id}
+                      control={
+                        <Checkbox
+                          checked={m.is_paid}
+                          onChange={() => handleMonthToggle(m.id)}
+                          color="success"
+                        />
+                      }
+                      label={`${m.month} (${finalMonthly.toLocaleString()} AR)`}
+                    />
+                  ))}
+                </Box>
+              </Grid>
+
+              <Grid size={{ xs: 12 }}>
                 <Paper
-                  variant="outlined"
                   sx={{
                     p: 2,
-                    bgcolor: "grey.50",
+                    border: "1px solid",
+                    borderColor: "primary.main",
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "center",
