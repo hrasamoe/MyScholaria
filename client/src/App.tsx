@@ -11,6 +11,7 @@ import {
   RoleRoute,
 } from "./hooks/ProtectRoute";
 import { AppThemeProvider } from "./hooks/Themecontext";
+import StudentFinanceSetupList from "./pages/StudentFinanceSetupList";
 import Announcements from "./pages/Announcements";
 import Attendance from "./pages/Attendance";
 import Budget from "./pages/Budget";
@@ -18,6 +19,7 @@ import CreateTimetable from "./pages/CreateTimeTable";
 import ChangePassword from "./pages/ChangePassword";
 import Classes from "./pages/Classes";
 import Classrooms from "./pages/Classrooms";
+import StudentFinanceSetup from './pages/StudentFinanceSetup'
 import Coursebook from "./pages/Coursebook";
 import CreateEstablishment from "./pages/CreateEstablishment";
 import CreateParent from "./pages/CreateParent";
@@ -70,6 +72,7 @@ import Timetable from "./pages/Timetable";
 import Users from "./pages/Users";
 import VerifyEmail from "./pages/VerifyEmail";
 import VerifyEmailMember from "./pages/VerifyEmailMember";
+import TuitionClassTracking from "./pages/TuitionTracking";
 
 const App = () => (
   <AppThemeProvider>
@@ -148,7 +151,22 @@ const App = () => (
 
                 <Route element={<RoleRoute roles={["admin", "staff"]} />}>
                   <Route path="/parents" element={<ParentsList />} />
-                  <Route path="/timetable/create" element={<CreateTimetable />} />
+                  <Route
+                    path="/tuition-track"
+                    element={<TuitionClassTracking />}
+                  />
+                  <Route
+                    path="/student-finance-setup"
+                    element={<StudentFinanceSetupList />}
+                  />
+                    <Route
+                    path="/students/finance-setup/:id"
+                    element={<StudentFinanceSetup />}
+                  />
+                  <Route
+                    path="/timetable/create"
+                    element={<CreateTimetable />}
+                  />
                   <Route path="/parents/create" element={<CreateParent />} />
                   <Route path="/parents/edit/:id" element={<EditParent />} />
                   <Route path="/users" element={<Users />} />
