@@ -24,7 +24,7 @@ import { teacherRouter } from "./modules/teacher/teacher.router";
 import { initWebSocketServer } from "./services/websocket/ws-server";
 import { subjectRouter } from "./modules/subject/subject.router";
 import { timetableRouter } from "./modules/timetable/timetable.router";
-
+import { financeRouter } from "./modules/finance/tuition.router";
 setDefaultResultOrder("ipv4first");
 
 const app = express();
@@ -50,6 +50,7 @@ app.use(
 
 app.use(cookieParser());
 app.use(express.json());
+app.use("/api/finance", financeRouter);
 app.use("/api/messages", messageRouter);
 app.use("/api/teachers", teacherRouter);
 app.use("/api/utils", utilschemaRouter);
