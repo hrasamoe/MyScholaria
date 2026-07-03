@@ -128,6 +128,11 @@ const navGroups = [
         icon: <PaymentIcon />,
       },
       {
+        label: "Tuition Tracking",
+        path: "/student-finance-setup",
+        icon: <PaymentIcon />,
+      },
+      {
         label: "Invoicing & Events",
         path: "/facturation",
         icon: <ReceiptIcon />,
