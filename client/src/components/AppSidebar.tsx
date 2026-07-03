@@ -124,12 +124,12 @@ const navGroups = [
       },
       {
         label: "Tuition & Fees",
-        path: "/payments",
+        path: "/tuition-list",
         icon: <PaymentIcon />,
       },
       {
         label: "Tuition Tracking",
-        path: "/student-finance-setup",
+        path: "/finance-student-setup-list",
         icon: <PaymentIcon />,
       },
       {
