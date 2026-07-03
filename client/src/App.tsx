@@ -156,11 +156,11 @@ const App = () => (
                     element={<TuitionClassTracking />}
                   />
                   <Route
-                    path="/student-finance-setup"
+                    path="/finance-student-setup-list"
                     element={<StudentFinanceSetupList />}
                   />
-                    <Route
-                    path="/students/finance-setup/:id"
+                  <Route
+                    path="/finance-student-setup-list/student/:id"
                     element={<StudentFinanceSetup />}
                   />
                   <Route
@@ -176,7 +176,7 @@ const App = () => (
                   <Route path="/staff/create" element={<CreateStaff />} />
                   <Route path="/staff/details/:id" element={<StaffDetails />} />
                   <Route path="/budget" element={<Budget />} />
-                  <Route path="/payments" element={<Payments />} />
+                  <Route path="/tuition-list" element={<Payments />} />
                   <Route path="/facturation" element={<Facturation />} />
                   <Route path="/scholarships" element={<Scholarships />} />
                   <Route path="/reports" element={<Reports />} />

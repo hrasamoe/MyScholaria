@@ -1,5 +1,5 @@
 import { pool } from "../../db/pool";
-import { TuitionInfo } from "./tuition.schema";
+import { TuitionInfo, StudentTuitionInfo } from "./tuition.schema";
 
 export async function createTuition(TuitionData: TuitionInfo, userID: string) {
   const client = await pool.connect();
@@ -47,20 +47,21 @@ export async function getTuitionList(establishentID: string) {
     await client.query("BEGIN");
     const result = await client.query(
       `SELECT
-    fc.id,
-    fc.class_id,
-    r.name AS room_name,
-    c.name AS class_name,
-    fc.tuition_fee,
-    fc.registration_fee,
-    CONCAT_WS(' ', p.first_name, p.last_name) AS teacher_full_name,
-    fc.academic_year
-  FROM fee_configurations fc
-  JOIN classes c ON fc.class_id = c.id
-  JOIN teachers t ON c.main_teacher_id = t.id
-  JOIN profiles p ON t.profile_id = p.id
-  JOIN rooms r ON c.room_id = r.id
-  WHERE fc.establishment_id = $1`,
+          fc.id,
+          fc.class_id,
+          r.name AS room_name,
+          c.name AS class_name,
+          fc.tuition_fee::float,
+          fc.registration_fee::float,
+          CONCAT_WS(' ', p.first_name, p.last_name) AS teacher_full_name,
+          fc.academic_year
+      FROM fee_configurations fc
+      JOIN classes c ON fc.class_id = c.id
+      JOIN teachers t ON c.main_teacher_id = t.id
+      JOIN profiles p ON t.profile_id = p.id
+      JOIN rooms r ON c.room_id = r.id
+      WHERE fc.establishment_id = $1
+      `,
       [establishentID],
     );
     await client.query("COMMIT");
@@ -139,5 +140,64 @@ export async function deleteTuition(TuitionID: string, userID: string) {
     throw error;
   } finally {
     client.release();
+  }
+}
+
+export async function saveStudentTuition(
+  studentId: string,
+  StudentTuitionData: StudentTuitionInfo,
+) {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const upsertSettingsQuery = `
+            INSERT INTO student_finance_settings (
+                student_id, base_monthly_tuition, discount_type, discount_value, 
+                total_paid_amount, registration_fee, is_registration_fee_paid, notes, updated_at
+            )
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
+            ON CONFLICT (student_id) 
+            DO UPDATE SET 
+                base_monthly_tuition = EXCLUDED.base_monthly_tuition,
+                discount_type = EXCLUDED.discount_type,
+                discount_value = EXCLUDED.discount_value,
+                total_paid_amount = EXCLUDED.total_paid_amount,
+                registration_fee = EXCLUDED.registration_fee,
+                is_registration_fee_paid = EXCLUDED.is_registration_fee_paid,
+                notes = EXCLUDED.notes,
+                updated_at = NOW();
+        `;
+    await client.query(upsertSettingsQuery, [
+      studentId,
+      StudentTuitionData.base_monthly_tuition,
+      StudentTuitionData.discount_type,
+      StudentTuitionData.discount_value,
+      StudentTuitionData.total_paid_amount,
+      StudentTuitionData.registration_fee,
+      StudentTuitionData.is_registration_fee_paid,
+      StudentTuitionData.notes,
+    ]);
+    for (const m of StudentTuitionData.tuition_months) {
+      const upsertMonthQuery = `
+        INSERT INTO student_tuition_months (student_id, month_id, month_name, amount_due, is_paid)
+        VALUES ($1, $2, $3, $4, $5)
+        ON CONFLICT (student_id, month_id)
+        DO UPDATE SET
+            amount_due = EXCLUDED.amount_due,
+            is_paid = EXCLUDED.is_paid;
+        `;
+      await client.query(upsertMonthQuery, [
+        studentId,
+        m.id,
+        m.month,
+        m.amount_due,
+        m.is_paid,
+      ]);
+    }
+    await client.query("COMMIT");
+  } catch (error: any) {
+    console.log(error);
+    await client.query("ROLLBACK");
+    throw error;
   }
 }

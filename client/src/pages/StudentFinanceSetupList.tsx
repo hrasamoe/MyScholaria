@@ -304,7 +304,9 @@ export default function StudentFinanceSetupList() {
                     color="primary"
                     startIcon={<AccountBalanceWalletIcon />}
                     onClick={() =>
-                      navigate(`/students/finance-setup/${student.id}`)
+                      navigate(
+                        `/finance-student-setup-list/student/${student.id}`,
+                      )
                     }
                   >
                     Setup Financial Plan

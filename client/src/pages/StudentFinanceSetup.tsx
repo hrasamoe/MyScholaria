@@ -237,13 +237,22 @@ export default function StudentFinanceSetup() {
         }),
       });
 
-      if (!res.ok) throw new Error();
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => null);
+        console.error(
+          "Save failed:",
+          res.status,
+          JSON.stringify(errBody, null, 2),
+        );
+        throw new Error(errBody?.error || "Save failed");
+      }
 
       enqueueSnackbar("Financial configuration updated successfully", {
         variant: "success",
       });
       navigate(`/students/details/${id}`);
-    } catch {
+    } catch (err) {
+      console.error(err);
       enqueueSnackbar("Failed to push structural account adjustments.", {
         variant: "error",
       });
@@ -251,7 +260,6 @@ export default function StudentFinanceSetup() {
       setSaving(false);
     }
   };
-
   const processedMonths = getProcessedMonths(settings.total_paid_amount);
   const totalDueAcademicYear = finalMonthly * settings.tuition_months.length;
   const currentRemainingBalance = Math.max(

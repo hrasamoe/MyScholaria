@@ -37,117 +37,8 @@ import {
   FormControlLabel,
 } from "@mui/material";
 import { useSnackbar } from "notistack";
-import { useEffect, useState } from "react";
+import { useEffect, useState, ReactNode } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-
-const MOCK_TUITION_SUMMARY = {
-  total_due: 500000,
-  total_paid: 200000,
-  balance: 300000,
-  overdue: 50000,
-};
-
-const MOCK_SCHED_ITEMS: TuitionScheduleItem[] = [
-  {
-    id: "1",
-    month: "September",
-    due_date: "2025-09-05",
-    amount_due: 50000,
-    amount_paid: 50000,
-    status: "paid",
-  },
-  {
-    id: "2",
-    month: "October",
-    due_date: "2025-10-05",
-    amount_due: 50000,
-    amount_paid: 50000,
-    status: "paid",
-  },
-  {
-    id: "3",
-    month: "November",
-    due_date: "2025-11-05",
-    amount_due: 50000,
-    amount_paid: 50000,
-    status: "paid",
-  },
-  {
-    id: "4",
-    month: "December",
-    due_date: "2025-12-05",
-    amount_due: 50000,
-    amount_paid: 50000,
-    status: "paid",
-  },
-  {
-    id: "5",
-    month: "January",
-    due_date: "2026-01-05",
-    amount_due: 50000,
-    amount_paid: 0,
-    status: "overdue",
-  },
-  {
-    id: "6",
-    month: "February",
-    due_date: "2026-02-05",
-    amount_due: 50000,
-    amount_paid: 0,
-    status: "pending",
-  },
-  {
-    id: "7",
-    month: "March",
-    due_date: "2026-03-05",
-    amount_due: 50000,
-    amount_paid: 0,
-    status: "pending",
-  },
-  {
-    id: "8",
-    month: "April",
-    due_date: "2026-04-05",
-    amount_due: 50000,
-    amount_paid: 0,
-    status: "pending",
-  },
-  {
-    id: "9",
-    month: "May",
-    due_date: "2026-05-05",
-    amount_due: 50000,
-    amount_paid: 0,
-    status: "pending",
-  },
-  {
-    id: "10",
-    month: "June",
-    due_date: "2026-06-05",
-    amount_due: 50000,
-    amount_paid: 0,
-    status: "pending",
-  },
-];
-
-const MOCK_TRANSACTIONS: TuitionTransaction[] = [
-  {
-    id: "t1",
-    amount: 100000,
-    payment_method: "Mvola",
-    reference: "TX-948293",
-    payment_date: "2025-09-04",
-    remarks: "Sept & Oct Tuition",
-  },
-  {
-    id: "t2",
-    amount: 100000,
-    payment_method: "Cash",
-    reference: null,
-    payment_date: "2025-11-02",
-    remarks: "Nov & Dec Tuition",
-  },
-];
 
 interface StudentDetail {
   id: string;
@@ -186,10 +77,9 @@ interface TeacherOption {
 interface TuitionScheduleItem {
   id: string;
   month: string;
-  due_date: string;
   amount_due: number;
   amount_paid: number;
-  status: "paid" | "partial" | "overdue" | "pending";
+  status: "paid" | "pending";
 }
 
 interface TuitionTransaction {
@@ -232,23 +122,13 @@ const TUITION_STATUS_CONFIG: Record<
   {
     label: string;
     color: "success" | "warning" | "error" | "default";
-    icon: React.ReactNode;
+    icon: ReactNode;
   }
 > = {
   paid: {
     label: "Paid",
     color: "success",
     icon: <CheckCircleIcon sx={{ fontSize: 14 }} />,
-  },
-  partial: {
-    label: "Partial",
-    color: "warning",
-    icon: <PendingIcon sx={{ fontSize: 14 }} />,
-  },
-  overdue: {
-    label: "Overdue",
-    color: "error",
-    icon: <ErrorIcon sx={{ fontSize: 14 }} />,
   },
   pending: {
     label: "Pending",
@@ -276,6 +156,17 @@ const formatParentName = (p: ParentOption) => {
           .map((x) => `${x[0].toUpperCase()}.`)
           .join(" ")}`;
   return `${first} ${p.last_name || ""}`.trim();
+};
+
+const calculateFinalMonthly = (data: any) => {
+  const base = data.base_monthly_tuition ?? 0;
+  if (data.discount_type === "percentage") {
+    return base - base * ((data.discount_value ?? 0) / 100);
+  }
+  if (data.discount_type === "fixed") {
+    return Math.max(0, base - (data.discount_value ?? 0));
+  }
+  return base;
 };
 
 const InfoRow = ({
@@ -311,11 +202,17 @@ const StudentDetails = () => {
   const [teacher, setTeacher] = useState<TeacherOption | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const [tuitionSummary, setTuitionSummary] = useState(MOCK_TUITION_SUMMARY);
-  const [tuitionSchedule, setTuitionSchedule] =
-    useState<TuitionScheduleItem[]>(MOCK_SCHED_ITEMS);
-  const [transactions, setTransactions] =
-    useState<TuitionTransaction[]>(MOCK_TRANSACTIONS);
+  const [tuitionSummary, setTuitionSummary] = useState({
+    total_due: 0,
+    total_paid: 0,
+    balance: 0,
+    overdue: 0,
+  });
+  const [tuitionSchedule, setTuitionSchedule] = useState<TuitionScheduleItem[]>(
+    [],
+  );
+  const [rawFinance, setRawFinance] = useState<any>(null);
+  const [transactions] = useState<TuitionTransaction[]>([]);
   const [tuitionLoading, setTuitionLoading] = useState(true);
   const [openPaymentModal, setOpenPaymentModal] = useState(false);
   const [processingPayment, setProcessingPayment] = useState(false);
@@ -330,23 +227,49 @@ const StudentDetails = () => {
     if (!id) return;
     try {
       setTuitionLoading(true);
-      const [resSummary, resSchedule, resTransactions] = await Promise.all([
-        apiRequest(`/api/finance/student-tuition-summary/${id}`, {
-          credentials: "include",
-        }),
-        apiRequest(`/api/finance/student-tuition-schedule/${id}`, {
-          credentials: "include",
-        }),
-        apiRequest(`/api/finance/student-tuition-transactions/${id}`, {
-          credentials: "include",
-        }),
-      ]);
+      const res = await apiRequest(`/api/finance/student-settings/${id}`, {
+        credentials: "include",
+      });
 
-      if (resSummary.ok) setTuitionSummary(await resSummary.json());
-      if (resSchedule.ok) setTuitionSchedule(await resSchedule.json());
-      if (resTransactions.ok) setTransactions(await resTransactions.json());
+      if (!res.ok) {
+        setRawFinance(null);
+        setTuitionSchedule([]);
+        setTuitionSummary({
+          total_due: 0,
+          total_paid: 0,
+          balance: 0,
+          overdue: 0,
+        });
+        return;
+      }
+
+      const data = await res.json();
+      setRawFinance(data);
+
+      const finalMonthly = calculateFinalMonthly(data);
+      const months = data.tuition_months ?? [];
+
+      const schedule: TuitionScheduleItem[] = months.map((m: any) => ({
+        id: m.id,
+        month: m.month,
+        amount_due: m.amount_due,
+        amount_paid: m.is_paid ? finalMonthly : finalMonthly - m.amount_due,
+        status: m.is_paid ? "paid" : "pending",
+      }));
+
+      const totalDue = finalMonthly * months.length;
+      const totalPaid = data.total_paid_amount ?? 0;
+      const balance = Math.max(0, totalDue - totalPaid);
+
+      setTuitionSchedule(schedule);
+      setTuitionSummary({
+        total_due: totalDue,
+        total_paid: totalPaid,
+        balance,
+        overdue: 0,
+      });
     } catch {
-      // Fallback
+      setRawFinance(null);
     } finally {
       setTuitionLoading(false);
     }
@@ -396,7 +319,7 @@ const StudentDetails = () => {
 
   const handleMonthToggle = (item: TuitionScheduleItem) => {
     const isSelected = selectedMonths.includes(item.id);
-    let updatedMonths = [];
+    let updatedMonths: string[] = [];
 
     if (isSelected) {
       updatedMonths = selectedMonths.filter((mId) => mId !== item.id);
@@ -417,7 +340,7 @@ const StudentDetails = () => {
   };
 
   const handleProcessPayment = async () => {
-    if (paymentAmount <= 0 || selectedMonths.length === 0) {
+    if (paymentAmount <= 0 || selectedMonths.length === 0 || !rawFinance) {
       enqueueSnackbar("Please pick outstanding items to pay.", {
         variant: "warning",
       });
@@ -426,21 +349,35 @@ const StudentDetails = () => {
 
     try {
       setProcessingPayment(true);
-      const res = await apiRequest(`/api/finance/collect-tuition`, {
-        method: "POST",
+
+      const updatedMonths = rawFinance.tuition_months.map((m: any) =>
+        selectedMonths.includes(m.id)
+          ? { ...m, is_paid: true, amount_due: 0 }
+          : m,
+      );
+
+      const res = await apiRequest(`/api/finance/student-settings/${id}`, {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
-          studentId: id,
-          scheduleItemIds: selectedMonths,
-          amountPaid: paymentAmount,
-          paymentMethod,
-          reference,
-          remarks,
+          base_monthly_tuition: rawFinance.base_monthly_tuition,
+          discount_type: rawFinance.discount_type,
+          discount_value: rawFinance.discount_value,
+          total_paid_amount:
+            (rawFinance.total_paid_amount ?? 0) + paymentAmount,
+          registration_fee: rawFinance.registration_fee,
+          is_registration_fee_paid: rawFinance.is_registration_fee_paid,
+          notes: rawFinance.notes,
+          tuition_months: updatedMonths,
         }),
       });
 
-      if (!res.ok) throw new Error();
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => null);
+        console.error("Payment failed:", res.status, errBody);
+        throw new Error(errBody?.error || "Payment failed");
+      }
 
       enqueueSnackbar("Payment successfully captured and matched!", {
         variant: "success",
@@ -451,7 +388,8 @@ const StudentDetails = () => {
       setReference("");
       setRemarks("");
       fetchTuitionData();
-    } catch {
+    } catch (err) {
+      console.error(err);
       enqueueSnackbar("Error executing server payment posting transaction.", {
         variant: "error",
       });
@@ -570,319 +508,6 @@ const StudentDetails = () => {
                 New Student
               </Button>
             </Stack>
-          </>
-        )}
-      </Paper>
-
-      <Paper
-        variant="outlined"
-        sx={{ p: 3, mt: 2, borderRadius: 2, borderColor: "primary.light" }}
-      >
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            mb: 2,
-            flexWrap: "wrap",
-            gap: 1,
-          }}
-        >
-          <Stack direction="row" spacing={2} alignItems="center">
-            <Typography variant="h6" fontWeight={600} color="primary.main">
-              Tuition & School Fees Status
-            </Typography>
-            {!tuitionLoading && (
-              <Chip
-                label={
-                  tuitionSummary.balance === 0
-                    ? "Paid All Year (Soldé)"
-                    : tuitionSchedule.filter((m) => m.status === "paid")
-                          .length > 4
-                      ? "Paid In Advance (En Avance)"
-                      : "Standard Monthly"
-                }
-                color={tuitionSummary.balance === 0 ? "success" : "info"}
-                // variant="contained"
-                size="small"
-                sx={{ fontWeight: 700 }}
-              />
-            )}
-          </Stack>
-          <Button
-            size="small"
-            variant="contained"
-            color="success"
-            startIcon={<ReceiptLongIcon />}
-            onClick={() => setOpenPaymentModal(true)}
-            disabled={tuitionLoading}
-          >
-            Collect Tuition Payment
-          </Button>
-        </Box>
-
-        {tuitionLoading ? (
-          <Skeleton
-            variant="rectangular"
-            width="100%"
-            height={100}
-            sx={{ borderRadius: 1 }}
-          />
-        ) : (
-          <>
-            <Box
-              sx={{
-                mb: 2,
-                p: 1.5,
-                bgcolor: "background.default",
-                borderRadius: 1,
-                borderLeft: "4px solid",
-                borderLeftColor: "primary.main",
-              }}
-            >
-              <Typography variant="body2" color="text.secondary">
-                <strong>Payment Standing:</strong> This student has completely
-                fulfilled{" "}
-                <strong>
-                  {tuitionSchedule.filter((m) => m.status === "paid").length}{" "}
-                  out of {tuitionSchedule.length} months
-                </strong>{" "}
-                for this current academic iteration cycle.
-                {tuitionSummary.balance === 0 &&
-                  " The structural account invoice balances to zero. Complete year cleared."}
-              </Typography>
-            </Box>
-
-            <Grid container spacing={2} sx={{ mb: 3 }}>
-              <Grid size={{ xs: 6, sm: 3 }}>
-                <Box
-                  sx={{
-                    p: 1.5,
-                    // bgcolor: "grey.50",
-                    borderRadius: 1,
-                    border: "1px solid",
-                    borderColor: "divider",
-                    textAlign: "center",
-                  }}
-                >
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    fontWeight={500}
-                  >
-                    Total Expected
-                  </Typography>
-                  <Typography
-                    variant="subtitle1"
-                    fontWeight={700}
-                    color="text.primary"
-                  >
-                    {tuitionSummary.total_due.toLocaleString()} AR
-                  </Typography>
-                </Box>
-              </Grid>
-              <Grid size={{ xs: 6, sm: 3 }}>
-                <Box
-                  sx={{
-                    p: 1.5,
-                    bgcolor: "success.50",
-                    borderRadius: 1,
-                    border: "1px solid",
-                    borderColor: "success.light",
-                    textAlign: "center",
-                  }}
-                >
-                  <Typography
-                    variant="caption"
-                    color="success.dark"
-                    fontWeight={500}
-                  >
-                    Total Paid
-                  </Typography>
-                  <Typography
-                    variant="subtitle1"
-                    fontWeight={700}
-                    color="success.dark"
-                  >
-                    {tuitionSummary.total_paid.toLocaleString()} AR
-                  </Typography>
-                </Box>
-              </Grid>
-              <Grid size={{ xs: 6, sm: 3 }}>
-                <Box
-                  sx={{
-                    p: 1.5,
-                    bgcolor: "info.50",
-                    borderRadius: 1,
-                    border: "1px solid",
-                    borderColor: "info.light",
-                    textAlign: "center",
-                  }}
-                >
-                  <Typography
-                    variant="caption"
-                    color="info.dark"
-                    fontWeight={500}
-                  >
-                    Remaining Balance
-                  </Typography>
-                  <Typography
-                    variant="subtitle1"
-                    fontWeight={700}
-                    color="info.dark"
-                  >
-                    {tuitionSummary.balance.toLocaleString()} AR
-                  </Typography>
-                </Box>
-              </Grid>
-              <Grid size={{ xs: 6, sm: 3 }}>
-                <Box
-                  sx={{
-                    p: 1.5,
-                    bgcolor:
-                      tuitionSummary.overdue > 0 ? "error.50" : "grey.50",
-                    borderRadius: 1,
-                    border: "1px solid",
-                    borderColor:
-                      tuitionSummary.overdue > 0 ? "error.light" : "divider",
-                    textAlign: "center",
-                  }}
-                >
-                  <Typography
-                    variant="caption"
-                    color={
-                      tuitionSummary.overdue > 0
-                        ? "error.dark"
-                        : "text.secondary"
-                    }
-                    fontWeight={500}
-                  >
-                    Arrears (Overdue)
-                  </Typography>
-                  <Typography
-                    variant="subtitle1"
-                    fontWeight={700}
-                    color={
-                      tuitionSummary.overdue > 0 ? "error.main" : "text.primary"
-                    }
-                  >
-                    {tuitionSummary.overdue.toLocaleString()} AR
-                  </Typography>
-                </Box>
-              </Grid>
-            </Grid>
-
-            <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1 }}>
-              Monthly Installments Schedule
-            </Typography>
-            <TableContainer
-              component={Paper}
-              variant="outlined"
-              sx={{ maxHeight: 260, mb: 3 }}
-            >
-              <Table size="small" stickyHeader>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Month</TableCell>
-                    <TableCell>Due Date</TableCell>
-                    <TableCell align="right">Amount Due</TableCell>
-                    <TableCell align="right">Amount Paid</TableCell>
-                    <TableCell align="center">Status</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {tuitionSchedule.map((row) => {
-                    const cfg =
-                      TUITION_STATUS_CONFIG[row.status] ||
-                      TUITION_STATUS_CONFIG.pending;
-                    return (
-                      <TableRow key={row.id} hover>
-                        <TableCell sx={{ fontWeight: 600 }}>
-                          {row.month}
-                        </TableCell>
-                        <TableCell>{formatDate(row.due_date)}</TableCell>
-                        <TableCell align="right">
-                          {row.amount_due.toLocaleString()} AR
-                        </TableCell>
-                        <TableCell align="right">
-                          {row.amount_paid.toLocaleString()} AR
-                        </TableCell>
-                        <TableCell align="center">
-                          <Chip
-                            // icon={cfg.icon}
-                            label={cfg.label}
-                            color={cfg.color}
-                            size="small"
-                            variant="outlined"
-                          />
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </TableContainer>
-
-            <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1 }}>
-              Recent Payments Ledger
-            </Typography>
-            {transactions.length === 0 ? (
-              <Typography
-                variant="body2"
-                color="text.disabled"
-                sx={{ fontStyle: "italic", pb: 1 }}
-              >
-                No previous invoice payments registered.
-              </Typography>
-            ) : (
-              <TableContainer component={Paper} variant="outlined">
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Date</TableCell>
-                      <TableCell>Method</TableCell>
-                      <TableCell>Reference ID</TableCell>
-                      <TableCell align="right">Amount</TableCell>
-                      <TableCell>Remarks</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {transactions.map((tx) => (
-                      <TableRow key={tx.id}>
-                        <TableCell>{formatDate(tx.payment_date)}</TableCell>
-                        <TableCell>
-                          <Chip
-                            label={tx.payment_method}
-                            size="small"
-                            // variant="contained"
-                            color="secondary"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Typography
-                            // variant="fontFamily"
-                            sx={{ fontSize: 12 }}
-                          >
-                            {tx.reference || "—"}
-                          </Typography>
-                        </TableCell>
-                        <TableCell
-                          align="right"
-                          sx={{ fontWeight: 600, color: "success.dark" }}
-                        >
-                          {tx.amount.toLocaleString()} AR
-                        </TableCell>
-                        <TableCell
-                          sx={{ fontSize: 12, color: "text.secondary" }}
-                        >
-                          {tx.remarks || "—"}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            )}
           </>
         )}
       </Paper>
@@ -1093,7 +718,7 @@ const StudentDetails = () => {
         <Box
           sx={{
             display: "flex",
-            justifycontent: "space-between",
+            justifyContent: "space-between",
             alignItems: "center",
             mb: 2,
           }}
@@ -1183,6 +808,330 @@ const StudentDetails = () => {
       </Paper>
 
       <Divider sx={{ my: 4 }} />
+      <Paper
+        variant="outlined"
+        sx={{ p: 3, mt: 2, borderRadius: 2, borderColor: "primary.light" }}
+      >
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 2,
+            flexWrap: "wrap",
+            gap: 1,
+          }}
+        >
+          <Stack direction="row" spacing={2} alignItems="center">
+            <Typography variant="h6" fontWeight={600} color="primary.main">
+              Tuition & School Fees Status
+            </Typography>
+            {!tuitionLoading && rawFinance && (
+              <Chip
+                label={
+                  tuitionSummary.balance === 0
+                    ? "Paid All Year (Soldé)"
+                    : tuitionSchedule.filter((m) => m.status === "paid")
+                          .length > 4
+                      ? "Paid In Advance (En Avance)"
+                      : "Standard Monthly"
+                }
+                color={tuitionSummary.balance === 0 ? "success" : "info"}
+                size="small"
+                sx={{ fontWeight: 700 }}
+              />
+            )}
+          </Stack>
+          <Button
+            size="small"
+            variant="contained"
+            color="success"
+            startIcon={<ReceiptLongIcon />}
+            onClick={() => setOpenPaymentModal(true)}
+            disabled={tuitionLoading || !rawFinance}
+          >
+            Collect Tuition Payment
+          </Button>
+        </Box>
+
+        {tuitionLoading ? (
+          <Skeleton
+            variant="rectangular"
+            width="100%"
+            height={100}
+            sx={{ borderRadius: 1 }}
+          />
+        ) : !rawFinance ? (
+          <Box
+            sx={{
+              p: 3,
+              textAlign: "center",
+              border: "1px dashed",
+              borderColor: "divider",
+              borderRadius: 1,
+            }}
+          >
+            <Typography variant="body2" color="text.disabled">
+              No financial configuration set up for this student yet.
+            </Typography>
+            <Button
+              sx={{ mt: 1 }}
+              size="small"
+              onClick={() => navigate(`/students/finance/${id}`)}
+            >
+              Set up finances
+            </Button>
+          </Box>
+        ) : (
+          <>
+            <Box
+              sx={{
+                mb: 2,
+                p: 1.5,
+                bgcolor: "background.default",
+                borderRadius: 1,
+                borderLeft: "4px solid",
+                borderLeftColor: "primary.main",
+              }}
+            >
+              <Typography variant="body2" color="text.secondary">
+                <strong>Payment Standing:</strong> This student has completely
+                fulfilled{" "}
+                <strong>
+                  {tuitionSchedule.filter((m) => m.status === "paid").length}{" "}
+                  out of {tuitionSchedule.length} months
+                </strong>{" "}
+                for this current academic iteration cycle.
+                {tuitionSummary.balance === 0 &&
+                  " The structural account invoice balances to zero. Complete year cleared."}
+              </Typography>
+            </Box>
+
+            <Grid container spacing={2} sx={{ mb: 3 }}>
+              <Grid size={{ xs: 6, sm: 3 }}>
+                <Box
+                  sx={{
+                    p: 1.5,
+                    borderRadius: 1,
+                    border: "1px solid",
+                    borderColor: "divider",
+                    textAlign: "center",
+                  }}
+                >
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    fontWeight={500}
+                  >
+                    Total Expected
+                  </Typography>
+                  <Typography
+                    variant="subtitle1"
+                    fontWeight={700}
+                    color="text.primary"
+                  >
+                    {tuitionSummary.total_due.toLocaleString()} AR
+                  </Typography>
+                </Box>
+              </Grid>
+              <Grid size={{ xs: 6, sm: 3 }}>
+                <Box
+                  sx={{
+                    p: 1.5,
+                    bgcolor: "success.50",
+                    borderRadius: 1,
+                    border: "1px solid",
+                    borderColor: "success.light",
+                    textAlign: "center",
+                  }}
+                >
+                  <Typography
+                    variant="caption"
+                    color="success.dark"
+                    fontWeight={500}
+                  >
+                    Total Paid
+                  </Typography>
+                  <Typography
+                    variant="subtitle1"
+                    fontWeight={700}
+                    color="success.dark"
+                  >
+                    {tuitionSummary.total_paid.toLocaleString()} AR
+                  </Typography>
+                </Box>
+              </Grid>
+              <Grid size={{ xs: 6, sm: 3 }}>
+                <Box
+                  sx={{
+                    p: 1.5,
+                    bgcolor: "info.50",
+                    borderRadius: 1,
+                    border: "1px solid",
+                    borderColor: "info.light",
+                    textAlign: "center",
+                  }}
+                >
+                  <Typography
+                    variant="caption"
+                    color="info.dark"
+                    fontWeight={500}
+                  >
+                    Remaining Balance
+                  </Typography>
+                  <Typography
+                    variant="subtitle1"
+                    fontWeight={700}
+                    color="info.dark"
+                  >
+                    {tuitionSummary.balance.toLocaleString()} AR
+                  </Typography>
+                </Box>
+              </Grid>
+              <Grid size={{ xs: 6, sm: 3 }}>
+                <Box
+                  sx={{
+                    p: 1.5,
+                    // bgcolor:
+                    // tuitionSummary.overdue > 0 ? "error.50" : "grey.50",
+                    borderRadius: 1,
+                    border: "1px solid",
+                    borderColor:
+                      tuitionSummary.overdue > 0 ? "error.light" : "divider",
+                    textAlign: "center",
+                  }}
+                >
+                  <Typography
+                    variant="caption"
+                    color={
+                      tuitionSummary.overdue > 0
+                        ? "error.dark"
+                        : "text.secondary"
+                    }
+                    fontWeight={500}
+                  >
+                    Arrears (Overdue)
+                  </Typography>
+                  <Typography
+                    variant="subtitle1"
+                    fontWeight={700}
+                    color={
+                      tuitionSummary.overdue > 0 ? "error.main" : "text.primary"
+                    }
+                  >
+                    {tuitionSummary.overdue.toLocaleString()} AR
+                  </Typography>
+                </Box>
+              </Grid>
+            </Grid>
+
+            <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1 }}>
+              Monthly Installments Schedule
+            </Typography>
+            <TableContainer
+              component={Paper}
+              variant="outlined"
+              sx={{ maxHeight: 260, mb: 3 }}
+            >
+              <Table size="small" stickyHeader>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Month</TableCell>
+                    <TableCell align="right">Amount Due</TableCell>
+                    <TableCell align="right">Amount Paid</TableCell>
+                    <TableCell align="center">Status</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {tuitionSchedule.map((row) => {
+                    const cfg =
+                      TUITION_STATUS_CONFIG[row.status] ||
+                      TUITION_STATUS_CONFIG.pending;
+                    return (
+                      <TableRow key={row.id} hover>
+                        <TableCell sx={{ fontWeight: 600 }}>
+                          {row.month}
+                        </TableCell>
+                        <TableCell align="right">
+                          {row.amount_due.toLocaleString()} AR
+                        </TableCell>
+                        <TableCell align="right">
+                          {row.amount_paid.toLocaleString()} AR
+                        </TableCell>
+                        <TableCell align="center">
+                          <Chip
+                            label={cfg.label}
+                            color={cfg.color}
+                            size="small"
+                            variant="outlined"
+                          />
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </TableContainer>
+
+            <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1 }}>
+              Recent Payments Ledger
+            </Typography>
+            {transactions.length === 0 ? (
+              <Typography
+                variant="body2"
+                color="text.disabled"
+                sx={{ fontStyle: "italic", pb: 1 }}
+              >
+                No previous invoice payments registered.
+              </Typography>
+            ) : (
+              <TableContainer component={Paper} variant="outlined">
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Date</TableCell>
+                      <TableCell>Method</TableCell>
+                      <TableCell>Reference ID</TableCell>
+                      <TableCell align="right">Amount</TableCell>
+                      <TableCell>Remarks</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {transactions.map((tx) => (
+                      <TableRow key={tx.id}>
+                        <TableCell>{formatDate(tx.payment_date)}</TableCell>
+                        <TableCell>
+                          <Chip
+                            label={tx.payment_method}
+                            size="small"
+                            color="secondary"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Typography sx={{ fontSize: 12 }}>
+                            {tx.reference || "—"}
+                          </Typography>
+                        </TableCell>
+                        <TableCell
+                          align="right"
+                          sx={{ fontWeight: 600, color: "success.dark" }}
+                        >
+                          {tx.amount.toLocaleString()} AR
+                        </TableCell>
+                        <TableCell
+                          sx={{ fontSize: 12, color: "text.secondary" }}
+                        >
+                          {tx.remarks || "—"}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            )}
+          </>
+        )}
+      </Paper>
 
       <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2 }}>
         <Button variant="outlined" onClick={() => navigate(-1)}>
@@ -1232,19 +1181,13 @@ const StudentDetails = () => {
                       alignItems: "center",
                     }}
                   >
-                    <Typography
-                      variant="body2"
-                      sx={{ fontWeight: m.status === "overdue" ? 600 : 400 }}
-                    >
+                    <Typography variant="body2">
                       {m.month} (
                       {m.status === "paid"
                         ? "Fully Paid"
                         : `${(m.amount_due - m.amount_paid).toLocaleString()} AR Remaining`}
                       )
                     </Typography>
-                    {m.status === "overdue" && (
-                      <Chip label="Overdue" color="error" size="small" />
-                    )}
                   </Box>
                 }
               />
