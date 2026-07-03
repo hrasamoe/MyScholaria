@@ -16,9 +16,8 @@ import {
   Typography,
   InputAdornment,
   Divider,
-  Alert,
-  FormControlLabel,
   Checkbox,
+  FormControlLabel,
 } from "@mui/material";
 import { useSnackbar } from "notistack";
 import { useEffect, useState } from "react";
@@ -36,10 +35,14 @@ interface StudentFinanceSettings {
   first_name: string;
   last_name: string;
   student_number: string;
+  class_id: string;
+  class_name: string;
   base_monthly_tuition: number;
   discount_type: "none" | "percentage" | "fixed";
   discount_value: number;
-  payment_plan: "standard" | "advance" | "full_year";
+  total_paid_amount: number;
+  registration_fee: number;
+  is_registration_fee_paid: boolean;
   notes: string;
   tuition_months: TuitionMonthOption[];
 }
@@ -56,73 +59,28 @@ export default function StudentFinanceSetup() {
     first_name: "",
     last_name: "",
     student_number: "",
-    base_monthly_tuition: 50000,
+    class_id: "",
+    class_name: "",
+    base_monthly_tuition: 0,
     discount_type: "none",
     discount_value: 0,
-    payment_plan: "standard",
+    total_paid_amount: 0,
+    registration_fee: 0,
+    is_registration_fee_paid: false,
     notes: "",
     tuition_months: [
-      { id: "1", month: "September", amount_due: 50000, is_paid: false },
-      { id: "2", month: "October", amount_due: 50000, is_paid: false },
-      { id: "3", month: "November", amount_due: 50000, is_paid: false },
-      { id: "4", month: "December", amount_due: 50000, is_paid: false },
-      { id: "5", month: "January", amount_due: 50000, is_paid: false },
-      { id: "6", month: "February", amount_due: 50000, is_paid: false },
-      { id: "7", month: "March", amount_due: 50000, is_paid: false },
-      { id: "8", month: "April", amount_due: 50000, is_paid: false },
-      { id: "9", month: "May", amount_due: 50000, is_paid: false },
-      { id: "10", month: "June", amount_due: 50000, is_paid: false },
+      { id: "1", month: "September", amount_due: 0, is_paid: false },
+      { id: "2", month: "October", amount_due: 0, is_paid: false },
+      { id: "3", month: "November", amount_due: 0, is_paid: false },
+      { id: "4", month: "December", amount_due: 0, is_paid: false },
+      { id: "5", month: "January", amount_due: 0, is_paid: false },
+      { id: "6", month: "February", amount_due: 0, is_paid: false },
+      { id: "7", month: "March", amount_due: 0, is_paid: false },
+      { id: "8", month: "April", amount_due: 0, is_paid: false },
+      { id: "9", month: "May", amount_due: 0, is_paid: false },
+      { id: "10", month: "June", amount_due: 0, is_paid: false },
     ],
   });
-
-  useEffect(() => {
-    if (!id) return;
-    const fetchFinanceSettings = async () => {
-      try {
-        setLoading(true);
-        const res = await apiRequest(`/api/finance/student-settings/${id}`, {
-          credentials: "include",
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          setSettings(data);
-        } else {
-          setSettings((prev) => ({
-            ...prev,
-            student_id: id,
-            first_name: "Heritiana",
-            last_name: "Rasamoelina",
-            student_number: "STD-2026-001",
-          }));
-        }
-      } catch {
-        enqueueSnackbar("Using template structure for configuration.", {
-          variant: "info",
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchFinanceSettings();
-  }, [id, enqueueSnackbar]);
-
-  const handleChange = (field: keyof StudentFinanceSettings, value: any) => {
-    setSettings((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-  };
-
-  const handleMonthToggle = (monthId: string) => {
-    setSettings((prev) => ({
-      ...prev,
-      tuition_months: prev.tuition_months.map((m) =>
-        m.id === monthId ? { ...m, is_paid: !m.is_paid } : m,
-      ),
-    }));
-  };
 
   const calculateFinalTuition = () => {
     const base = settings.base_monthly_tuition;
@@ -133,6 +91,131 @@ export default function StudentFinanceSetup() {
       return Math.max(0, base - settings.discount_value);
     }
     return base;
+  };
+
+  const finalMonthly = calculateFinalTuition();
+
+  const getProcessedMonths = (paidAmount: number) => {
+    let pool = paidAmount;
+    return settings.tuition_months.map((m) => {
+      if (finalMonthly <= 0) {
+        return { ...m, amount_due: 0, is_paid: false };
+      }
+      if (pool >= finalMonthly) {
+        pool -= finalMonthly;
+        return { ...m, amount_due: 0, is_paid: true };
+      } else if (pool > 0) {
+        const remainder = finalMonthly - pool;
+        pool = 0;
+        return { ...m, amount_due: remainder, is_paid: false };
+      } else {
+        return { ...m, amount_due: finalMonthly, is_paid: false };
+      }
+    });
+  };
+
+  useEffect(() => {
+    if (!id) return;
+    const fetchAllData = async () => {
+      try {
+        setLoading(true);
+
+        const [detailsRes, financeRes, rulesRes] = await Promise.all([
+          apiRequest(`/api/students/details/${id}`, { credentials: "include" }),
+          apiRequest(`/api/finance/student-settings/${id}`, {
+            credentials: "include",
+          }),
+          apiRequest(`/api/finance/tuition-rules`, { credentials: "include" }),
+        ]);
+
+        let studentProfile = {
+          first_name: "",
+          last_name: "",
+          student_number: "",
+          class_id: "",
+          class_name: "",
+        };
+
+        let defaultTuitionFromRules = 0;
+        let defaultRegistrationFee = 0;
+
+        if (detailsRes.ok) {
+          const detailsData = await detailsRes.json();
+          studentProfile = {
+            first_name: detailsData.first_name || "",
+            last_name: detailsData.last_name || "",
+            student_number: detailsData.student_number || "",
+            class_id: detailsData.class_id || "",
+            class_name: detailsData.class_name || "N/A",
+          };
+        }
+
+        if (rulesRes.ok && studentProfile.class_id) {
+          const rulesData = await rulesRes.json();
+          const matchedRule = rulesData.find(
+            (r: any) => r.class_id === studentProfile.class_id,
+          );
+          if (matchedRule) {
+            defaultTuitionFromRules = matchedRule.tuition_fee || 0;
+            defaultRegistrationFee = matchedRule.registration_fee || 0;
+          }
+        }
+
+        if (financeRes.ok) {
+          const financeData = await financeRes.json();
+          setSettings((prev) => ({
+            ...prev,
+            ...financeData,
+            ...studentProfile,
+            student_id: id,
+            base_monthly_tuition:
+              financeData.base_monthly_tuition || defaultTuitionFromRules,
+            registration_fee:
+              financeData.registration_fee || defaultRegistrationFee,
+          }));
+        } else {
+          setSettings((prev) => ({
+            ...prev,
+            ...studentProfile,
+            student_id: id,
+            base_monthly_tuition: defaultTuitionFromRules,
+            registration_fee: defaultRegistrationFee,
+          }));
+        }
+      } catch (error) {
+        console.error("Error loading student parameters:", error);
+        enqueueSnackbar("Error synchronizing structural data.", {
+          variant: "error",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAllData();
+  }, [id, enqueueSnackbar]);
+
+  const handleChange = (field: keyof StudentFinanceSettings, value: any) => {
+    setSettings((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  const handleMonthCheckChange = (monthId: string, isChecked: boolean) => {
+    setSettings((prev) => {
+      const updatedMonths = prev.tuition_months.map((m) => {
+        if (m.id === monthId) {
+          return {
+            ...m,
+            is_paid: isChecked,
+            amount_due: isChecked ? 0 : finalMonthly,
+          };
+        }
+        return m;
+      });
+      return { ...prev, tuition_months: updatedMonths };
+    });
   };
 
   const handleSave = async () => {
@@ -146,9 +229,11 @@ export default function StudentFinanceSetup() {
           base_monthly_tuition: settings.base_monthly_tuition,
           discount_type: settings.discount_type,
           discount_value: settings.discount_value,
-          payment_plan: settings.payment_plan,
+          total_paid_amount: settings.total_paid_amount,
+          registration_fee: settings.registration_fee,
+          is_registration_fee_paid: settings.is_registration_fee_paid,
           notes: settings.notes,
-          tuition_months: settings.tuition_months,
+          tuition_months: processedMonths,
         }),
       });
 
@@ -167,7 +252,12 @@ export default function StudentFinanceSetup() {
     }
   };
 
-  const finalMonthly = calculateFinalTuition();
+  const processedMonths = getProcessedMonths(settings.total_paid_amount);
+  const totalDueAcademicYear = finalMonthly * settings.tuition_months.length;
+  const currentRemainingBalance = Math.max(
+    0,
+    totalDueAcademicYear - settings.total_paid_amount,
+  );
 
   return (
     <Container sx={{ maxWidth: 800, mx: "auto", p: 2 }}>
@@ -211,53 +301,80 @@ export default function StudentFinanceSetup() {
                 <Typography variant="h6" fontWeight={700}>
                   {settings.first_name} {settings.last_name}
                 </Typography>
-                <Typography variant="caption" color="text.secondary">
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  display="block"
+                >
                   Student Matrix Reference: {settings.student_number}
+                </Typography>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  display="block"
+                >
+                  Assigned Classroom: <strong>{settings.class_name}</strong>
                 </Typography>
               </Box>
             </Box>
 
-            <Alert severity="info" sx={{ mb: 3 }}>
-              Modifying these baselines will adjust the system generation
-              parameters for upcoming generation runs in the current fiscal
-              academic cycle.
-            </Alert>
-
             <Grid container spacing={3}>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  fullWidth
+                  label="Base Registration Fee"
+                  type="number"
+                  value={settings.registration_fee}
+                  slotProps={{
+                    input: {
+                      readOnly: true,
+                      endAdornment: (
+                        <InputAdornment position="end">AR</InputAdornment>
+                      ),
+                    },
+                  }}
+                />
+              </Grid>
+
+              <Grid
+                size={{ xs: 12, sm: 6 }}
+                sx={{ display: "flex", alignItems: "center" }}
+              >
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={settings.is_registration_fee_paid}
+                      onChange={(e) =>
+                        handleChange(
+                          "is_registration_fee_paid",
+                          e.target.checked,
+                        )
+                      }
+                    />
+                  }
+                  label="Registration fee already paid"
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12 }}>
+                <Divider />
+              </Grid>
+
               <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
                   fullWidth
                   label="Standard Monthly Tuition Base"
                   type="number"
                   value={settings.base_monthly_tuition}
-                  onChange={(e) =>
-                    handleChange(
-                      "base_monthly_tuition",
-                      parseFloat(e.target.value) || 0,
-                    )
-                  }
-                  InputProps={{
-                    endAdornment: (
-                      <InputAdornment position="end">AR</InputAdornment>
-                    ),
+                  slotProps={{
+                    input: {
+                      readOnly: true,
+                      endAdornment: (
+                        <InputAdornment position="end">AR</InputAdornment>
+                      ),
+                    },
                   }}
                 />
-              </Grid>
-
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <TextField
-                  fullWidth
-                  select
-                  label="Payment Strategy Mode"
-                  value={settings.payment_plan}
-                  onChange={(e) => handleChange("payment_plan", e.target.value)}
-                >
-                  <MenuItem value="standard">Standard Monthly Plan</MenuItem>
-                  <MenuItem value="advance">Paid In Advance Structure</MenuItem>
-                  <MenuItem value="full_year">
-                    Full Year Core Clearance (Soldé)
-                  </MenuItem>
-                </TextField>
               </Grid>
 
               <Grid size={{ xs: 12, sm: 6 }}>
@@ -291,19 +408,27 @@ export default function StudentFinanceSetup() {
                         : "Deductible Flat Sum"
                     }
                     type="number"
-                    value={settings.discount_value}
+                    value={
+                      settings.discount_value === 0
+                        ? ""
+                        : settings.discount_value
+                    }
                     onChange={(e) =>
                       handleChange(
                         "discount_value",
-                        parseFloat(e.target.value) || 0,
+                        e.target.value === "" ? 0 : parseFloat(e.target.value),
                       )
                     }
-                    InputProps={{
-                      endAdornment: (
-                        <InputAdornment position="end">
-                          {settings.discount_type === "percentage" ? "%" : "AR"}
-                        </InputAdornment>
-                      ),
+                    slotProps={{
+                      input: {
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            {settings.discount_type === "percentage"
+                              ? "%"
+                              : "AR"}
+                          </InputAdornment>
+                        ),
+                      },
                     }}
                   />
                 </Grid>
@@ -313,63 +438,122 @@ export default function StudentFinanceSetup() {
                 <Divider sx={{ my: 1 }} />
               </Grid>
 
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  fullWidth
+                  label="Amount paid by student"
+                  type="number"
+                  value={
+                    settings.total_paid_amount === 0
+                      ? ""
+                      : settings.total_paid_amount
+                  }
+                  onChange={(e) =>
+                    handleChange(
+                      "total_paid_amount",
+                      e.target.value === "" ? 0 : parseFloat(e.target.value),
+                    )
+                  }
+                  helperText="Enter the total amount provided by the student."
+                  slotProps={{
+                    input: {
+                      endAdornment: (
+                        <InputAdornment position="end">AR</InputAdornment>
+                      ),
+                    },
+                  }}
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Paper
+                  sx={{ p: 2, border: "1px solid", borderColor: "divider" }}
+                >
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    display="block"
+                  >
+                    Remaining Academic Balance:
+                  </Typography>
+                  <Typography
+                    variant="subtitle1"
+                    fontWeight={700}
+                    color={
+                      currentRemainingBalance > 0
+                        ? "error.main"
+                        : "success.main"
+                    }
+                  >
+                    {currentRemainingBalance.toLocaleString()} AR /{" "}
+                    {totalDueAcademicYear.toLocaleString()} AR
+                  </Typography>
+                </Paper>
+              </Grid>
+
               <Grid size={{ xs: 12 }}>
                 <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
-                  Mark Months as Settled / Paid:
+                  Chronological Monthly Status Coverages:
                 </Typography>
                 <Box
                   sx={{
                     display: "flex",
                     flexDirection: "column",
-                    gap: 0.5,
+                    gap: 1,
                     p: 2,
                     border: "1px solid",
                     borderColor: "divider",
                     borderRadius: 1,
                   }}
                 >
-                  {settings.tuition_months.map((m) => (
-                    <FormControlLabel
-                      key={m.id}
-                      control={
-                        <Checkbox
-                          checked={m.is_paid}
-                          onChange={() => handleMonthToggle(m.id)}
-                          color="success"
-                        />
-                      }
-                      label={`${m.month} (${finalMonthly.toLocaleString()} AR)`}
-                    />
-                  ))}
-                </Box>
-              </Grid>
+                  {processedMonths.map((m) => {
+                    const canCheckManual =
+                      settings.total_paid_amount >= finalMonthly;
 
-              <Grid size={{ xs: 12 }}>
-                <Paper
-                  sx={{
-                    p: 2,
-                    border: "1px solid",
-                    borderColor: "primary.main",
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                  }}
-                >
-                  <Typography
-                    variant="body2"
-                    fontWeight={600}
-                    color="text.secondary"
-                  >
-                    Calculated Net Net Tuition Value / Month:
-                  </Typography>
-                  <Typography
-                    variant="h6"
-                    fontWeight={800}
-                    color="primary.main"
-                  >
-                    {finalMonthly.toLocaleString()} AR
-                  </Typography>
-                </Paper>
+                    return (
+                      <Box
+                        key={m.id}
+                        sx={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          p: 1,
+                          borderBottom: "1px solid",
+                          borderColor: "divider",
+                          "&:last-child": { borderBottom: 0 },
+                        }}
+                      >
+                        <FormControlLabel
+                          control={
+                            <Checkbox
+                              checked={m.is_paid}
+                              disabled={!m.is_paid && !canCheckManual}
+                              onChange={(e) =>
+                                handleMonthCheckChange(m.id, e.target.checked)
+                              }
+                            />
+                          }
+                          label={
+                            <Typography variant="body2" fontWeight={500}>
+                              {m.month}
+                            </Typography>
+                          }
+                        />
+                        <Box
+                          sx={{ display: "flex", alignItems: "center", gap: 2 }}
+                        >
+                          <Typography variant="caption" color="text.secondary">
+                            {m.is_paid
+                              ? "Paid"
+                              : m.amount_due < finalMonthly
+                                ? `Remaining: ${m.amount_due.toLocaleString()} AR`
+                                : `Due: ${finalMonthly.toLocaleString()} AR`}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    );
+                  })}
+                </Box>
               </Grid>
 
               <Grid size={{ xs: 12 }}>
