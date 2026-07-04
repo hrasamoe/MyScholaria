@@ -117,7 +117,7 @@ financeRouter.put("/student-settings/:id", RequireAuth, async (req, res) => {
       console.error("Validation error:", error);
       return res.status(400).json({
         error: "Invalid data format",
-        details: error.issues ?? error.errors, 
+        details: error.issues ?? error.errors,
       });
     }
     console.error("Unexpected error:", error);
@@ -158,7 +158,7 @@ financeRouter.get("/student-settings/:id", RequireAuth, async (req, res) => {
                 is_paid
             FROM student_tuition_months
             WHERE student_id = $1
-            ORDER BY CAST (id AS INTEGER) ASC;
+            ORDER BY month_id::int ASC;
         `;
     const monthsResult = await pool.query(monthsQuery, [studentId]);
 
@@ -169,6 +169,7 @@ financeRouter.get("/student-settings/:id", RequireAuth, async (req, res) => {
 
     res.status(200).json(responseData);
   } catch (error) {
+    console.error("GET student-settings error:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 });

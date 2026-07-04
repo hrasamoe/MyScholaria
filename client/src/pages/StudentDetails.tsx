@@ -807,6 +807,332 @@ const StudentDetails = () => {
         )}
       </Paper>
 
+      <Paper
+        variant="outlined"
+        sx={{ p: 3, mt: 2, borderRadius: 2, borderColor: "primary.light" }}
+      >
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 2,
+            flexWrap: "wrap",
+            gap: 1,
+          }}
+        >
+          <Stack direction="row" spacing={2} alignItems="center">
+            <Typography variant="h6" fontWeight={600} color="primary.main">
+              Tuition & School Fees Status
+            </Typography>
+            {!tuitionLoading && rawFinance && (
+              <Chip
+                label={
+                  tuitionSummary.balance === 0
+                    ? "Paid All Year (Soldé)"
+                    : tuitionSchedule.filter((m) => m.status === "paid")
+                          .length > 4
+                      ? "Paid In Advance (En Avance)"
+                      : "Standard Monthly"
+                }
+                color={tuitionSummary.balance === 0 ? "success" : "info"}
+                size="small"
+                sx={{ fontWeight: 700 }}
+              />
+            )}
+          </Stack>
+          <Button
+            size="small"
+            variant="contained"
+            color="success"
+            startIcon={<ReceiptLongIcon />}
+            onClick={() => setOpenPaymentModal(true)}
+            disabled={tuitionLoading || !rawFinance}
+          >
+            Collect Tuition Payment
+          </Button>
+        </Box>
+
+        {tuitionLoading ? (
+          <Skeleton
+            variant="rectangular"
+            width="100%"
+            height={100}
+            sx={{ borderRadius: 1 }}
+          />
+        ) : !rawFinance ? (
+          <Box
+            sx={{
+              p: 3,
+              textAlign: "center",
+              border: "1px dashed",
+              borderColor: "divider",
+              borderRadius: 1,
+            }}
+          >
+            <Typography variant="body2" color="text.disabled">
+              No financial configuration set up for this student yet.
+            </Typography>
+            <Button
+              sx={{ mt: 1 }}
+              size="small"
+              onClick={() =>
+                navigate(`/finance-student-setup-list/student/${id}`)
+              }
+            >
+              Set up finances
+            </Button>
+          </Box>
+        ) : (
+          <>
+            <Box
+              sx={{
+                mb: 2,
+                p: 1.5,
+                bgcolor: "background.default",
+                borderRadius: 1,
+                borderLeft: "4px solid",
+                borderLeftColor: "primary.main",
+              }}
+            >
+              <Typography variant="body2" color="text.secondary">
+                <strong>Payment Standing:</strong> This student has completely
+                fulfilled{" "}
+                <strong>
+                  {tuitionSchedule.filter((m) => m.status === "paid").length}{" "}
+                  out of {tuitionSchedule.length} months
+                </strong>{" "}
+                for this current academic iteration cycle.
+                {tuitionSummary.balance === 0 &&
+                  " The structural account invoice balances to zero. Complete year cleared."}
+              </Typography>
+            </Box>
+
+            <Grid container spacing={2} sx={{ mb: 3 }}>
+              <Grid size={{ xs: 6, sm: 3 }}>
+                <Box
+                  sx={{
+                    p: 1.5,
+                    borderRadius: 1,
+                    border: "1px solid",
+                    borderColor: "divider",
+                    textAlign: "center",
+                  }}
+                >
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    fontWeight={500}
+                  >
+                    Total Expected
+                  </Typography>
+                  <Typography
+                    variant="subtitle1"
+                    fontWeight={700}
+                    color="text.primary"
+                  >
+                    {tuitionSummary.total_due.toLocaleString()} AR
+                  </Typography>
+                </Box>
+              </Grid>
+              <Grid size={{ xs: 6, sm: 3 }}>
+                <Box
+                  sx={{
+                    p: 1.5,
+                    bgcolor: "success.50",
+                    borderRadius: 1,
+                    border: "1px solid",
+                    borderColor: "success.light",
+                    textAlign: "center",
+                  }}
+                >
+                  <Typography
+                    variant="caption"
+                    color="success.dark"
+                    fontWeight={500}
+                  >
+                    Total Paid
+                  </Typography>
+                  <Typography
+                    variant="subtitle1"
+                    fontWeight={700}
+                    color="success.dark"
+                  >
+                    {tuitionSummary.total_paid.toLocaleString()} AR
+                  </Typography>
+                </Box>
+              </Grid>
+              <Grid size={{ xs: 6, sm: 3 }}>
+                <Box
+                  sx={{
+                    p: 1.5,
+                    bgcolor: "info.50",
+                    borderRadius: 1,
+                    border: "1px solid",
+                    borderColor: "info.light",
+                    textAlign: "center",
+                  }}
+                >
+                  <Typography
+                    variant="caption"
+                    color="info.dark"
+                    fontWeight={500}
+                  >
+                    Remaining Balance
+                  </Typography>
+                  <Typography
+                    variant="subtitle1"
+                    fontWeight={700}
+                    color="info.dark"
+                  >
+                    {tuitionSummary.balance.toLocaleString()} AR
+                  </Typography>
+                </Box>
+              </Grid>
+              <Grid size={{ xs: 6, sm: 3 }}>
+                <Box
+                  sx={{
+                    p: 1.5,
+                    // bgcolor:
+                    // tuitionSummary.overdue > 0 ? "error.50" : "grey.50",
+                    borderRadius: 1,
+                    border: "1px solid",
+                    borderColor:
+                      tuitionSummary.overdue > 0 ? "error.light" : "divider",
+                    textAlign: "center",
+                  }}
+                >
+                  <Typography
+                    variant="caption"
+                    color={
+                      tuitionSummary.overdue > 0
+                        ? "error.dark"
+                        : "text.secondary"
+                    }
+                    fontWeight={500}
+                  >
+                    Arrears (Overdue)
+                  </Typography>
+                  <Typography
+                    variant="subtitle1"
+                    fontWeight={700}
+                    color={
+                      tuitionSummary.overdue > 0 ? "error.main" : "text.primary"
+                    }
+                  >
+                    {tuitionSummary.overdue.toLocaleString()} AR
+                  </Typography>
+                </Box>
+              </Grid>
+            </Grid>
+
+            <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1 }}>
+              Monthly Installments Schedule
+            </Typography>
+            <TableContainer
+              component={Paper}
+              variant="outlined"
+              sx={{ maxHeight: 260, mb: 3 }}
+            >
+              <Table size="small" stickyHeader>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Month</TableCell>
+                    <TableCell align="right">Amount Due</TableCell>
+                    <TableCell align="right">Amount Paid</TableCell>
+                    <TableCell align="center">Status</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {tuitionSchedule.map((row) => {
+                    const cfg =
+                      TUITION_STATUS_CONFIG[row.status] ||
+                      TUITION_STATUS_CONFIG.pending;
+                    return (
+                      <TableRow key={row.id} hover>
+                        <TableCell sx={{ fontWeight: 600 }}>
+                          {row.month}
+                        </TableCell>
+                        <TableCell align="right">
+                          {row.amount_due.toLocaleString()} AR
+                        </TableCell>
+                        <TableCell align="right">
+                          {row.amount_paid.toLocaleString()} AR
+                        </TableCell>
+                        <TableCell align="center">
+                          <Chip
+                            label={cfg.label}
+                            color={cfg.color}
+                            size="small"
+                            variant="outlined"
+                          />
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </TableContainer>
+
+            <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1 }}>
+              Recent Payments Ledger
+            </Typography>
+            {transactions.length === 0 ? (
+              <Typography
+                variant="body2"
+                color="text.disabled"
+                sx={{ fontStyle: "italic", pb: 1 }}
+              >
+                No previous invoice payments registered.
+              </Typography>
+            ) : (
+              <TableContainer component={Paper} variant="outlined">
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Date</TableCell>
+                      <TableCell>Method</TableCell>
+                      <TableCell>Reference ID</TableCell>
+                      <TableCell align="right">Amount</TableCell>
+                      <TableCell>Remarks</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {transactions.map((tx) => (
+                      <TableRow key={tx.id}>
+                        <TableCell>{formatDate(tx.payment_date)}</TableCell>
+                        <TableCell>
+                          <Chip
+                            label={tx.payment_method}
+                            size="small"
+                            color="secondary"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Typography sx={{ fontSize: 12 }}>
+                            {tx.reference || "—"}
+                          </Typography>
+                        </TableCell>
+                        <TableCell
+                          align="right"
+                          sx={{ fontWeight: 600, color: "success.dark" }}
+                        >
+                          {tx.amount.toLocaleString()} AR
+                        </TableCell>
+                        <TableCell
+                          sx={{ fontSize: 12, color: "text.secondary" }}
+                        >
+                          {tx.remarks || "—"}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            )}
+          </>
+        )}
+      </Paper>
       <Divider sx={{ my: 4 }} />
       <Paper
         variant="outlined"
