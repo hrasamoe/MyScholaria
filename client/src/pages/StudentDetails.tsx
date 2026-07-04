@@ -807,7 +807,6 @@ const StudentDetails = () => {
         )}
       </Paper>
 
-      <Divider sx={{ my: 4 }} />
       <Paper
         variant="outlined"
         sx={{ p: 3, mt: 2, borderRadius: 2, borderColor: "primary.light" }}
@@ -877,7 +876,9 @@ const StudentDetails = () => {
             <Button
               sx={{ mt: 1 }}
               size="small"
-              onClick={() => navigate(`/students/finance/${id}`)}
+              onClick={() =>
+                navigate(`/finance-student-setup-list/student/${id}`)
+              }
             >
               Set up finances
             </Button>
@@ -1132,6 +1133,7 @@ const StudentDetails = () => {
           </>
         )}
       </Paper>
+      <Divider sx={{ my: 4 }} />
 
       <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2 }}>
         <Button variant="outlined" onClick={() => navigate(-1)}>
