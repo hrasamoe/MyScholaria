@@ -28,7 +28,28 @@ import {
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import { useEffect, useRef, useState } from "react";
-const API_URL = import.meta.env.VITE_API_URL;
+import {
+  getAcademicYear,
+  updateAcademicYear,
+} from "@/services/establishment.service";
+import EventIcon from "@mui/icons-material/Event";
+import { MenuItem } from "@mui/material";
+import { useSnackbar } from "notistack";
+
+const MONTHS = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
 
 const Settings = () => {
   const { isDark, toggle } = useThemeMode();
@@ -38,6 +59,34 @@ const Settings = () => {
   const isOnline = useOnlineStatus();
   const [copiedJoinCode, setCopiedJoinCode] = useState(false);
   const [copiedAdminCode, setCopiedAdminCode] = useState(false);
+  const { enqueueSnackbar } = useSnackbar();
+  const [academicStart, setAcademicStart] = useState(9);
+  const [academicEnd, setAcademicEnd] = useState(6);
+  const [savingAcademicYear, setSavingAcademicYear] = useState(false);
+  useEffect(() => {
+    getAcademicYear()
+      .then((data) => {
+        setAcademicStart(data.startMonth);
+        setAcademicEnd(data.endMonth);
+      })
+      .catch((err) => console.error("FETCH ACADEMIC YEAR ERROR:", err));
+  }, [isOnline]);
+
+  const handleSaveAcademicYear = async () => {
+    try {
+      setSavingAcademicYear(true);
+      await updateAcademicYear(academicStart, academicEnd);
+      enqueueSnackbar("School period updated successfully", {
+        variant: "success",
+      });
+    } catch (e: any) {
+      enqueueSnackbar(e.message || "Failed to update school period", {
+        variant: "error",
+      });
+    } finally {
+      setSavingAcademicYear(false);
+    }
+  };
   const handleSwitch = (event) => {
     setChecked(event.target.checked);
   };
@@ -181,6 +230,57 @@ const Settings = () => {
                     </Box>
                   }
                 />
+              </Stack>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <Card>
+            <CardContent>
+              <Box
+                sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}
+              >
+                <EventIcon color="primary" />
+                <Typography variant="subtitle1" fontWeight={700}>
+                  Academic Year Period
+                </Typography>
+              </Box>
+              <Divider sx={{ mb: 2 }} />
+              <Stack spacing={2}>
+                <TextField
+                  select
+                  fullWidth
+                  label="Start Month"
+                  value={academicStart}
+                  onChange={(e) => setAcademicStart(Number(e.target.value))}
+                >
+                  {MONTHS.map((m, i) => (
+                    <MenuItem key={i + 1} value={i + 1}>
+                      {m}
+                    </MenuItem>
+                  ))}
+                </TextField>
+                <TextField
+                  select
+                  fullWidth
+                  label="End Month"
+                  value={academicEnd}
+                  onChange={(e) => setAcademicEnd(Number(e.target.value))}
+                >
+                  {MONTHS.map((m, i) => (
+                    <MenuItem key={i + 1} value={i + 1}>
+                      {m}
+                    </MenuItem>
+                  ))}
+                </TextField>
+                <Button
+                  variant="contained"
+                  size="small"
+                  disabled={savingAcademicYear}
+                  onClick={handleSaveAcademicYear}
+                >
+                  Save Period
+                </Button>
               </Stack>
             </CardContent>
           </Card>

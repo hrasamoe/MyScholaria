@@ -1,6 +1,7 @@
 import PageHeader from "@/components/PageHeader";
 import { apiRequest } from "@/services/api.service";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import { useAcademicYear } from "@/hooks/useAcademicYear";
 import SaveIcon from "@mui/icons-material/Save";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import {
@@ -22,6 +23,10 @@ import {
 import { useSnackbar } from "notistack";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import {
+  getAcademicMonthLabels,
+  getTuitionDueDate,
+} from "@/config/Academicyear";
 
 interface TuitionMonthOption {
   id: string;
@@ -47,10 +52,38 @@ interface StudentFinanceSettings {
   tuition_months: TuitionMonthOption[];
 }
 
+// Default set of tuition installments, built from whatever
+// startMonth/endMonth the caller passes in (sourced from the
+// establishment's Academic Year settings).
+const buildDefaultTuitionMonths = (
+  startMonth: number,
+  endMonth: number,
+): TuitionMonthOption[] =>
+  getAcademicMonthLabels(startMonth, endMonth).map((month, i) => ({
+    id: String(i + 1),
+    month,
+    amount_due: 0,
+    is_paid: false,
+  }));
+
+const formatDate = (date: Date | null) => {
+  if (!date) return "—";
+  return date.toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+};
+
 export default function StudentFinanceSetup() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
+  const {
+    startMonth,
+    endMonth,
+    loaded: academicYearLoaded,
+  } = useAcademicYear();
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -68,18 +101,7 @@ export default function StudentFinanceSetup() {
     registration_fee: 0,
     is_registration_fee_paid: false,
     notes: "",
-    tuition_months: [
-      { id: "1", month: "September", amount_due: 0, is_paid: false },
-      { id: "2", month: "October", amount_due: 0, is_paid: false },
-      { id: "3", month: "November", amount_due: 0, is_paid: false },
-      { id: "4", month: "December", amount_due: 0, is_paid: false },
-      { id: "5", month: "January", amount_due: 0, is_paid: false },
-      { id: "6", month: "February", amount_due: 0, is_paid: false },
-      { id: "7", month: "March", amount_due: 0, is_paid: false },
-      { id: "8", month: "April", amount_due: 0, is_paid: false },
-      { id: "9", month: "May", amount_due: 0, is_paid: false },
-      { id: "10", month: "June", amount_due: 0, is_paid: false },
-    ],
+    tuition_months: [], // filled once academic year settings load
   });
 
   const calculateFinalTuition = () => {
@@ -115,7 +137,7 @@ export default function StudentFinanceSetup() {
   };
 
   useEffect(() => {
-    if (!id) return;
+    if (!id || !academicYearLoaded) return;
     const fetchAllData = async () => {
       try {
         setLoading(true);
@@ -172,6 +194,12 @@ export default function StudentFinanceSetup() {
               financeData.base_monthly_tuition || defaultTuitionFromRules,
             registration_fee:
               financeData.registration_fee || defaultRegistrationFee,
+            // Fall back to the establishment's configured academic-year
+            // months if this student doesn't have a saved schedule yet.
+            tuition_months:
+              financeData.tuition_months?.length > 0
+                ? financeData.tuition_months
+                : buildDefaultTuitionMonths(startMonth, endMonth),
           }));
         } else {
           setSettings((prev) => ({
@@ -180,6 +208,7 @@ export default function StudentFinanceSetup() {
             student_id: id,
             base_monthly_tuition: defaultTuitionFromRules,
             registration_fee: defaultRegistrationFee,
+            tuition_months: buildDefaultTuitionMonths(startMonth, endMonth),
           }));
         }
       } catch (error) {
@@ -193,7 +222,7 @@ export default function StudentFinanceSetup() {
     };
 
     fetchAllData();
-  }, [id, enqueueSnackbar]);
+  }, [id, startMonth, endMonth, academicYearLoaded, enqueueSnackbar]);
 
   const handleChange = (field: keyof StudentFinanceSettings, value: any) => {
     setSettings((prev) => ({
@@ -517,6 +546,12 @@ export default function StudentFinanceSetup() {
                   {processedMonths.map((m) => {
                     const canCheckManual =
                       settings.total_paid_amount >= finalMonthly;
+                    const dueDate = getTuitionDueDate(
+                      m.month,
+                      startMonth,
+                      endMonth,
+                    );
+                    const isOverdue = !m.is_paid && dueDate < new Date();
 
                     return (
                       <Box
@@ -548,15 +583,34 @@ export default function StudentFinanceSetup() {
                           }
                         />
                         <Box
-                          sx={{ display: "flex", alignItems: "center", gap: 2 }}
+                          sx={{
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "flex-end",
+                            gap: 0.25,
+                          }}
                         >
-                          <Typography variant="caption" color="text.secondary">
+                          <Typography
+                            variant="caption"
+                            color={isOverdue ? "error.main" : "text.secondary"}
+                            fontWeight={isOverdue ? 600 : 400}
+                          >
                             {m.is_paid
                               ? "Paid"
                               : m.amount_due < finalMonthly
                                 ? `Remaining: ${m.amount_due.toLocaleString()} AR`
                                 : `Due: ${finalMonthly.toLocaleString()} AR`}
+                            {isOverdue && " — Overdue"}
                           </Typography>
+                          {!m.is_paid && (
+                            <Typography
+                              variant="caption"
+                              color="text.disabled"
+                              sx={{ fontSize: 11 }}
+                            >
+                              Due by {formatDate(dueDate)}
+                            </Typography>
+                          )}
                         </Box>
                       </Box>
                     );

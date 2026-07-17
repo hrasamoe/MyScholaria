@@ -9,6 +9,7 @@ import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import ErrorIcon from "@mui/icons-material/Error";
 import PendingIcon from "@mui/icons-material/Pending";
+import { useAcademicYear } from "@/hooks/useAcademicYear";
 import {
   Avatar,
   Box,
@@ -39,6 +40,7 @@ import {
 import { useSnackbar } from "notistack";
 import { useEffect, useState, ReactNode } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { getTuitionDueDate } from "@/config/Academicyear";
 
 interface StudentDetail {
   id: string;
@@ -108,48 +110,10 @@ const getClassColor = (name: string) => {
   return CLASS_COLORS[hash % CLASS_COLORS.length];
 };
 
-// Calendar month number (1-12) for each academic tuition month label.
-const MONTH_NUM: Record<string, number> = {
-  September: 9,
-  October: 10,
-  November: 11,
-  December: 12,
-  January: 1,
-  February: 2,
-  March: 3,
-  April: 4,
-  May: 5,
-  June: 6,
-};
-
-/**
- * The academic year runs September -> June. Since tuition_months only
- * store a month label (no year), we infer the academic year's start
- * year from today's date:
- *  - If we're currently in Sept-Dec, that's the start year.
- *  - If we're currently in Jan-June (or July/Aug summer break), the
- *    academic year started the previous calendar year.
- */
-const getAcademicStartYear = () => {
-  const now = new Date();
-  const currentMonth = now.getMonth() + 1; // 1-12
-  return currentMonth >= 9 ? now.getFullYear() : now.getFullYear() - 1;
-};
-
-/**
- * Tuition due date rule: the day before the last day of the month.
- * e.g. for a 30-day month, due date is the 29th.
- */
-const getTuitionDueDate = (monthLabel: string): Date => {
-  const startYear = getAcademicStartYear();
-  const monthNum = MONTH_NUM[monthLabel] ?? 9;
-  const calendarYear = monthNum >= 9 ? startYear : startYear + 1;
-  // Day 0 of "next month" = last day of target month.
-  const lastDayOfMonth = new Date(calendarYear, monthNum, 0);
-  const dueDate = new Date(lastDayOfMonth);
-  dueDate.setDate(lastDayOfMonth.getDate() - 1);
-  return dueDate;
-};
+// Academic year start month / cycle length / due-date rule now live in
+// a shared config so every screen stays in sync — see academicYear.ts.
+// Change ACADEMIC_YEAR_START_MONTH there for schools that don't run
+// September -> June.
 
 const STATUS_CONFIG: Record<
   string,
@@ -175,7 +139,7 @@ const TUITION_STATUS_CONFIG: Record<
     icon: <CheckCircleIcon sx={{ fontSize: 14 }} />,
   },
   pending: {
-    label: "Pending",
+    label: "À venir",
     color: "default",
     icon: <PendingIcon sx={{ fontSize: 14 }} />,
   },
@@ -245,6 +209,11 @@ const StudentDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
+  const {
+    startMonth,
+    endMonth,
+    loaded: academicYearLoaded,
+  } = useAcademicYear();
 
   const [student, setStudent] = useState<StudentDetail | null>(null);
   const [parents, setParents] = useState<ParentOption[]>([]);
@@ -300,7 +269,7 @@ const StudentDetails = () => {
       const today = new Date();
 
       const schedule: TuitionScheduleItem[] = months.map((m: any) => {
-        const dueDate = getTuitionDueDate(m.month);
+        const dueDate = getTuitionDueDate(m.month, startMonth, endMonth);
         const isPastDue = !m.is_paid && dueDate < today;
 
         return {
@@ -334,6 +303,7 @@ const StudentDetails = () => {
     }
   };
 
+  // Student profile + parents + teacher — independent of academic year.
   useEffect(() => {
     if (!id) return;
     const fetchAll = async () => {
@@ -373,8 +343,11 @@ const StudentDetails = () => {
       }
     };
     fetchAll();
-    fetchTuitionData();
   }, [id, enqueueSnackbar]);
+  useEffect(() => {
+    if (!id || !academicYearLoaded) return;
+    fetchTuitionData();
+  }, [id, startMonth, endMonth, academicYearLoaded]);
 
   const handleMonthToggle = (item: TuitionScheduleItem) => {
     const isSelected = selectedMonths.includes(item.id);
@@ -1274,7 +1247,9 @@ const StudentDetails = () => {
                       {m.month} (
                       {m.status === "paid"
                         ? "Fully Paid"
-                        : `${(m.amount_due - m.amount_paid).toLocaleString()} AR Remaining${m.status === "overdue" ? " — Overdue" : ""}`}
+                        : `${(m.amount_due - m.amount_paid).toLocaleString()} AR Remaining${
+                            m.status === "overdue" ? " — Overdue" : " — À venir"
+                          }`}
                       )
                     </Typography>
                   </Box>
