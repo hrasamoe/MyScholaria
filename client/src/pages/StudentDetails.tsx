@@ -79,7 +79,8 @@ interface TuitionScheduleItem {
   month: string;
   amount_due: number;
   amount_paid: number;
-  status: "paid" | "pending";
+  due_date: Date;
+  status: "paid" | "pending" | "overdue";
 }
 
 interface TuitionTransaction {
@@ -105,6 +106,49 @@ const CLASS_COLORS = [
 const getClassColor = (name: string) => {
   const hash = name.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
   return CLASS_COLORS[hash % CLASS_COLORS.length];
+};
+
+// Calendar month number (1-12) for each academic tuition month label.
+const MONTH_NUM: Record<string, number> = {
+  September: 9,
+  October: 10,
+  November: 11,
+  December: 12,
+  January: 1,
+  February: 2,
+  March: 3,
+  April: 4,
+  May: 5,
+  June: 6,
+};
+
+/**
+ * The academic year runs September -> June. Since tuition_months only
+ * store a month label (no year), we infer the academic year's start
+ * year from today's date:
+ *  - If we're currently in Sept-Dec, that's the start year.
+ *  - If we're currently in Jan-June (or July/Aug summer break), the
+ *    academic year started the previous calendar year.
+ */
+const getAcademicStartYear = () => {
+  const now = new Date();
+  const currentMonth = now.getMonth() + 1; // 1-12
+  return currentMonth >= 9 ? now.getFullYear() : now.getFullYear() - 1;
+};
+
+/**
+ * Tuition due date rule: the day before the last day of the month.
+ * e.g. for a 30-day month, due date is the 29th.
+ */
+const getTuitionDueDate = (monthLabel: string): Date => {
+  const startYear = getAcademicStartYear();
+  const monthNum = MONTH_NUM[monthLabel] ?? 9;
+  const calendarYear = monthNum >= 9 ? startYear : startYear + 1;
+  // Day 0 of "next month" = last day of target month.
+  const lastDayOfMonth = new Date(calendarYear, monthNum, 0);
+  const dueDate = new Date(lastDayOfMonth);
+  dueDate.setDate(lastDayOfMonth.getDate() - 1);
+  return dueDate;
 };
 
 const STATUS_CONFIG: Record<
@@ -135,9 +179,14 @@ const TUITION_STATUS_CONFIG: Record<
     color: "default",
     icon: <PendingIcon sx={{ fontSize: 14 }} />,
   },
+  overdue: {
+    label: "Overdue",
+    color: "error",
+    icon: <ErrorIcon sx={{ fontSize: 14 }} />,
+  },
 };
 
-const formatDate = (iso: string | null) => {
+const formatDate = (iso: string | Date | null) => {
   if (!iso) return "—";
   return new Date(iso).toLocaleDateString(undefined, {
     year: "numeric",
@@ -248,25 +297,35 @@ const StudentDetails = () => {
 
       const finalMonthly = calculateFinalMonthly(data);
       const months = data.tuition_months ?? [];
+      const today = new Date();
 
-      const schedule: TuitionScheduleItem[] = months.map((m: any) => ({
-        id: m.id,
-        month: m.month,
-        amount_due: m.amount_due,
-        amount_paid: m.is_paid ? finalMonthly : finalMonthly - m.amount_due,
-        status: m.is_paid ? "paid" : "pending",
-      }));
+      const schedule: TuitionScheduleItem[] = months.map((m: any) => {
+        const dueDate = getTuitionDueDate(m.month);
+        const isPastDue = !m.is_paid && dueDate < today;
+
+        return {
+          id: m.id,
+          month: m.month,
+          amount_due: m.amount_due,
+          amount_paid: m.is_paid ? finalMonthly : finalMonthly - m.amount_due,
+          due_date: dueDate,
+          status: m.is_paid ? "paid" : isPastDue ? "overdue" : "pending",
+        };
+      });
 
       const totalDue = finalMonthly * months.length;
       const totalPaid = data.total_paid_amount ?? 0;
       const balance = Math.max(0, totalDue - totalPaid);
+      const overdue = schedule
+        .filter((s) => s.status === "overdue")
+        .reduce((acc, s) => acc + Math.max(0, s.amount_due - s.amount_paid), 0);
 
       setTuitionSchedule(schedule);
       setTuitionSummary({
         total_due: totalDue,
         total_paid: totalPaid,
         balance,
-        overdue: 0,
+        overdue,
       });
     } catch {
       setRawFinance(null);
@@ -828,14 +887,22 @@ const StudentDetails = () => {
             {!tuitionLoading && rawFinance && (
               <Chip
                 label={
-                  tuitionSummary.balance === 0
-                    ? "Paid All Year (Soldé)"
-                    : tuitionSchedule.filter((m) => m.status === "paid")
-                          .length > 4
-                      ? "Paid In Advance (En Avance)"
-                      : "Standard Monthly"
+                  tuitionSummary.overdue > 0
+                    ? "Payment Overdue"
+                    : tuitionSummary.balance === 0
+                      ? "Paid All Year (Soldé)"
+                      : tuitionSchedule.filter((m) => m.status === "paid")
+                            .length > 4
+                        ? "Paid In Advance (En Avance)"
+                        : "Standard Monthly"
                 }
-                color={tuitionSummary.balance === 0 ? "success" : "info"}
+                color={
+                  tuitionSummary.overdue > 0
+                    ? "error"
+                    : tuitionSummary.balance === 0
+                      ? "success"
+                      : "info"
+                }
                 size="small"
                 sx={{ fontWeight: 700 }}
               />
@@ -905,6 +972,8 @@ const StudentDetails = () => {
                 for this current academic iteration cycle.
                 {tuitionSummary.balance === 0 &&
                   " The structural account invoice balances to zero. Complete year cleared."}
+                {tuitionSummary.overdue > 0 &&
+                  ` ${tuitionSchedule.filter((m) => m.status === "overdue").length} month(s) are past the due date (day before month-end).`}
               </Typography>
             </Box>
 
@@ -993,8 +1062,8 @@ const StudentDetails = () => {
                 <Box
                   sx={{
                     p: 1.5,
-                    // bgcolor:
-                    // tuitionSummary.overdue > 0 ? "error.50" : "grey.50",
+                    bgcolor:
+                      tuitionSummary.overdue > 0 ? "error.50" : "grey.50",
                     borderRadius: 1,
                     border: "1px solid",
                     borderColor:
@@ -1038,6 +1107,7 @@ const StudentDetails = () => {
                 <TableHead>
                   <TableRow>
                     <TableCell>Month</TableCell>
+                    <TableCell>Due Date</TableCell>
                     <TableCell align="right">Amount Due</TableCell>
                     <TableCell align="right">Amount Paid</TableCell>
                     <TableCell align="center">Status</TableCell>
@@ -1049,9 +1119,22 @@ const StudentDetails = () => {
                       TUITION_STATUS_CONFIG[row.status] ||
                       TUITION_STATUS_CONFIG.pending;
                     return (
-                      <TableRow key={row.id} hover>
+                      <TableRow
+                        key={row.id}
+                        hover
+                        sx={
+                          row.status === "overdue"
+                            ? { bgcolor: "error.50" }
+                            : undefined
+                        }
+                      >
                         <TableCell sx={{ fontWeight: 600 }}>
                           {row.month}
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="caption">
+                            {formatDate(row.due_date)}
+                          </Typography>
                         </TableCell>
                         <TableCell align="right">
                           {row.amount_due.toLocaleString()} AR
@@ -1061,6 +1144,7 @@ const StudentDetails = () => {
                         </TableCell>
                         <TableCell align="center">
                           <Chip
+                            icon={cfg.icon}
                             label={cfg.label}
                             color={cfg.color}
                             size="small"
@@ -1183,11 +1267,14 @@ const StudentDetails = () => {
                       alignItems: "center",
                     }}
                   >
-                    <Typography variant="body2">
+                    <Typography
+                      variant="body2"
+                      color={m.status === "overdue" ? "error.main" : "inherit"}
+                    >
                       {m.month} (
                       {m.status === "paid"
                         ? "Fully Paid"
-                        : `${(m.amount_due - m.amount_paid).toLocaleString()} AR Remaining`}
+                        : `${(m.amount_due - m.amount_paid).toLocaleString()} AR Remaining${m.status === "overdue" ? " — Overdue" : ""}`}
                       )
                     </Typography>
                   </Box>
