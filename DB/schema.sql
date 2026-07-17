@@ -123,7 +123,7 @@ CREATE TABLE public.teachers (
   profile_id uuid NOT NULL,
   establishment_id uuid NOT NULL,
   employee_number text NOT NULL UNIQUE,
-  specialization USER-DEFINED DEFAULT 'Malagasy'::subject_type,
+  specialization text DEFAULT 'Malagasy'::subject_type,
   hire_date date,
   contract_type USER-DEFINED,
   hourly_rate numeric CHECK (hourly_rate IS NULL OR hourly_rate >= 0::numeric),
@@ -144,7 +144,7 @@ CREATE TABLE public.classes (
   academic_year text NOT NULL,
   main_teacher_id uuid,
   capacity integer,
-  room_id uuid NOT NULL,
+  room_id uuid,
   created_at timestamp with time zone NOT NULL DEFAULT now(),
   updated_at timestamp with time zone NOT NULL DEFAULT now(),
   CONSTRAINT classes_pkey PRIMARY KEY (id),
@@ -239,9 +239,13 @@ CREATE TABLE public.subjects (
   hours_per_week integer,
   created_at timestamp with time zone NOT NULL DEFAULT now(),
   created_by uuid,
+  establishment_id uuid,
+  teacher_id uuid,
   CONSTRAINT subjects_pkey PRIMARY KEY (id),
   CONSTRAINT subjects_level_fkey FOREIGN KEY (level) REFERENCES public.classes(id),
-  CONSTRAINT subjects_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id)
+  CONSTRAINT subjects_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id),
+  CONSTRAINT subjects_establishment_id_fkey FOREIGN KEY (establishment_id) REFERENCES public.establishments(id),
+  CONSTRAINT subjects_teacher_id_fkey FOREIGN KEY (teacher_id) REFERENCES public.teachers(id)
 );
 CREATE TABLE public.programs (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -276,22 +280,6 @@ CREATE TABLE public.class_subjects (
   CONSTRAINT class_subjects_class_id_fkey FOREIGN KEY (class_id) REFERENCES public.classes(id),
   CONSTRAINT class_subjects_subject_id_fkey FOREIGN KEY (subject_id) REFERENCES public.subjects(id),
   CONSTRAINT class_subjects_teacher_id_fkey FOREIGN KEY (teacher_id) REFERENCES public.teachers(id)
-);
-CREATE TABLE public.timetable (
-  id uuid NOT NULL DEFAULT gen_random_uuid(),
-  class_id uuid NOT NULL,
-  subject_id uuid NOT NULL,
-  teacher_id uuid,
-  room_id uuid,
-  day_of_week smallint NOT NULL CHECK (day_of_week >= 0 AND day_of_week <= 6),
-  start_time time without time zone NOT NULL,
-  end_time time without time zone NOT NULL,
-  week_type USER-DEFINED NOT NULL DEFAULT 'all'::week_type_enum,
-  created_at timestamp with time zone NOT NULL DEFAULT now(),
-  CONSTRAINT timetable_pkey PRIMARY KEY (id),
-  CONSTRAINT timetable_class_id_fkey FOREIGN KEY (class_id) REFERENCES public.classes(id),
-  CONSTRAINT timetable_subject_id_fkey FOREIGN KEY (subject_id) REFERENCES public.subjects(id),
-  CONSTRAINT timetable_teacher_id_fkey FOREIGN KEY (teacher_id) REFERENCES public.teachers(id)
 );
 CREATE TABLE public.coursebook (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -435,18 +423,6 @@ CREATE TABLE public.duty_schedule (
   created_at timestamp with time zone NOT NULL DEFAULT now(),
   CONSTRAINT duty_schedule_pkey PRIMARY KEY (id),
   CONSTRAINT duty_schedule_staff_id_fkey FOREIGN KEY (staff_id) REFERENCES public.staff(id)
-);
-CREATE TABLE public.fee_structures (
-  id uuid NOT NULL DEFAULT gen_random_uuid(),
-  establishment_id uuid NOT NULL,
-  name text NOT NULL,
-  level text,
-  academic_year text NOT NULL,
-  amount numeric NOT NULL CHECK (amount >= 0::numeric),
-  frequency USER-DEFINED NOT NULL DEFAULT 'annual'::fee_frequency_enum,
-  created_at timestamp with time zone NOT NULL DEFAULT now(),
-  CONSTRAINT fee_structures_pkey PRIMARY KEY (id),
-  CONSTRAINT fee_structures_establishment_id_fkey FOREIGN KEY (establishment_id) REFERENCES public.establishments(id)
 );
 CREATE TABLE public.invoices (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -796,4 +772,54 @@ CREATE TABLE public.notification_receipts (
   CONSTRAINT notification_receipts_pkey PRIMARY KEY (id),
   CONSTRAINT notification_receipts_notification_id_fkey FOREIGN KEY (notification_id) REFERENCES public.notifications(id),
   CONSTRAINT notification_receipts_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
+);
+CREATE TABLE public.schedule_slot (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  subject_id uuid NOT NULL,
+  class_id uuid NOT NULL,
+  day USER-DEFINED NOT NULL,
+  start_time time without time zone NOT NULL,
+  end_time time without time zone NOT NULL,
+  created_by uuid,
+  CONSTRAINT schedule_slot_pkey PRIMARY KEY (id),
+  CONSTRAINT schedule_slot_subject_id_fkey FOREIGN KEY (subject_id) REFERENCES public.subjects(id),
+  CONSTRAINT schedule_slot_class_id_fkey FOREIGN KEY (class_id) REFERENCES public.classes(id)
+);
+CREATE TABLE public.fee_configurations (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  class_id uuid NOT NULL,
+  tuition_fee numeric NOT NULL DEFAULT 0.00,
+  registration_fee numeric NOT NULL DEFAULT 0.00,
+  academic_year character varying NOT NULL,
+  establishment_id uuid NOT NULL,
+  created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  created_by uuid,
+  CONSTRAINT fee_configurations_pkey PRIMARY KEY (id),
+  CONSTRAINT fee_configurations_class_id_fkey FOREIGN KEY (class_id) REFERENCES public.classes(id),
+  CONSTRAINT fee_configurations_establishment_id_fkey FOREIGN KEY (establishment_id) REFERENCES public.establishments(id),
+  CONSTRAINT fee_configurations_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id)
+);
+CREATE TABLE public.student_finance_settings (
+  student_id uuid NOT NULL,
+  base_monthly_tuition numeric NOT NULL DEFAULT 0.00,
+  discount_type character varying NOT NULL DEFAULT 'none'::character varying,
+  discount_value numeric NOT NULL DEFAULT 0.00,
+  total_paid_amount numeric NOT NULL DEFAULT 0.00,
+  registration_fee numeric NOT NULL DEFAULT 0.00,
+  is_registration_fee_paid boolean NOT NULL DEFAULT false,
+  notes text,
+  updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT student_finance_settings_pkey PRIMARY KEY (student_id),
+  CONSTRAINT student_finance_settings_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.students(id)
+);
+CREATE TABLE public.student_tuition_months (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  student_id uuid,
+  month_id character varying NOT NULL,
+  month_name character varying NOT NULL,
+  amount_due numeric NOT NULL DEFAULT 0.00,
+  is_paid boolean NOT NULL DEFAULT false,
+  CONSTRAINT student_tuition_months_pkey PRIMARY KEY (id),
+  CONSTRAINT student_tuition_months_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.student_finance_settings(student_id)
 );
