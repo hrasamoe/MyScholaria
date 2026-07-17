@@ -94,7 +94,6 @@ interface TuitionTransaction {
   remarks: string | null;
 }
 
-const API_URL = import.meta.env.VITE_API_URL;
 
 const CLASS_COLORS = [
   "#1976d2",
@@ -323,10 +322,9 @@ const StudentDetails = () => {
         setParents(data.parents || []);
 
         try {
-          const resTeacher = await fetch(
-            `${API_URL}/api/students/teacher/${id}`,
-            { credentials: "include" },
-          );
+          const resTeacher = await apiRequest(`/api/students/teacher/${id}`, {
+            credentials: "include",
+          });
           if (resTeacher.ok) {
             const t = await resTeacher.json();
             setTeacher(t || null);
@@ -1117,7 +1115,7 @@ const StudentDetails = () => {
                         </TableCell>
                         <TableCell align="center">
                           <Chip
-                            icon={cfg.icon}
+                            // icon={cfg.icon}
                             label={cfg.label}
                             color={cfg.color}
                             size="small"
