@@ -525,3 +525,32 @@ export async function deleteClass(classID: string) {
     client.release();
   }
 }
+
+export const getAcademicYear = async (establishmentId: string) => {
+  const result = await pool.query(
+    `SELECT academic_year_start_month AS "startMonth",
+            academic_year_end_month   AS "endMonth"
+     FROM establishments
+     WHERE id = $1`,
+    [establishmentId],
+  );
+  if (!result.rows[0]) throw new Error("Establishment not found");
+  return result.rows[0];
+};
+
+export const updateAcademicYear = async (
+  establishmentId: string,
+  startMonth: number,
+  endMonth: number,
+) => {
+  const result = await pool.query(
+    `UPDATE establishments
+     SET academic_year_start_month = $1,
+         academic_year_end_month = $2
+     WHERE id = $3
+     RETURNING academic_year_start_month AS "startMonth",
+               academic_year_end_month   AS "endMonth"`,
+    [startMonth, endMonth, establishmentId],
+  );
+  return result.rows[0];
+};

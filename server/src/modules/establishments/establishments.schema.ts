@@ -76,6 +76,11 @@ export const classSchema = z.object({
   classRoomID: z.string().min(4, "Please provide the classroom"),
 });
 
+export const academicYearSchema = z.object({
+  startMonth: z.number().int().min(1).max(12),
+  endMonth: z.number().int().min(1).max(12),
+});
+
 export type ClassInfo = z.infer<typeof classSchema>;
 export type JoinInput = z.infer<typeof joinSchema>;
 export type EstablishmentInput = z.infer<typeof establishementSchema>;

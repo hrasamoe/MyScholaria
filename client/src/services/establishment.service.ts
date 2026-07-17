@@ -74,3 +74,28 @@ export async function approvedMember(email: string, establishmentId: string) {
   if (!res.ok) throw new Error(result.message);
   return result;
 }
+
+export const getAcademicYear = async () => {
+  const res = await apiRequest(`/api/establishment/academic-year`, {
+    credentials: "include",
+  });
+  if (!res.ok) throw new Error("Failed to fetch academic year");
+  return res.json(); // { startMonth, endMonth }
+};
+
+export const updateAcademicYear = async (
+  startMonth: number,
+  endMonth: number,
+) => {
+  const res = await apiRequest(`/api/establishment/academic-year`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ startMonth, endMonth }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => null);
+    throw new Error(err?.message || "Failed to update academic year");
+  }
+  return res.json();
+};

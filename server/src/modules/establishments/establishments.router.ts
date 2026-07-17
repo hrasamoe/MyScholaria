@@ -22,6 +22,8 @@ import {
   establishementSchema,
   joinSchema,
 } from "./establishments.schema";
+import { academicYearSchema } from "./establishments.schema";
+import { getAcademicYear, updateAcademicYear } from "./establishement.service";
 
 export const establishementRouter = Router();
 
@@ -283,6 +285,45 @@ establishementRouter.delete(
       res
         .status(500)
         .json({ message: "An error occurred while deleting the class" });
+    }
+  },
+);
+
+
+establishementRouter.get(
+  "/academic-year",
+  RequireAuth,
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const establishmentID = req.establishmentID as string;
+      const data = await getAcademicYear(establishmentID);
+      res.status(200).json(data);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  },
+);
+
+establishementRouter.put(
+  "/academic-year",
+  RequireAuth,
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const establishmentID = req.establishmentID as string;
+      const data = academicYearSchema.parse({
+        startMonth: req.body.startMonth,
+        endMonth: req.body.endMonth,
+      });
+      const updated = await updateAcademicYear(
+        establishmentID,
+        data.startMonth,
+        data.endMonth,
+      );
+      res.status(200).json({ message: "Academic year updated", data: updated });
+    } catch (err: any) {
+      if (err.errors)
+        return res.status(400).json({ message: err.errors[0].message });
+      res.status(400).json({ message: err.message });
     }
   },
 );
