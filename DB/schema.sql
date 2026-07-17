@@ -1,6 +1,8 @@
 -- WARNING: This schema is for context only and is not meant to be run.
 -- Table order and constraints may not be valid for execution.
 
+
+
 CREATE TABLE public.users (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   email text NOT NULL UNIQUE,
@@ -27,6 +29,8 @@ CREATE TABLE public.users (
   pending_establishment_id text,
   CONSTRAINT users_pkey PRIMARY KEY (id)
 );
+
+
 CREATE TABLE public.refresh_tokens (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   user_id uuid NOT NULL,
@@ -39,6 +43,8 @@ CREATE TABLE public.refresh_tokens (
   CONSTRAINT refresh_tokens_pkey PRIMARY KEY (id),
   CONSTRAINT refresh_tokens_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
 );
+
+
 CREATE TABLE public.oauth_accounts (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   user_id uuid NOT NULL,
@@ -50,6 +56,8 @@ CREATE TABLE public.oauth_accounts (
   CONSTRAINT oauth_accounts_pkey PRIMARY KEY (id),
   CONSTRAINT oauth_accounts_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
 );
+
+
 CREATE TABLE public.user_roles (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   user_id uuid NOT NULL,
@@ -58,6 +66,8 @@ CREATE TABLE public.user_roles (
   CONSTRAINT user_roles_pkey PRIMARY KEY (id),
   CONSTRAINT user_roles_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
 );
+
+
 CREATE TABLE public.profiles (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   full_name text,
@@ -79,6 +89,8 @@ CREATE TABLE public.profiles (
   CONSTRAINT profiles_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
   CONSTRAINT profiles_establishment_id_fkey FOREIGN KEY (establishment_id) REFERENCES public.establishments(id)
 );
+
+
 CREATE TABLE public.establishments (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   name text NOT NULL,
@@ -102,6 +114,8 @@ CREATE TABLE public.establishments (
   CONSTRAINT establishments_pkey PRIMARY KEY (id),
   CONSTRAINT establishments_owner_id_fkey FOREIGN KEY (owner_id) REFERENCES public.users(id)
 );
+
+
 CREATE TABLE public.staff (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   profile_id uuid NOT NULL UNIQUE,
@@ -118,6 +132,8 @@ CREATE TABLE public.staff (
   CONSTRAINT staff_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES public.profiles(id),
   CONSTRAINT staff_establishment_id_fkey FOREIGN KEY (establishment_id) REFERENCES public.establishments(id)
 );
+
+
 CREATE TABLE public.teachers (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   profile_id uuid NOT NULL,
@@ -136,6 +152,8 @@ CREATE TABLE public.teachers (
   CONSTRAINT teachers_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES public.profiles(id),
   CONSTRAINT teachers_account_id_fkey FOREIGN KEY (account_id) REFERENCES public.users(id)
 );
+
+
 CREATE TABLE public.classes (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   establishment_id uuid NOT NULL,
@@ -152,6 +170,8 @@ CREATE TABLE public.classes (
   CONSTRAINT classes_main_teacher_id_fkey FOREIGN KEY (main_teacher_id) REFERENCES public.teachers(id),
   CONSTRAINT classes_room_id_fkey FOREIGN KEY (room_id) REFERENCES public.rooms(id)
 );
+
+
 CREATE TABLE public.students (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   profile_id uuid UNIQUE,
@@ -168,6 +188,8 @@ CREATE TABLE public.students (
   CONSTRAINT students_establishment_id_fkey FOREIGN KEY (establishment_id) REFERENCES public.establishments(id),
   CONSTRAINT students_class_id_fkey FOREIGN KEY (class_id) REFERENCES public.classes(id)
 );
+
+
 CREATE TABLE public.student_documents (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   student_id uuid NOT NULL,
@@ -178,6 +200,8 @@ CREATE TABLE public.student_documents (
   CONSTRAINT student_documents_pkey PRIMARY KEY (id),
   CONSTRAINT student_documents_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.students(id)
 );
+
+
 CREATE TABLE public.staff_absences (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   user_id uuid NOT NULL,
@@ -191,6 +215,8 @@ CREATE TABLE public.staff_absences (
   CONSTRAINT staff_absences_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id),
   CONSTRAINT staff_absences_approved_by_fkey FOREIGN KEY (approved_by) REFERENCES public.profiles(id)
 );
+
+
 CREATE TABLE public.class_groups (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   class_id uuid NOT NULL,
@@ -200,6 +226,8 @@ CREATE TABLE public.class_groups (
   CONSTRAINT class_groups_pkey PRIMARY KEY (id),
   CONSTRAINT class_groups_class_id_fkey FOREIGN KEY (class_id) REFERENCES public.classes(id)
 );
+
+
 CREATE TABLE public.room_reservations (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   room_id uuid NOT NULL,
@@ -212,6 +240,8 @@ CREATE TABLE public.room_reservations (
   CONSTRAINT room_reservations_pkey PRIMARY KEY (id),
   CONSTRAINT room_reservations_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id)
 );
+
+
 CREATE TABLE public.school_calendar (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   establishment_id uuid NOT NULL,
@@ -230,6 +260,8 @@ CREATE TABLE public.school_calendar (
   CONSTRAINT school_calendar_establishment_id_fkey FOREIGN KEY (establishment_id) REFERENCES public.establishments(id),
   CONSTRAINT school_calendar_author_id_fkey FOREIGN KEY (author_id) REFERENCES public.users(id)
 );
+
+
 CREATE TABLE public.subjects (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   code text NOT NULL UNIQUE,
@@ -247,6 +279,8 @@ CREATE TABLE public.subjects (
   CONSTRAINT subjects_establishment_id_fkey FOREIGN KEY (establishment_id) REFERENCES public.establishments(id),
   CONSTRAINT subjects_teacher_id_fkey FOREIGN KEY (teacher_id) REFERENCES public.teachers(id)
 );
+
+
 CREATE TABLE public.programs (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   code text NOT NULL UNIQUE,
@@ -259,6 +293,8 @@ CREATE TABLE public.programs (
   CONSTRAINT programs_pkey PRIMARY KEY (id),
   CONSTRAINT programs_head_id_fkey FOREIGN KEY (head_id) REFERENCES public.profiles(id)
 );
+
+
 CREATE TABLE public.program_subjects (
   program_id uuid NOT NULL,
   subject_id uuid NOT NULL,
@@ -269,6 +305,8 @@ CREATE TABLE public.program_subjects (
   CONSTRAINT program_subjects_program_id_fkey FOREIGN KEY (program_id) REFERENCES public.programs(id),
   CONSTRAINT program_subjects_subject_id_fkey FOREIGN KEY (subject_id) REFERENCES public.subjects(id)
 );
+
+
 CREATE TABLE public.class_subjects (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   class_id uuid NOT NULL,
@@ -281,6 +319,8 @@ CREATE TABLE public.class_subjects (
   CONSTRAINT class_subjects_subject_id_fkey FOREIGN KEY (subject_id) REFERENCES public.subjects(id),
   CONSTRAINT class_subjects_teacher_id_fkey FOREIGN KEY (teacher_id) REFERENCES public.teachers(id)
 );
+
+
 CREATE TABLE public.coursebook (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   class_subject_id uuid NOT NULL,
@@ -294,6 +334,8 @@ CREATE TABLE public.coursebook (
   CONSTRAINT coursebook_class_subject_id_fkey FOREIGN KEY (class_subject_id) REFERENCES public.class_subjects(id),
   CONSTRAINT coursebook_teacher_id_fkey FOREIGN KEY (teacher_id) REFERENCES public.teachers(id)
 );
+
+
 CREATE TABLE public.homework_assignments (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   class_subject_id uuid NOT NULL,
@@ -305,6 +347,8 @@ CREATE TABLE public.homework_assignments (
   CONSTRAINT homework_assignments_pkey PRIMARY KEY (id),
   CONSTRAINT homework_assignments_class_subject_id_fkey FOREIGN KEY (class_subject_id) REFERENCES public.class_subjects(id)
 );
+
+
 CREATE TABLE public.homework_submissions (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   assignment_id uuid NOT NULL,
@@ -317,6 +361,8 @@ CREATE TABLE public.homework_submissions (
   CONSTRAINT homework_submissions_assignment_id_fkey FOREIGN KEY (assignment_id) REFERENCES public.homework_assignments(id),
   CONSTRAINT homework_submissions_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.students(id)
 );
+
+
 CREATE TABLE public.internships (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   student_id uuid NOT NULL,
@@ -333,6 +379,8 @@ CREATE TABLE public.internships (
   CONSTRAINT internships_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.students(id),
   CONSTRAINT internships_mentor_teacher_id_fkey FOREIGN KEY (mentor_teacher_id) REFERENCES public.teachers(id)
 );
+
+
 CREATE TABLE public.exams (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   class_subject_id uuid NOT NULL,
@@ -347,6 +395,8 @@ CREATE TABLE public.exams (
   CONSTRAINT exams_pkey PRIMARY KEY (id),
   CONSTRAINT exams_class_subject_id_fkey FOREIGN KEY (class_subject_id) REFERENCES public.class_subjects(id)
 );
+
+
 CREATE TABLE public.grades (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   student_id uuid NOT NULL,
@@ -360,6 +410,8 @@ CREATE TABLE public.grades (
   CONSTRAINT grades_exam_id_fkey FOREIGN KEY (exam_id) REFERENCES public.exams(id),
   CONSTRAINT grades_graded_by_fkey FOREIGN KEY (graded_by) REFERENCES public.profiles(id)
 );
+
+
 CREATE TABLE public.report_cards (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   student_id uuid NOT NULL,
@@ -374,6 +426,8 @@ CREATE TABLE public.report_cards (
   CONSTRAINT report_cards_pkey PRIMARY KEY (id),
   CONSTRAINT report_cards_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.students(id)
 );
+
+
 CREATE TABLE public.report_card_lines (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   report_card_id uuid NOT NULL,
@@ -386,6 +440,8 @@ CREATE TABLE public.report_card_lines (
   CONSTRAINT report_card_lines_report_card_id_fkey FOREIGN KEY (report_card_id) REFERENCES public.report_cards(id),
   CONSTRAINT report_card_lines_subject_id_fkey FOREIGN KEY (subject_id) REFERENCES public.subjects(id)
 );
+
+
 CREATE TABLE public.attendance (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   student_id uuid NOT NULL,
@@ -400,6 +456,8 @@ CREATE TABLE public.attendance (
   CONSTRAINT attendance_class_subject_id_fkey FOREIGN KEY (class_subject_id) REFERENCES public.class_subjects(id),
   CONSTRAINT attendance_recorded_by_fkey FOREIGN KEY (recorded_by) REFERENCES public.profiles(id)
 );
+
+
 CREATE TABLE public.disciplinary_actions (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   student_id uuid NOT NULL,
@@ -413,6 +471,8 @@ CREATE TABLE public.disciplinary_actions (
   CONSTRAINT disciplinary_actions_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.students(id),
   CONSTRAINT disciplinary_actions_decided_by_fkey FOREIGN KEY (decided_by) REFERENCES public.profiles(id)
 );
+
+
 CREATE TABLE public.duty_schedule (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   staff_id uuid NOT NULL,
@@ -424,6 +484,8 @@ CREATE TABLE public.duty_schedule (
   CONSTRAINT duty_schedule_pkey PRIMARY KEY (id),
   CONSTRAINT duty_schedule_staff_id_fkey FOREIGN KEY (staff_id) REFERENCES public.staff(id)
 );
+
+
 CREATE TABLE public.invoices (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   student_id uuid NOT NULL,
@@ -439,6 +501,8 @@ CREATE TABLE public.invoices (
   CONSTRAINT invoices_pkey PRIMARY KEY (id),
   CONSTRAINT invoices_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.students(id)
 );
+
+
 CREATE TABLE public.invoice_lines (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   invoice_id uuid NOT NULL,
@@ -449,6 +513,8 @@ CREATE TABLE public.invoice_lines (
   CONSTRAINT invoice_lines_pkey PRIMARY KEY (id),
   CONSTRAINT invoice_lines_invoice_id_fkey FOREIGN KEY (invoice_id) REFERENCES public.invoices(id)
 );
+
+
 CREATE TABLE public.payments (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   invoice_id uuid NOT NULL,
@@ -465,6 +531,8 @@ CREATE TABLE public.payments (
   CONSTRAINT payments_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.students(id),
   CONSTRAINT payments_received_by_fkey FOREIGN KEY (received_by) REFERENCES public.profiles(id)
 );
+
+
 CREATE TABLE public.scholarships (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   student_id uuid NOT NULL,
@@ -477,6 +545,8 @@ CREATE TABLE public.scholarships (
   CONSTRAINT scholarships_pkey PRIMARY KEY (id),
   CONSTRAINT scholarships_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.students(id)
 );
+
+
 CREATE TABLE public.budget_entries (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   establishment_id uuid NOT NULL,
@@ -491,6 +561,8 @@ CREATE TABLE public.budget_entries (
   CONSTRAINT budget_entries_establishment_id_fkey FOREIGN KEY (establishment_id) REFERENCES public.establishments(id),
   CONSTRAINT budget_entries_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.profiles(id)
 );
+
+
 CREATE TABLE public.events (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   establishment_id uuid NOT NULL,
@@ -506,6 +578,8 @@ CREATE TABLE public.events (
   CONSTRAINT events_pkey PRIMARY KEY (id),
   CONSTRAINT events_establishment_id_fkey FOREIGN KEY (establishment_id) REFERENCES public.establishments(id)
 );
+
+
 CREATE TABLE public.event_activities (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   event_id uuid NOT NULL,
@@ -518,6 +592,8 @@ CREATE TABLE public.event_activities (
   CONSTRAINT event_activities_pkey PRIMARY KEY (id),
   CONSTRAINT event_activities_event_id_fkey FOREIGN KEY (event_id) REFERENCES public.events(id)
 );
+
+
 CREATE TABLE public.event_fees (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   event_id uuid NOT NULL,
@@ -527,6 +603,8 @@ CREATE TABLE public.event_fees (
   CONSTRAINT event_fees_pkey PRIMARY KEY (id),
   CONSTRAINT event_fees_event_id_fkey FOREIGN KEY (event_id) REFERENCES public.events(id)
 );
+
+
 CREATE TABLE public.event_registrations (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   event_id uuid NOT NULL,
@@ -538,6 +616,8 @@ CREATE TABLE public.event_registrations (
   CONSTRAINT event_registrations_event_id_fkey FOREIGN KEY (event_id) REFERENCES public.events(id),
   CONSTRAINT event_registrations_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.students(id)
 );
+
+
 CREATE TABLE public.books (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   isbn text UNIQUE,
@@ -553,6 +633,8 @@ CREATE TABLE public.books (
   created_at timestamp with time zone NOT NULL DEFAULT now(),
   CONSTRAINT books_pkey PRIMARY KEY (id)
 );
+
+
 CREATE TABLE public.book_loans (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   book_id uuid NOT NULL,
@@ -567,6 +649,8 @@ CREATE TABLE public.book_loans (
   CONSTRAINT book_loans_book_id_fkey FOREIGN KEY (book_id) REFERENCES public.books(id),
   CONSTRAINT book_loans_borrower_id_fkey FOREIGN KEY (borrower_id) REFERENCES public.profiles(id)
 );
+
+
 CREATE TABLE public.messages (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   sender_id uuid NOT NULL,
@@ -585,12 +669,16 @@ CREATE TABLE public.messages (
   CONSTRAINT messages_recipient_id_fkey1 FOREIGN KEY (recipient_id) REFERENCES public.users(id),
   CONSTRAINT messages_reply_id_fkey FOREIGN KEY (reply_id) REFERENCES public.messages(id)
 );
+
+
 CREATE TABLE public.conversations (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   participants jsonb NOT NULL DEFAULT '[]'::jsonb,
   last_message_at timestamp with time zone NOT NULL DEFAULT now(),
   CONSTRAINT conversations_pkey PRIMARY KEY (id)
 );
+
+
 CREATE TABLE public.announcements (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   establishment_id uuid NOT NULL,
@@ -604,6 +692,8 @@ CREATE TABLE public.announcements (
   CONSTRAINT announcements_establishment_id_fkey FOREIGN KEY (establishment_id) REFERENCES public.establishments(id),
   CONSTRAINT announcements_author_id_fkey FOREIGN KEY (author_id) REFERENCES public.users(id)
 );
+
+
 CREATE TABLE public.theses (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   student_id uuid NOT NULL,
@@ -622,6 +712,8 @@ CREATE TABLE public.theses (
   CONSTRAINT theses_supervisor_id_fkey FOREIGN KEY (supervisor_id) REFERENCES public.teachers(id),
   CONSTRAINT theses_co_supervisor_id_fkey FOREIGN KEY (co_supervisor_id) REFERENCES public.teachers(id)
 );
+
+
 CREATE TABLE public.diplomas (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   student_id uuid NOT NULL,
@@ -637,6 +729,8 @@ CREATE TABLE public.diplomas (
   CONSTRAINT diplomas_program_id_fkey FOREIGN KEY (program_id) REFERENCES public.programs(id),
   CONSTRAINT diplomas_signed_by_fkey FOREIGN KEY (signed_by) REFERENCES public.profiles(id)
 );
+
+
 CREATE TABLE public.audit_logs (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   user_id uuid,
@@ -649,6 +743,8 @@ CREATE TABLE public.audit_logs (
   CONSTRAINT audit_logs_pkey PRIMARY KEY (id),
   CONSTRAINT audit_logs_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
 );
+
+
 CREATE TABLE public.settings (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   establishment_id uuid NOT NULL,
@@ -658,6 +754,8 @@ CREATE TABLE public.settings (
   CONSTRAINT settings_pkey PRIMARY KEY (id),
   CONSTRAINT settings_establishment_id_fkey FOREIGN KEY (establishment_id) REFERENCES public.establishments(id)
 );
+
+
 CREATE TABLE public.backups (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   filename text NOT NULL,
@@ -668,6 +766,8 @@ CREATE TABLE public.backups (
   CONSTRAINT backups_pkey PRIMARY KEY (id),
   CONSTRAINT backups_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id)
 );
+
+
 CREATE TABLE public.subscriptions (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   establishment_id uuid NOT NULL,
@@ -680,6 +780,8 @@ CREATE TABLE public.subscriptions (
   CONSTRAINT subscriptions_pkey PRIMARY KEY (id),
   CONSTRAINT subscriptions_establishment_id_fkey FOREIGN KEY (establishment_id) REFERENCES public.establishments(id)
 );
+
+
 CREATE TABLE public.establishment_members (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   establishment_id uuid NOT NULL,
@@ -692,6 +794,8 @@ CREATE TABLE public.establishment_members (
   CONSTRAINT establishment_members_establishment_id_fkey FOREIGN KEY (establishment_id) REFERENCES public.establishments(id),
   CONSTRAINT establishment_members_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
 );
+
+
 CREATE TABLE public.school_periods (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   establishment_id uuid NOT NULL,
@@ -704,6 +808,8 @@ CREATE TABLE public.school_periods (
   CONSTRAINT school_periods_pkey PRIMARY KEY (id),
   CONSTRAINT school_periods_establishment_id_fkey FOREIGN KEY (establishment_id) REFERENCES public.establishments(id)
 );
+
+
 CREATE TABLE public.student_parents (
   student_id uuid NOT NULL,
   parent_profile_id uuid NOT NULL,
@@ -714,6 +820,8 @@ CREATE TABLE public.student_parents (
   CONSTRAINT student_parents_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.students(id),
   CONSTRAINT student_parents_parent_profile_id_fkey FOREIGN KEY (parent_profile_id) REFERENCES public.profiles(id)
 );
+
+
 CREATE TABLE public.invitations (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   establishment_id uuid NOT NULL,
@@ -728,6 +836,8 @@ CREATE TABLE public.invitations (
   CONSTRAINT invitations_establishment_id_fkey FOREIGN KEY (establishment_id) REFERENCES public.establishments(id),
   CONSTRAINT invitations_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id)
 );
+
+
 CREATE TABLE public.rooms (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   establishment_id uuid NOT NULL,
@@ -741,6 +851,8 @@ CREATE TABLE public.rooms (
   CONSTRAINT rooms_pkey PRIMARY KEY (id),
   CONSTRAINT rooms_establishment_id_fkey FOREIGN KEY (establishment_id) REFERENCES public.establishments(id)
 );
+
+
 CREATE TABLE public.announcement_targets (
   id bigint GENERATED ALWAYS AS IDENTITY NOT NULL,
   announcement_id uuid,
@@ -749,6 +861,8 @@ CREATE TABLE public.announcement_targets (
   CONSTRAINT announcement_targets_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
   CONSTRAINT announcement_targets_announcement_id_fkey FOREIGN KEY (announcement_id) REFERENCES public.announcements(id)
 );
+
+
 CREATE TABLE public.notifications (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   establishment_id uuid NOT NULL,
@@ -763,6 +877,8 @@ CREATE TABLE public.notifications (
   CONSTRAINT notifications_establishment_id_fkey FOREIGN KEY (establishment_id) REFERENCES public.establishments(id),
   CONSTRAINT notifications_author_id_fkey FOREIGN KEY (author_id) REFERENCES public.users(id)
 );
+
+
 CREATE TABLE public.notification_receipts (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   notification_id uuid NOT NULL,
@@ -773,6 +889,8 @@ CREATE TABLE public.notification_receipts (
   CONSTRAINT notification_receipts_notification_id_fkey FOREIGN KEY (notification_id) REFERENCES public.notifications(id),
   CONSTRAINT notification_receipts_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
 );
+
+
 CREATE TABLE public.schedule_slot (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   subject_id uuid NOT NULL,
@@ -785,6 +903,8 @@ CREATE TABLE public.schedule_slot (
   CONSTRAINT schedule_slot_subject_id_fkey FOREIGN KEY (subject_id) REFERENCES public.subjects(id),
   CONSTRAINT schedule_slot_class_id_fkey FOREIGN KEY (class_id) REFERENCES public.classes(id)
 );
+
+
 CREATE TABLE public.fee_configurations (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
   class_id uuid NOT NULL,
@@ -800,6 +920,8 @@ CREATE TABLE public.fee_configurations (
   CONSTRAINT fee_configurations_establishment_id_fkey FOREIGN KEY (establishment_id) REFERENCES public.establishments(id),
   CONSTRAINT fee_configurations_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id)
 );
+
+
 CREATE TABLE public.student_finance_settings (
   student_id uuid NOT NULL,
   base_monthly_tuition numeric NOT NULL DEFAULT 0.00,
@@ -813,6 +935,8 @@ CREATE TABLE public.student_finance_settings (
   CONSTRAINT student_finance_settings_pkey PRIMARY KEY (student_id),
   CONSTRAINT student_finance_settings_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.students(id)
 );
+
+
 CREATE TABLE public.student_tuition_months (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
   student_id uuid,
