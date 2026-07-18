@@ -201,3 +201,156 @@ export async function saveStudentTuition(
     throw error;
   }
 }
+
+const countAcademicMonths = (startMonth: number, endMonth: number): number => {
+  if (endMonth >= startMonth) {
+    return endMonth - startMonth + 1;
+  }
+  return 12 - startMonth + 1 + endMonth;
+};
+
+export const getFinanceOverview = async (establishmentID: string) => {
+  const establishmentRes = await pool.query(
+    `SELECT academic_year_start_month, academic_year_end_month
+     FROM establishments
+     WHERE id = $1`,
+    [establishmentID],
+  );
+
+  if (establishmentRes.rows.length === 0) {
+    throw new Error("Establishment not found");
+  }
+
+  const { academic_year_start_month, academic_year_end_month } =
+    establishmentRes.rows[0];
+  const fallbackMonthsCount = countAcademicMonths(
+    Number(academic_year_start_month),
+    Number(academic_year_end_month),
+  );
+
+  // Current academic year label, used to prefer the matching
+  // fee_configurations row when a class has several (one per year).
+  const currentPeriodRes = await pool.query(
+    `SELECT academic_year
+     FROM school_periods
+     WHERE establishment_id = $1 AND is_current = true
+     LIMIT 1`,
+    [establishmentID],
+  );
+  const currentAcademicYear = currentPeriodRes.rows[0]?.academic_year ?? null;
+
+  const query = `
+    SELECT
+      s.id,
+      p.first_name,
+      p.last_name,
+      s.student_number,
+      c.name AS class_name,
+      fs.base_monthly_tuition,
+      fs.discount_type,
+      fs.discount_value,
+      fs.total_paid_amount,
+      fs.registration_fee AS student_registration_fee,
+      fs.is_registration_fee_paid,
+      fc.tuition_fee AS class_tuition_fee,
+      fc.registration_fee AS class_registration_fee,
+      COUNT(tm.id) AS recorded_months_count,
+      COUNT(tm.id) FILTER (WHERE tm.is_paid = false) AS unpaid_months_count
+    FROM students s
+    JOIN profiles p ON p.id = s.profile_id
+    LEFT JOIN classes c ON c.id = s.class_id
+    LEFT JOIN student_finance_settings fs ON fs.student_id = s.id
+    LEFT JOIN student_tuition_months tm ON tm.student_id = s.id
+    -- Picks the fee_configurations row for this class matching the
+    -- current academic year if one exists, otherwise falls back to
+    -- the most recently created row for that class.
+    LEFT JOIN LATERAL (
+      SELECT tuition_fee, registration_fee
+      FROM fee_configurations fc
+      WHERE fc.class_id = s.class_id
+        AND fc.establishment_id = s.establishment_id
+      ORDER BY (fc.academic_year = $2) DESC, fc.created_at DESC
+      LIMIT 1
+    ) fc ON true
+    WHERE s.establishment_id = $1
+    GROUP BY s.id, p.first_name, p.last_name, s.student_number, c.name,
+             fs.base_monthly_tuition, fs.discount_type, fs.discount_value,
+             fs.total_paid_amount, fs.registration_fee, fs.is_registration_fee_paid,
+             fc.tuition_fee, fc.registration_fee
+    ORDER BY p.first_name ASC;
+  `;
+
+  const result = await pool.query(query, [
+    establishmentID,
+    currentAcademicYear,
+  ]);
+
+  let totalExpected = 0;
+  let totalCollected = 0;
+  let unpaidCount = 0;
+
+  const rows = result.rows.map((row: any) => {
+    const hasIndividualSettings = row.base_monthly_tuition !== null;
+
+    let finalMonthly = 0;
+    if (hasIndividualSettings) {
+      const base = Number(row.base_monthly_tuition) || 0;
+      if (row.discount_type === "percentage") {
+        finalMonthly = base - base * ((Number(row.discount_value) || 0) / 100);
+      } else if (row.discount_type === "fixed") {
+        finalMonthly = Math.max(0, base - (Number(row.discount_value) || 0));
+      } else {
+        finalMonthly = base;
+      }
+    } else {
+      finalMonthly = Number(row.class_tuition_fee) || 0;
+    }
+
+    const registrationFee =
+      row.student_registration_fee !== null
+        ? Number(row.student_registration_fee) || 0
+        : Number(row.class_registration_fee) || 0;
+
+    const isRegistrationFeePaid = row.is_registration_fee_paid === true;
+
+    const recordedMonths = Number(row.recorded_months_count) || 0;
+    const monthsCount =
+      recordedMonths > 0 ? recordedMonths : fallbackMonthsCount;
+
+    const tuitionDue = finalMonthly * monthsCount;
+    const totalDue = registrationFee + tuitionDue;
+
+    const tuitionPaid = Number(row.total_paid_amount) || 0;
+    const totalPaid =
+      tuitionPaid + (isRegistrationFeePaid ? registrationFee : 0);
+
+    const balance = Math.max(0, totalDue - totalPaid);
+    const hasOverdue = balance > 0 && Number(row.unpaid_months_count) > 0;
+
+    totalExpected += totalDue;
+    totalCollected += totalPaid;
+    if (balance > 0) unpaidCount += 1;
+
+    return {
+      id: row.id,
+      name: `${row.first_name} ${row.last_name}`,
+      class_name: row.class_name,
+      student_number: row.student_number,
+      totalDue,
+      totalPaid,
+      balance,
+      hasOverdue,
+      hasSetup: hasIndividualSettings,
+    };
+  });
+
+  return {
+    totals: {
+      expected: totalExpected,
+      collected: totalCollected,
+      remaining: totalExpected - totalCollected,
+      unpaidCount,
+    },
+    students: rows,
+  };
+};

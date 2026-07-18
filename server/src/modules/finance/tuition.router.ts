@@ -7,6 +7,7 @@ import {
 import {
   createTuition,
   deleteTuition,
+  getFinanceOverview,
   editTuition,
   getTuitionList,
   saveStudentTuition,
@@ -173,3 +174,24 @@ financeRouter.get("/student-settings/:id", RequireAuth, async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
+
+financeRouter.get(
+  "/overview",
+  RequireAuth,
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const establishmentID = req.establishmentID as string;
+      if (!establishmentID) {
+        return res.status(400).json({ message: "Missing establishmentID" });
+      }
+
+      const overview = await getFinanceOverview(establishmentID);
+      res.status(200).json(overview);
+    } catch (error: any) {
+      console.error("GET /finance/overview error:", error);
+      res
+        .status(500)
+        .json({ message: error.message || "Internal server error" });
+    }
+  },
+);
