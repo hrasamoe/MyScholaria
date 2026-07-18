@@ -240,68 +240,68 @@ const StudentDetails = () => {
   const [reference, setReference] = useState<string>("");
   const [remarks, setRemarks] = useState<string>("");
 
-  const fetchTuitionData = async () => {
-    if (!id) return;
-    try {
-      setTuitionLoading(true);
-      const res = await apiRequest(`/api/finance/student-settings/${id}`, {
-        credentials: "include",
-      });
+const fetchTuitionData = async () => {
+  if (!id) return;
+  try {
+    setTuitionLoading(true);
+    const res = await apiRequest(`/api/finance/student-settings/${id}`, {
+      credentials: "include",
+    });
 
-      if (!res.ok) {
-        setRawFinance(null);
-        setTuitionSchedule([]);
-        setTuitionSummary({
-          total_due: 0,
-          total_paid: 0,
-          balance: 0,
-          overdue: 0,
-        });
-        return;
-      }
-
-      const data = await res.json();
-      setRawFinance(data);
-
-      const finalMonthly = calculateFinalMonthly(data);
-      const months = data.tuition_months ?? [];
-      const today = new Date();
-
-      const schedule: TuitionScheduleItem[] = months.map((m: any) => {
-        const dueDate = getTuitionDueDate(m.month, startMonth, endMonth);
-        const isPastDue = !m.is_paid && dueDate < today;
-
-        return {
-          id: m.id,
-          month: m.month,
-          amount_due: m.amount_due,
-          amount_paid: m.is_paid ? finalMonthly : finalMonthly - m.amount_due,
-          due_date: dueDate,
-          status: m.is_paid ? "paid" : isPastDue ? "overdue" : "pending",
-        };
-      });
-
-      const totalDue = finalMonthly * months.length;
-      const totalPaid = data.total_paid_amount ?? 0;
-      const balance = Math.max(0, totalDue - totalPaid);
-      const overdue = schedule
-        .filter((s) => s.status === "overdue")
-        .reduce((acc, s) => acc + Math.max(0, s.amount_due - s.amount_paid), 0);
-
-      setTuitionSchedule(schedule);
-      setTuitionSummary({
-        total_due: totalDue,
-        total_paid: totalPaid,
-        balance,
-        overdue,
-      });
-    } catch {
+    if (!res.ok) {
       setRawFinance(null);
-    } finally {
-      setTuitionLoading(false);
+      setTuitionSchedule([]);
+      setTuitionSummary({
+        total_due: 0,
+        total_paid: 0,
+        balance: 0,
+        overdue: 0,
+      });
+      return;
     }
-  };
 
+    const data = await res.json();
+    setRawFinance(data);
+
+    const finalMonthly = calculateFinalMonthly(data);
+    const months = data.tuition_months ?? [];
+    const today = new Date();
+
+    const schedule: TuitionScheduleItem[] = months.map((m: any) => {
+      const dueDate = getTuitionDueDate(m.month, startMonth, endMonth);
+      const isPastDue = !m.is_paid && dueDate < today;
+
+      return {
+        id: m.id,
+        month: m.month,
+        amount_due: m.amount_due,
+        amount_paid: m.is_paid ? finalMonthly : finalMonthly - m.amount_due,
+        due_date: dueDate,
+        status: m.is_paid ? "paid" : isPastDue ? "overdue" : "pending",
+      };
+    });
+
+    const totalDue = finalMonthly * months.length;
+    const totalPaid = data.total_paid_amount ?? 0;
+    const balance = Math.max(0, totalDue - totalPaid);
+
+    const overdue = schedule
+      .filter((s) => s.status === "overdue")
+      .reduce((acc, s) => acc + s.amount_due, 0);
+
+    setTuitionSchedule(schedule);
+    setTuitionSummary({
+      total_due: totalDue,
+      total_paid: totalPaid,
+      balance,
+      overdue,
+    });
+  } catch {
+    setRawFinance(null);
+  } finally {
+    setTuitionLoading(false);
+  }
+};
   // Student profile + parents + teacher — independent of academic year.
   useEffect(() => {
     if (!id) return;
@@ -1034,7 +1034,7 @@ const StudentDetails = () => {
                   sx={{
                     p: 1.5,
                     bgcolor:
-                      tuitionSummary.overdue > 0 ? "error.50" : "grey.50",
+                      tuitionSummary.overdue > 0 ? "error.50" : "success.50",
                     borderRadius: 1,
                     border: "1px solid",
                     borderColor:
