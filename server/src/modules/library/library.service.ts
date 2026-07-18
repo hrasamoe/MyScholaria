@@ -209,7 +209,7 @@ export const getLibraryStats = async (establishmentID: string) => {
        (SELECT COUNT(*) FROM book_loans
           WHERE establishment_id = $1 AND status = 'active' AND due_date < CURRENT_DATE) AS overdue_loans
      FROM books b
-     WHERE b.establishment_id = $1`,
+     WHERE b.establishment_id = $1 AND b.is_archived = false`,
     [establishmentID],
   );
   return res.rows[0];
