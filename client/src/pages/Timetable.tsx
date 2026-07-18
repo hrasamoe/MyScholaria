@@ -21,13 +21,12 @@ import {
   DialogContent,
   DialogActions,
   Button,
-  Divider,
 } from "@mui/material";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import { useNavigate } from "react-router-dom";
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { useSnackbar } from "notistack";  
+import { useSnackbar } from "notistack";
 
 const days = [
   "Monday",
@@ -39,6 +38,7 @@ const days = [
 ] as const;
 type Day = (typeof days)[number];
 
+// Visible time window of the grid, in minutes from midnight.
 const DAY_START_MIN = 6 * 60 + 30;
 const DAY_END_MIN = 18 * 60 + 30;
 const TOTAL_MIN = DAY_END_MIN - DAY_START_MIN;
@@ -47,6 +47,8 @@ const TOTAL_HEIGHT = TOTAL_MIN * PX_PER_MIN;
 const HOUR_STEP = 60;
 const HALF_STEP = 30;
 
+// Builds the horizontal guide lines (one every 30 minutes) used as a
+// background grid behind the course blocks.
 const generateGridLines = () => {
   const lines: { label: string; top: number; isHalf: boolean }[] = [];
   for (let m = DAY_START_MIN; m <= DAY_END_MIN; m += HALF_STEP) {
@@ -87,6 +89,10 @@ interface GroupedSubject {
   classes: SubjectClassDetails[];
 }
 
+// Raw slot as returned by the API. Field names below are the ones
+// actually returned by /api/timetable/class/:id. If the backend ever
+// changes these names, update SUBJECT_ID_KEYS below instead of adding
+// another ad-hoc fallback.
 interface Slot {
   id: string;
   subject_id: string;
@@ -105,6 +111,8 @@ interface Option {
   label: string;
 }
 
+// Deterministic color per subject name, so the same subject always gets
+// the same color across renders and across different class timetables.
 const getDynamicSubjectStyle = (subjectName: string, isDarkMode: boolean) => {
   let hash = 0;
   const saltedName = subjectName + "timetable-salt-xyz-123";
@@ -119,18 +127,30 @@ const getDynamicSubjectStyle = (subjectName: string, isDarkMode: boolean) => {
       text: "#ffffff",
       border: `hsl(${hue}, 70%, 38%)`,
     };
-  } else {
-    return {
-      bg: `hsl(${hue}, 80%, 93%)`,
-      text: `hsl(${hue}, 85%, 16%)`,
-      border: `hsl(${hue}, 55%, 78%)`,
-    };
   }
+  return {
+    bg: `hsl(${hue}, 80%, 93%)`,
+    text: `hsl(${hue}, 85%, 16%)`,
+    border: `hsl(${hue}, 55%, 78%)`,
+  };
 };
 
 const timeToMinutes = (t: string) => {
   const [h, m] = t.split(":").map(Number);
   return h * 60 + m;
+};
+
+// Any key name the backend might use to reference a subject on a slot.
+// Centralizing this list means a backend rename only needs one line
+// changed here, instead of hunting for scattered `||` fallbacks.
+const SUBJECT_ID_KEYS = ["subject_id", "subjectID", "subjectId"] as const;
+
+const getSubjectId = (slot: Slot): string | undefined => {
+  for (const key of SUBJECT_ID_KEYS) {
+    const value = (slot as any)[key];
+    if (value) return value;
+  }
+  return undefined;
 };
 
 interface LayoutSlot extends Slot {
@@ -140,6 +160,10 @@ interface LayoutSlot extends Slot {
   totalCols: number;
 }
 
+// Lays out overlapping slots side by side within the same day column.
+// Groups slots into "clusters" of time-overlapping items, then assigns
+// each item to the first free column within its cluster (like a
+// simplified interval graph coloring).
 const layoutDay = (slots: Slot[]): LayoutSlot[] => {
   const items = slots
     .map((s) => ({
@@ -195,6 +219,12 @@ const DayColumn = ({
   slots: LayoutSlot[];
   onSlotClick: (slot: LayoutSlot) => void;
 }) => {
+  // useTheme must be called once per component render, never inside a
+  // loop or map callback (that would break the Rules of Hooks and can
+  // crash the render when the number of slots changes).
+  const theme = useTheme();
+  const isDarkMode = theme.palette.mode === "dark";
+
   return (
     <Box
       sx={{
@@ -222,10 +252,7 @@ const DayColumn = ({
       ))}
 
       {slots.map((slot) => {
-        const st = getDynamicSubjectStyle(
-          slot.subject || "",
-          useTheme().palette.mode === "dark",
-        );
+        const st = getDynamicSubjectStyle(slot.subject || "", isDarkMode);
         const top = (slot.startMin - DAY_START_MIN) * PX_PER_MIN;
         const height = Math.max((slot.endMin - slot.startMin) * PX_PER_MIN, 20);
         const wPct = 100 / slot.totalCols;
@@ -539,8 +566,15 @@ const Timetable = () => {
   const [groupedSubjects, setGroupedSubjects] = useState<GroupedSubject[]>([]);
   const [classID, setClassID] = useState("");
   const [slots, setSlots] = useState<Slot[]>([]);
+
+  // Two separate loading flags: one for the reference data (classes,
+  // teachers, subjects) and one for the schedule itself. Both must be
+  // false before we compute subject names, otherwise a slot can briefly
+  // render as "Unknown" simply because groupedSubjects has not arrived
+  // yet (see byDay below).
   const [loadingInitial, setLoadingInitial] = useState(true);
   const [loading, setLoading] = useState(false);
+
   const [error, setError] = useState("");
   const [selectedSlot, setSelectedSlot] = useState<LayoutSlot | null>(null);
   const [infoDialogOpen, setInfoDialogOpen] = useState(false);
@@ -572,7 +606,14 @@ const Timetable = () => {
             classroom_name: c.classroom_name,
           })),
         );
-        if (data.length > 0 && !classID) setClassID(data[0].id);
+        // Only auto-select a default class on first load, never override
+        // a class the user already picked. Using the functional form of
+        // setClassID avoids needing classID as a dependency below, which
+        // previously caused this whole callback (and thus the fetch) to
+        // re-run every time the class changed.
+        if (data.length > 0) {
+          setClassID((prev) => prev || data[0].id);
+        }
       } else {
         enqueueSnackbar("Failed to load classes", { variant: "error" });
       }
@@ -600,7 +641,7 @@ const Timetable = () => {
     } finally {
       setLoadingInitial(false);
     }
-  }, [enqueueSnackbar, classID]);
+  }, [enqueueSnackbar]);
 
   useEffect(() => {
     loadDataConfig();
@@ -638,11 +679,15 @@ const Timetable = () => {
     return classes.find((c) => c.id === classID) || null;
   }, [classes, classID]);
 
+  // Attaches subject name, teacher name, room and coefficient to each
+  // raw slot. This only produces a correct result once both slots and
+  // groupedSubjects have loaded, hence the loadingInitial guard used
+  // below when deciding what to render.
   const byDay = useMemo(() => {
     const map = {} as Record<Day, LayoutSlot[]>;
 
     const enrichedSlots = slots.map((slot) => {
-      const targetSubjectId = (slot as any).subjectID || slot.subject_id;
+      const targetSubjectId = getSubjectId(slot);
       const foundSubject = groupedSubjects.find(
         (s) => s.id === targetSubjectId,
       );
@@ -670,9 +715,7 @@ const Timetable = () => {
   }, [slots, groupedSubjects, classID, teachers, selectedClassDetails]);
 
   const usedSubjects = useMemo(() => {
-    const uniqueIds = [
-      ...new Set(slots.map((s) => (s as any).subjectID || s.subject_id)),
-    ];
+    const uniqueIds = [...new Set(slots.map((s) => getSubjectId(s)))];
     return uniqueIds
       .map((id) => groupedSubjects.find((gs) => gs.id === id)?.name)
       .filter((name): name is string => !!name)
@@ -688,6 +731,11 @@ const Timetable = () => {
     setInfoDialogOpen(false);
     setSelectedSlot(null);
   };
+
+  // True while any of the data the grid depends on is still in flight.
+  // Used to keep the skeleton on screen instead of flashing "Unknown"
+  // labels while groupedSubjects/teachers/slots are still arriving.
+  const isGridLoading = loadingInitial || loading;
 
   return (
     <>
@@ -726,9 +774,7 @@ const Timetable = () => {
             startIcon={<AddIcon />}
             color="success"
             variant="contained"
-            onClick={() => {
-              navigate("/timetable/create");
-            }}
+            onClick={() => navigate("/timetable/create")}
           >
             Create schedule
           </Button>
@@ -741,7 +787,7 @@ const Timetable = () => {
         </Alert>
       )}
 
-      {loadingInitial || loading ? (
+      {isGridLoading ? (
         <TimetableSkeleton />
       ) : (
         classID && (
