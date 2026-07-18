@@ -260,12 +260,12 @@ const Library = () => {
         method: "DELETE",
         credentials: "include",
       });
-      if (!res.ok) throw new Error("Deletion failed");
-      enqueueSnackbar("Book deleted", { variant: "success" });
+      if (!res.ok) throw new Error("Archiving failed");
+      enqueueSnackbar("Book archived", { variant: "success" });
       setDeleteTarget(null);
       fetchAll();
     } catch (error: any) {
-      enqueueSnackbar(error.message || "Error deleting book", {
+      enqueueSnackbar(error.message || "Error archiving book", {
         variant: "error",
       });
     } finally {
@@ -757,10 +757,10 @@ const Library = () => {
 
       {/* Delete Book */}
       <Dialog open={!!deleteTarget} onClose={() => setDeleteTarget(null)}>
-        <DialogTitle>Delete Book</DialogTitle>
+        <DialogTitle>Archive Book</DialogTitle>
         <DialogContent>
-          Are you sure you want to delete <strong>{deleteTarget?.title}</strong>
-          ?
+          Are you sure you want to remove <strong>{deleteTarget?.title}</strong>{" "}
+          from the active catalog? Its loan history will be preserved.
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button
@@ -775,7 +775,7 @@ const Library = () => {
             onClick={handleDeleteBook}
             disabled={actionLoading}
           >
-            {actionLoading ? "Deleting..." : "Yes, Delete"}
+            {actionLoading ? "Archiving..." : "Yes, Archive"}
           </Button>
         </DialogActions>
       </Dialog>
