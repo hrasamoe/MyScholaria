@@ -63,6 +63,7 @@ const Settings = () => {
   const [academicStart, setAcademicStart] = useState(9);
   const [academicEnd, setAcademicEnd] = useState(6);
   const [savingAcademicYear, setSavingAcademicYear] = useState(false);
+
   useEffect(() => {
     getAcademicYear()
       .then((data) => {
@@ -87,13 +88,14 @@ const Settings = () => {
       setSavingAcademicYear(false);
     }
   };
+
   const handleSwitch = (event) => {
     setChecked(event.target.checked);
   };
+
   const handleCopy = (text: string, type: "join" | "admin") => {
     if (text) {
       navigator.clipboard.writeText(text);
-
       if (type === "join") {
         setCopiedJoinCode(true);
         setTimeout(() => setCopiedJoinCode(false), 1000);
@@ -103,8 +105,10 @@ const Settings = () => {
       }
     }
   };
+
   const { user } = useAuth();
   const isSearching = useRef(false);
+
   useEffect(() => {
     const userID = user.id;
     isSearching.current = true;
@@ -121,6 +125,7 @@ const Settings = () => {
         setLoading(false);
       });
   }, [isOnline]);
+
   return (
     <>
       <PageHeader
@@ -128,9 +133,16 @@ const Settings = () => {
         subtitle="Security, backups and multi-campus configuration"
       />
       <Grid container spacing={2}>
-        <Grid size={{ xs: 12, md: 6 }}>
-          <Card>
-            <CardContent>
+        <Grid size={{ xs: 12, md: 6 }} sx={{ display: "flex" }}>
+          <Card
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              width: "100%",
+              height: "100%",
+            }}
+          >
+            <CardContent sx={{ flexGrow: 1 }}>
               <Box
                 sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}
               >
@@ -161,9 +173,17 @@ const Settings = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid size={{ xs: 12, md: 6 }}>
-          <Card>
-            <CardContent>
+
+        <Grid size={{ xs: 12, md: 6 }} sx={{ display: "flex" }}>
+          <Card
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              width: "100%",
+              height: "100%",
+            }}
+          >
+            <CardContent sx={{ flexGrow: 1 }}>
               <Box
                 sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}
               >
@@ -193,9 +213,17 @@ const Settings = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid size={{ xs: 12, md: 6 }}>
-          <Card>
-            <CardContent>
+
+        <Grid size={{ xs: 12, md: 6 }} sx={{ display: "flex" }}>
+          <Card
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              width: "100%",
+              height: "100%",
+            }}
+          >
+            <CardContent sx={{ flexGrow: 1 }}>
               <Box
                 sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}
               >
@@ -234,9 +262,17 @@ const Settings = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid size={{ xs: 12, md: 6 }}>
-          <Card>
-            <CardContent>
+
+        <Grid size={{ xs: 12, md: 6 }} sx={{ display: "flex" }}>
+          <Card
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              width: "100%",
+              height: "100%",
+            }}
+          >
+            <CardContent sx={{ flexGrow: 1 }}>
               <Box
                 sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}
               >
@@ -285,7 +321,8 @@ const Settings = () => {
             </CardContent>
           </Card>
         </Grid>
-        {isOnline ? (
+
+        {isOnline && (
           <Grid size={12}>
             <Card>
               <CardContent>
@@ -456,8 +493,6 @@ const Settings = () => {
               </CardContent>
             </Card>
           </Grid>
-        ) : (
-          <></>
         )}
       </Grid>
     </>
