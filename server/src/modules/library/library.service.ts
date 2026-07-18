@@ -7,7 +7,7 @@ export const getBooks = async (establishmentID: string) => {
     `SELECT id, isbn, title, author, publisher, year, category,
             total_copies, available_copies, cover_url, location
      FROM books
-     WHERE establishment_id = $1
+     WHERE establishment_id = $1 AND is_archived = false
      ORDER BY title ASC`,
     [establishmentID],
   );
@@ -128,7 +128,8 @@ export const createLoan = async (data: any, establishmentID: string) => {
       throw new Error("No copies available for this book");
     }
 
-    const borrowerTable = data.borrowerType === "student" ? "students" : "teachers";
+    const borrowerTable =
+      data.borrowerType === "student" ? "students" : "teachers";
     const borrowerRes = await client.query(
       `SELECT profile_id FROM ${borrowerTable} WHERE id = $1 AND establishment_id = $2`,
       [data.borrowerID, establishmentID],
@@ -143,7 +144,13 @@ export const createLoan = async (data: any, establishmentID: string) => {
          (book_id, borrower_id, borrower_type, loan_date, due_date, status, establishment_id)
        VALUES ($1, $2, $3, CURRENT_DATE, $4, 'active', $5)
        RETURNING *`,
-      [data.bookID, profileID, data.borrowerType, data.dueDate, establishmentID],
+      [
+        data.bookID,
+        profileID,
+        data.borrowerType,
+        data.dueDate,
+        establishmentID,
+      ],
     );
 
     await client.query(
@@ -206,4 +213,12 @@ export const getLibraryStats = async (establishmentID: string) => {
     [establishmentID],
   );
   return res.rows[0];
+};
+
+export const archiveBook = async (id: string) => {
+  const res = await pool.query(
+    `UPDATE books SET is_archived = true WHERE id = $1 RETURNING id`,
+    [id],
+  );
+  if (res.rows.length === 0) throw new Error("Book not found");
 };

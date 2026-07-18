@@ -10,6 +10,7 @@ import {
   createLoan,
   returnLoan,
   getLibraryStats,
+  archiveBook,
 } from "./library.service";
 
 export const libraryRouter = Router();
@@ -72,8 +73,8 @@ libraryRouter.delete(
       const bookId = Array.isArray(req.params.id)
         ? req.params.id[0]
         : req.params.id;
-      await deleteBook(bookId);
-      res.status(200).json({ message: "Book deleted successfully" });
+      await archiveBook(bookId);
+      res.status(200).json({ message: "Book archived successfully" });
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
