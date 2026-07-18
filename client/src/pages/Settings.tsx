@@ -173,6 +173,64 @@ const Settings = () => {
             </CardContent>
           </Card>
         </Grid>
+        <Grid size={{ xs: 12, md: 6 }} sx={{ display: "flex" }}>
+          <Card
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              width: "100%",
+              height: "100%",
+            }}
+          >
+            <CardContent sx={{ flexGrow: 1 }}>
+              <Box
+                sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}
+              >
+                <EventIcon color="primary" />
+                <Typography variant="subtitle1" fontWeight={700}>
+                  Academic Year Period
+                </Typography>
+              </Box>
+              <Divider sx={{ mb: 2 }} />
+              <Stack spacing={2}>
+                <TextField
+                  select
+                  fullWidth
+                  label="Start Month"
+                  value={academicStart}
+                  onChange={(e) => setAcademicStart(Number(e.target.value))}
+                >
+                  {MONTHS.map((m, i) => (
+                    <MenuItem key={i + 1} value={i + 1}>
+                      {m}
+                    </MenuItem>
+                  ))}
+                </TextField>
+                <TextField
+                  select
+                  fullWidth
+                  label="End Month"
+                  value={academicEnd}
+                  onChange={(e) => setAcademicEnd(Number(e.target.value))}
+                >
+                  {MONTHS.map((m, i) => (
+                    <MenuItem key={i + 1} value={i + 1}>
+                      {m}
+                    </MenuItem>
+                  ))}
+                </TextField>
+                <Button
+                  variant="contained"
+                  size="small"
+                  disabled={savingAcademicYear}
+                  onClick={handleSaveAcademicYear}
+                >
+                  Save Period
+                </Button>
+              </Stack>
+            </CardContent>
+          </Card>
+        </Grid>
 
         <Grid size={{ xs: 12, md: 6 }} sx={{ display: "flex" }}>
           <Card
@@ -258,65 +316,6 @@ const Settings = () => {
                     </Box>
                   }
                 />
-              </Stack>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid size={{ xs: 12, md: 6 }} sx={{ display: "flex" }}>
-          <Card
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              width: "100%",
-              height: "100%",
-            }}
-          >
-            <CardContent sx={{ flexGrow: 1 }}>
-              <Box
-                sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}
-              >
-                <EventIcon color="primary" />
-                <Typography variant="subtitle1" fontWeight={700}>
-                  Academic Year Period
-                </Typography>
-              </Box>
-              <Divider sx={{ mb: 2 }} />
-              <Stack spacing={2}>
-                <TextField
-                  select
-                  fullWidth
-                  label="Start Month"
-                  value={academicStart}
-                  onChange={(e) => setAcademicStart(Number(e.target.value))}
-                >
-                  {MONTHS.map((m, i) => (
-                    <MenuItem key={i + 1} value={i + 1}>
-                      {m}
-                    </MenuItem>
-                  ))}
-                </TextField>
-                <TextField
-                  select
-                  fullWidth
-                  label="End Month"
-                  value={academicEnd}
-                  onChange={(e) => setAcademicEnd(Number(e.target.value))}
-                >
-                  {MONTHS.map((m, i) => (
-                    <MenuItem key={i + 1} value={i + 1}>
-                      {m}
-                    </MenuItem>
-                  ))}
-                </TextField>
-                <Button
-                  variant="contained"
-                  size="small"
-                  disabled={savingAcademicYear}
-                  onClick={handleSaveAcademicYear}
-                >
-                  Save Period
-                </Button>
               </Stack>
             </CardContent>
           </Card>
