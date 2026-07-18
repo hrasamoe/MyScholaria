@@ -1,13 +1,11 @@
-pc:
-	cd ../; make pc
+.PHONY: start_server dev pc dp
 
-dp:
-	cd ../; make dp
-
-build: 
+build:
 	npm run build
-start_server: build
+
+start: build
 	npm run start
 
 dev:
 	npm run dev
+

@@ -1,0 +1,13 @@
+.PHONY: dev start_client start_server
+
+dev:
+	@trap 'kill 0' EXIT; \
+	(cd server && npm run dev) & \
+	(cd client && npm run dev) & \
+	wait
+
+start_client:
+	cd client && npm run dev
+
+start_server:
+	cd server && $(MAKE) start
