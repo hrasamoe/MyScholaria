@@ -10,6 +10,7 @@ import helmet from "helmet";
 import { createServer } from "http";
 import cron from "node-cron";
 import { initPool } from "./db/pool";
+import { libraryRouter } from "./modules/library/library.router";
 import { announcementRouter } from "./modules/announcements/announcement.router";
 import { authRouter } from "./modules/auth/auth.router";
 import { cleanUnverifiedAccounts } from "./modules/auth/auth.service";
@@ -63,6 +64,7 @@ app.use("/api/announcement", announcementRouter);
 app.use("/api/notification", notificationROuter);
 app.use("/api/calendar", calendarRouter);
 app.use("/api/subject", subjectRouter);
+app.use("/api/library", libraryRouter);
 
 app.get("/api/health", (_, res) => {
   res.json({ status: "ok", project: "MyScholaria" });
