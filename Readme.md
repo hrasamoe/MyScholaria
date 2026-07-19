@@ -30,12 +30,11 @@ Built with a **mobile-first**, accessibility-aware design and a strong focus on 
 - **Classes & Classrooms** — group classes and physical room allocation
 - **Coursebook** — lesson logs and pedagogical progression
 
-![Academic Management](./docs/screenshot2.png)
 
 - **Subjects & Programs** — course catalog and curriculum tracks
 - **Timetable & School Calendar** — schedules, holidays, school year planning
 
-![Timetable](./docs/screenshot3.png)
+![Timetable](./docs/timetable.png)
 
 ### 📊 Evaluation & Tracking
 
@@ -54,6 +53,8 @@ Built with a **mobile-first**, accessibility-aware design and a strong focus on 
 - **Payments** — payment tracking and history
 - **Budget** — institutional budget management
 - **Scholarships** — scholarship awards and tracking
+
+![Tuition Track](./docs/screenshot7.png)
 
 ### 💬 Communication & Portals
 
