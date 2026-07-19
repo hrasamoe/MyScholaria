@@ -2,7 +2,7 @@
 
 > A modern, full-stack **School Management System** built with React, MUI and Node.js — designed for schools, colleges and universities to manage students, teachers, classes, finances and communication in one unified platform.
 
-![MyScholaria Banner](./docs/screenshot.png)
+![MyScholaria Banner](./docs/dashboard.png)
 
 <p align="center">
   <a href="https://myscholariaa.web.app"><img src="https://img.shields.io/badge/Live-Demo-blue?style=for-the-badge" alt="Live Demo"/></a>
@@ -45,7 +45,7 @@ Built with a **mobile-first**, accessibility-aware design and a strong focus on 
 - **Diplomas & Theses** — certificates and dissertation tracking
 - **Internships** — internship management and follow-up
 
-![Evaluation](./docs/screenshot4.png)
+![Evaluation](./docs/classes.png)
 
 ### 💰 Finance
 
@@ -54,7 +54,7 @@ Built with a **mobile-first**, accessibility-aware design and a strong focus on 
 - **Budget** — institutional budget management
 - **Scholarships** — scholarship awards and tracking
 
-![Tuition Track](./docs/screenshot7.png)
+![Tuition Track](./docs/finance.png)
 
 ### 💬 Communication & Portals
 
@@ -69,7 +69,7 @@ Built with a **mobile-first**, accessibility-aware design and a strong focus on 
 
 > Users and admins can now exchange private messages in real time, directly from their dashboard.
 
-![DM Preview](./docs/screenshot6.png)
+![DM Preview](./docs/message.png)
 
 > 🛡️ Message deletion follows a moderation-aware retention policy.
 > See [`docs/MESSAGE_MODERATION.md`](./docs/MESSAGE_MODERATION.md) for details.
@@ -82,7 +82,7 @@ Built with a **mobile-first**, accessibility-aware design and a strong focus on 
 - **Settings** — institution-wide configuration
 - **Dashboard** — KPIs and quick overview
 
-![Dashboard](./docs/screenshot1.png)
+![Dashboard](./docs/settings.png)
 
 ### 🔐 Authentication & Security
 
