@@ -631,7 +631,10 @@ CREATE TABLE public.books (
   cover_url text,
   location text,
   created_at timestamp with time zone NOT NULL DEFAULT now(),
-  CONSTRAINT books_pkey PRIMARY KEY (id)
+  establishment_id uuid,
+  is_archived boolean NOT NULL DEFAULT false,
+  CONSTRAINT books_pkey PRIMARY KEY (id),
+  CONSTRAINT books_establishment_id_fkey FOREIGN KEY (establishment_id) REFERENCES public.establishments(id)
 );
 
 
@@ -645,9 +648,12 @@ CREATE TABLE public.book_loans (
   status USER-DEFINED NOT NULL DEFAULT 'active'::loan_status_enum,
   fine_amount numeric NOT NULL DEFAULT 0 CHECK (fine_amount >= 0::numeric),
   created_at timestamp with time zone NOT NULL DEFAULT now(),
+  establishment_id uuid,
+  borrower_type text CHECK (borrower_type = ANY (ARRAY['student'::text, 'teacher'::text])),
   CONSTRAINT book_loans_pkey PRIMARY KEY (id),
   CONSTRAINT book_loans_book_id_fkey FOREIGN KEY (book_id) REFERENCES public.books(id),
-  CONSTRAINT book_loans_borrower_id_fkey FOREIGN KEY (borrower_id) REFERENCES public.profiles(id)
+  CONSTRAINT book_loans_borrower_id_fkey FOREIGN KEY (borrower_id) REFERENCES public.profiles(id),
+  CONSTRAINT book_loans_establishment_id_fkey FOREIGN KEY (establishment_id) REFERENCES public.establishments(id)
 );
 
 
