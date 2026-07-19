@@ -210,9 +210,9 @@ const App = () => (
                   <Route path="/duty" element={<Duty />} />
                   <Route path="/coursebook" element={<Coursebook />} />
                   <Route path="/internships" element={<Internships />} />
-                  <Route path="/programs" element={<Programs />} />
-                  <Route path="/theses" element={<Theses />} />
-                  <Route path="/diplomas" element={<Diplomas />} />
+                  {/* <Route path="/programs" element={<Programs />} /> */}
+                  {/* <Route path="/theses" element={<Theses />} /> */}
+                  {/* <Route path="/diplomas" element={<Diplomas />} /> */}
                 </Route>
 
                 <Route path="/library" element={<Library />} />

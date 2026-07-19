@@ -176,18 +176,18 @@ const navGroups = [
       },
     ],
   },
-  {
-    label: "University",
-    items: [
-      {
-        label: "Programs (LMD)",
-        path: "/programs",
-        icon: <WorkspacePremiumIcon />,
-      },
-      { label: "Theses", path: "/theses", icon: <ScienceIcon /> },
-      { label: "Diplomas", path: "/diplomas", icon: <VerifiedIcon /> },
-    ],
-  },
+  // {
+  //   label: "University",
+  //   items: [
+  //     {
+  //       label: "Programs (LMD)",
+  //       path: "/programs",
+  //       icon: <WorkspacePremiumIcon />,
+  //     },
+  //     { label: "Theses", path: "/theses", icon: <ScienceIcon /> },
+  //     { label: "Diplomas", path: "/diplomas", icon: <VerifiedIcon /> },
+  //   ],
+  // },
   {
     label: "System",
     items: [
