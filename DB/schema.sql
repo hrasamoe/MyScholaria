@@ -393,7 +393,7 @@ CREATE TABLE public.exams (
   max_score numeric NOT NULL DEFAULT 20,
   created_at timestamp with time zone NOT NULL DEFAULT now(),
   CONSTRAINT exams_pkey PRIMARY KEY (id),
-  CONSTRAINT exams_class_subject_id_fkey FOREIGN KEY (class_subject_id) REFERENCES public.class_subjects(id)
+  CONSTRAINT exams_class_subject_id_fkey FOREIGN KEY (class_subject_id) REFERENCES public.subjects(id)
 );
 
 
@@ -453,8 +453,8 @@ CREATE TABLE public.attendance (
   created_at timestamp with time zone NOT NULL DEFAULT now(),
   CONSTRAINT attendance_pkey PRIMARY KEY (id),
   CONSTRAINT attendance_student_id_fkey FOREIGN KEY (student_id) REFERENCES public.students(id),
-  CONSTRAINT attendance_class_subject_id_fkey FOREIGN KEY (class_subject_id) REFERENCES public.class_subjects(id),
-  CONSTRAINT attendance_recorded_by_fkey FOREIGN KEY (recorded_by) REFERENCES public.profiles(id)
+  CONSTRAINT attendance_recorded_by_fkey FOREIGN KEY (recorded_by) REFERENCES public.profiles(id),
+  CONSTRAINT attendance_class_subject_id_fkey FOREIGN KEY (class_subject_id) REFERENCES public.subjects(id)
 );
 
 
